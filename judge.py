@@ -12,7 +12,6 @@ import os
 import json
 import pathlib
 import keyboard
-import shlex
 
 # Enable ANSI escape codes
 os.system("")
@@ -59,7 +58,7 @@ try:
 except Exception as e:
     perr(f"Failed to connect to Docker environment: {str(e)}")
     perr("Your Docker environment might be faulty, or you might not have Docker Engine installed and turned on.")
-    exit
+    exit()
 
 # Check if the connection is okay
 try:
@@ -186,11 +185,12 @@ def compile_code(filecontents: str, lang: str):
 
         # Create the file using heredoc
         pinfo("[Compile] Writing file content...")
+        # Remove any trailing newlines from filecontents to prevent extra blank lines
+        filecontents = filecontents.rstrip('\n')
         cat_command = f"""cat << 'EOF' > {container_temp_working_dir}/{source_filename}
         {filecontents}
-        EOF"""
+        EOF"""  # EOF must be at start of line with no trailing spaces
 
-        # Execute the cat command to create the source file inside the container
         exec_result = compilecontainer.exec_run(['sh', '-c', cat_command])
         if exec_result.exit_code != 0:
             perr(f"[Compile] Failed to create source file:\n{exec_result.output.decode()}")
@@ -239,8 +239,6 @@ def compile_code(filecontents: str, lang: str):
     except Exception as e:
         perr(f"Error during compilation: {str(e)}")
         return [-4, str(e)]
-
-
 
 
 # Judging function. Used for checking if a submit had done okay.
