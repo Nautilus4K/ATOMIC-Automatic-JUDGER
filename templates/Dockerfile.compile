@@ -1,0 +1,9 @@
+FROM archlinux:latest
+
+# Update system and install required packages
+RUN pacman -Sy && \
+    pacman -Syu --noconfirm && \
+    pacman -Sy --noconfirm gcc fpc
+
+# Keep the container always running
+CMD ["tail", "-f", "/dev/null"]

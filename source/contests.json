@@ -1,0 +1,12 @@
+{
+    "Test1": {
+        "Desc": "Prints out `Test` on execution",
+        "InputType": "file",
+        "OutputType": "file",
+        "TestAmount": 2,
+        "Tests": [
+            ["", "Test"],
+            ["", "Test"]
+        ]
+    }
+}

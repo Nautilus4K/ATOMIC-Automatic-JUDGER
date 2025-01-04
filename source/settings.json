@@ -1,0 +1,5 @@
+{
+    "wait_time": 1,
+    "mem_limit": 1024,
+    "time_limit": 1
+}

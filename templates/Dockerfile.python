@@ -1,0 +1,6 @@
+FROM archlinux:latest
+
+# Install Python without additional libraries
+RUN pacman -Syu --noconfirm && pacman -S --noconfirm python3
+
+CMD ["tail", "-f", "/dev/null"]
