@@ -2,7 +2,9 @@
     "Test1": {
         "Desc": "Prints out `Test` on execution",
         "InputType": "file",
+        "InputFile": "Test1.INP",
         "OutputType": "file",
+        "OutputFile": "Test1.OUT",
         "TestAmount": 2,
         "Tests": [
             ["", "Test"],

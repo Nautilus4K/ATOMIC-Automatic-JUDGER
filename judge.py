@@ -6,27 +6,17 @@
 # ├──judge.py
 
 import time
-import datetime
 import docker
 import os
 import json
 import pathlib
 import keyboard
 
+# For logging, like pwarn(), pinfo(), pok(), perr
+from csmcoloredloggerprint import *
+
 # Enable ANSI escape codes
 os.system("")
-
-def pinfo(content: str):
-    print(f"\x1b[0m[{datetime.datetime.fromtimestamp(int(time.time())).strftime('%H:%M:%S %Y-%m-%d')}] [INFO] {content}\x1b[0m")
-
-def perr(content: str):
-    print(f"\x1b[31m[{datetime.datetime.fromtimestamp(int(time.time())).strftime('%H:%M:%S %Y-%m-%d')}] [ERROR] {content}\x1b[0m")
-
-def pwarn(content: str):
-    print(f"\x1b[33m[{datetime.datetime.fromtimestamp(int(time.time())).strftime('%H:%M:%S %Y-%m-%d')}] [WARNING] {content}\x1b[0m")
-
-def pok(content: str):
-    print(f"\x1b[32m[{datetime.datetime.fromtimestamp(int(time.time())).strftime('%H:%M:%S %Y-%m-%d')}] [SUCCESS] {content}\x1b[0m")
 
 # Variables
 filePath = os.path.dirname(os.path.abspath(__file__))
@@ -97,13 +87,14 @@ def run_container(image_name, mounted_dir: str):
     # Mount the host's current directory into /mnt inside the container
     container = client.containers.run(
         image_name,
-        command="/bin/sh -c 'cd /mnt && /bin/sh'",  # Start the shell
         volumes={current_directory: {'bind': '/mnt', 'mode': 'rw'}},  # Mount the current directory to /mnt
         detach=True,  # Run in the background
         working_dir='/mnt'  # Set the working directory inside the container to /mnt (host's current directory)
     )
     
-    print(f"Container {container.id} is running with host's current directory mounted.")
+    container.start()
+    container.reload()
+    pinfo(f"Container {container.id} is running with host's current directory mounted. Current status: {container.status}")
     return container
 
 if not check_image_exists("atomic-python"):
@@ -183,19 +174,20 @@ def compile_code(filecontents: str, lang: str):
             perr(f"[Compile] Unsupported language. Supported languages: C++, Pascal, Python (Direct Execution). Target language: {lang}")
             return [-1, "Unsupported language"]
 
-        # Create the file using heredoc
+        # Create the file using heredoc - no indentation in the multiline string
         pinfo("[Compile] Writing file content...")
-        # Remove any trailing newlines from filecontents to prevent extra blank lines
-        filecontents = filecontents.rstrip('\n')
         cat_command = f"""cat << 'EOF' > {container_temp_working_dir}/{source_filename}
-        {filecontents}
-        EOF"""  # EOF must be at start of line with no trailing spaces
+        {filecontents.strip()}
+        EOF""" # EOF right at start, no extra spaces
+
+        # OR even cleaner:
+        cat_command = 'cat << \'EOF\' > ' + f'{container_temp_working_dir}/{source_filename}\n{filecontents.strip()}\nEOF'
 
         exec_result = compilecontainer.exec_run(['sh', '-c', cat_command])
         if exec_result.exit_code != 0:
             perr(f"[Compile] Failed to create source file:\n{exec_result.output.decode()}")
             return [-5, "Failed to create source compilation file"]
-        pok(f"[Compile] Created source file inside container. Logs:\n{exec_result.output.decode()}")
+        pok("[Compile] Created source file inside container")
 
         # Step 3: Verify the file exists in the container
         file_contents2_result = compilecontainer.exec_run(f"cat {container_temp_working_dir}/{source_filename}")
@@ -205,8 +197,8 @@ def compile_code(filecontents: str, lang: str):
         pok("[Compile] Source file exists inside container.")
 
         # Decode and print the content
-        file_contents2 = file_contents2_result.output.decode('utf-8')
-        pinfo(f"Copied over file content:\n{file_contents2}")
+        # file_contents2 = file_contents2_result.output.decode('utf-8')
+        # pinfo(f"Copied over file content:\n{file_contents2}")
 
         # Verify that the source file exists in the container
         exec_result = compilecontainer.exec_run(f"ls -l {container_temp_working_dir}/{source_filename}")
@@ -233,26 +225,86 @@ def compile_code(filecontents: str, lang: str):
             for chunk in binary_stream:
                 f.write(chunk)
 
-        pinfo(f"[Compile] Compilation successful. Binary saved to host at '{host_binary_path}'.")
+        pok(f"[Compile] Compilation successful. Binary saved to host at '{host_binary_path}'.")
         return [0, ""]
 
     except Exception as e:
         perr(f"Error during compilation: {str(e)}")
         return [-4, str(e)]
+    
+def runAndGet(isPython: bool, filedIn: bool, filedOut: bool, inputstr: str, filedInName: str = "", filedOutName: str = ""):
+    # Get information about the execution of the code
+    # Returns output and execution time. In case of error, returns error message and execution time
+    """
+    Runs a program in container and returns (return_code, output, execution_time)
+    """
+    # Untar the executable file
+    runcontainer.exec_run("tar -xvf /mnt/a.out -C /mnt")
 
+    # Construct command with time
+    if not filedIn: # Straight input into the executing process
+        cmd = f"""cat << 'EOF' | /mnt/a.out 2>&1
+{inputstr}
+EOF"""
+    else: # Input from additional files
+        with open(filePath+"/tempWorking/"+filedInName, "w") as file:
+            file.write(inputstr)
+        cmd = f"/mnt/a.out 2>&1"
+
+    beforeTime = time.time()
+    # Run the program
+    exec_result = runcontainer.exec_run(['sh', '-c', cmd])
+    execution_time = time.time() - beforeTime
+    
+    # Parse output
+    output = exec_result.output.decode()
+    lines = output.splitlines()
+    error = None
+
+    if not filedOut:
+        # Everything else is program output
+        program_output = '\n'.join(lines[:-1])
+    else:
+        # if the program outputs a file. We check that file
+        exec_result_2 = runcontainer.exec_run(['sh', '-c', f"cat {filedOutName}"])
+        try:
+            program_output = exec_result_2.output.decode()
+            runcontainer.exec_run(["sh", "-c", f"rm -rf {filedOutName}"])
+            if exec_result_2.exit_code != 0:
+                perr("Error reading output file of submit. Error: " + program_output)
+                execution_folder = runcontainer.exec_run(['sh', '-c', "pwd && ls"]).output.decode()
+                perr("Execution folder: " + execution_folder)
+                program_output = None
+        except UnicodeDecodeError:
+            perr("File returned non-utf8 bytes. Marking as wrong...")
+            program_output = None
+            error = UnicodeDecodeError
+        except Exception as e:
+            perr("Error reading output file of submit. Error: " + str(e))
+            execution_folder = runcontainer.exec_run(['sh', '-c', "pwd && ls"]).output.decode()
+            perr("Execution folder: " + execution_folder)
+            program_output = None
+            error = e
+
+    # Remove input/output files
+    os.remove(filePath+"/tempWorking/"+filedInName)
+    
+    return exec_result.exit_code, program_output, execution_time, error
 
 # Judging function. Used for checking if a submit had done okay.
 def judge(filename: str):
     try:
+        pinfo("Reloading contests information...")
         with open(filePath+"/source/contests.json", "r", encoding="utf-8") as file:
             contests = json.loads(file.read())
-            normalized_contests = {item.lower() for item in contests}
+            normalized_contests = {key.lower(): value for key, value in contests.items()}
     except:
         perr("No `contests.json` found in source. Please generate one or reinstall the software.")
         return [-4, None]
 
     # We test if the file's name is one of the things we need to judge, else just remove the file for storage's sake and return its name into result?
-    if pathlib.Path(filename).stem.lower() in normalized_contests:
+    fileSubmitTarget = pathlib.Path(filename).stem.lower()
+    if fileSubmitTarget in normalized_contests:
         pinfo(f"Judging {filename}...")
         root, ext = os.path.splitext(filename)
         ext = ext[1:]
@@ -266,12 +318,36 @@ def judge(filename: str):
                 with open(filePath+"/workspace/queue/"+filename) as file:
                     filecontents = file.read()
             except:
-                perr(f"Failed to read file. Please check the file's integrity. Error: {str(e)}")
+                perr(f"> Failed to read file. Please check the file's integrity. Error: {str(e)}")
                 return [-2, None]
             
-            comres, exception = compile_code(filecontents, ext) # Compile results, too
+            comres, exception = compile_code(filecontents, ext.lower()) # Compile results, too
             if comres == 0:
-                pinfo("> Compilation successful. Entering testing step")
+                pok("> Compilation successful. Entering testing step")
+                try: 
+                    inputFromFile = bool(normalized_contests[fileSubmitTarget]["InputType"] == "file")
+                    outputFromFile = bool(normalized_contests[fileSubmitTarget]["OutputType"] == "file")
+                        
+                    code, output, exectime, exc = runAndGet(
+                        False, 
+                        inputFromFile,
+                        outputFromFile,
+                        normalized_contests[fileSubmitTarget]["Tests"][0][0],
+                        normalized_contests[fileSubmitTarget]["InputFile"],
+                        normalized_contests[fileSubmitTarget]["OutputFile"]
+                    )
+
+                    if exc:
+                        # If an exception happened
+                        perr(f"> Exception happened during execution. Error: {str(exc)}")
+                        if exc == UnicodeDecodeError:
+                            perr("> File returned non-utf8 bytes.")
+
+                    pok(f"Executed file with exit code {code} in {exectime} seconds. Output: {output}")
+                    os.remove(filePath+"/tempWorking/a.out")
+                except Exception as e:
+                    perr(f"An error occurred during execution: {str(e)}")
+                    return [-4, e]
             else:
                 perr(f"> Compilation failed with code {comres}. Please check the code's integrity.")
                 perr(f"> Exception:\n {exception}")
@@ -281,7 +357,6 @@ def judge(filename: str):
         pinfo(f"Found submit not in line with any current contests, removing {filename}.")
         os.remove(filePath+"/workspace/queue/"+filename)
     return -1
-
 
 
 pinfo("Now testing/judging current queued submissions.")
@@ -301,8 +376,7 @@ while running:
         # Reduce drive I/O stress
         if keyboard.is_pressed("a") and keyboard.is_pressed("x") and keyboard.is_pressed("z"):
             # Keybind: A + X + Z
-            running = False
-            break
+            input("Pausing...")
         
         time.sleep(wait_time)
     except KeyboardInterrupt:
@@ -311,4 +385,9 @@ while running:
         break
 
 # Remove the container for running tasks
+pinfo("Stopping execution container...")
+runcontainer.stop()
+pinfo("Removing execution container...")
 runcontainer.remove()
+pinfo("Stopping compilation container...")
+compilecontainer.stop()

@@ -2,6 +2,7 @@
 
 using namespace std;
 int main() {
-    cout << "Hello, world" + '!';
+    freopen("Test1.OUT", "w", stdout);
+    cout << "Hello, world" << '!';
     return 0;
 }
