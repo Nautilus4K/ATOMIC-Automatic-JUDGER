@@ -5,10 +5,11 @@
         "InputFile": "Test1.INP",
         "OutputType": "file",
         "OutputFile": "Test1.OUT",
+        "TimeLimit": 1,
         "TestAmount": 2,
         "Tests": [
             ["", "Test"],
-            ["", "Test"]
+            ["", "Test2"]
         ]
     }
 }
