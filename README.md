@@ -12,29 +12,10 @@ If you don't understand Vietnamese and want to add English. Feel free to contrib
 - Cross-platform support (Windows, Linux, macOS)
 - Security over performance (I'm not a security expert, just a hobbyist, so do not take that seriously)
 - Arch Linux, btw (I use Arch btw)
-```
-                   -`
-                  .o+`
-                 `ooo/
-                `+oooo:
-               `+oooooo:
-               -+oooooo+:
-             `/:-:++oooo+:
-            `/++++/+++++++:
-           `/++++++++++++++:
-          `/+++ooooooooooooo/`
-         ./ooosssso++osssssso+`
-        .oossssso-````/ossssss+`
-       -osssssso.      :ssssssso.
-      :osssssss/        osssso+++.
-     /ossssssss/        +ssssooo/-
-   `/ossssso+/:-        -:/+osssso+-
-  `+sso+:-`                 `.-/+oso:
- `++:.                           `-/+/
- .`                                 `/
-```
+
 
 ## Dependencies
+- Python 3 (Probably 3.11)
 - Flask
 - WSGI caller. Like gunicorn, for example.
 - Docker (Both desktop and Python package)
@@ -42,4 +23,21 @@ If you don't understand Vietnamese and want to add English. Feel free to contrib
 If you don't want to waste your time trying to find these dependencies, do this command:
 ```bash
 python -m pip install -r requirements.txt
+```
+
+## Using the software
+This thing requires Python, at least 3.10, I highly recommend **3.11.2** as it is tested, others I'm not sure.
+
+### Download
+Clone this repo, that's the file.
+
+### Start judging daemon manually
+To enable the judging system, navigate to the downloaded directory, then run the command:
+```bash
+python -m pip install -r requirements.txt
+```
+Thats the command to install required libraries
+To enable actual judging, run the command:
+```bash
+python judge.py
 ```

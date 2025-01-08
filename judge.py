@@ -14,6 +14,7 @@ import keyboard
 import threading
 import queue
 from typing import Tuple, Optional, Any
+import shutil
 
 # For logging, like pwarn(), pinfo(), pok(), perr
 from csmcoloredloggerprint import *
@@ -21,7 +22,7 @@ from csmcoloredloggerprint import *
 # Enable ANSI escape codes
 os.system("")
 
-LOG_PATH = "/source/logs/"
+LOG_PATH = "/workspace/result/logs/"
 CONTEST_PATH = "/source/contests.json"
 SETTINGS_PATH = "/source/settings.json"
 VERSION_PATH = "/source/version.json"
@@ -88,7 +89,7 @@ def check_container_exists(container_name):
     except docker.errors.NotFound:
         return False
     
-def run_container(image_name, mounted_dir: str):
+def run_container(image_name, mounted_dir: str, name: str):
     # Get the current working directory on the host
     current_directory = filePath + mounted_dir
     
@@ -97,7 +98,8 @@ def run_container(image_name, mounted_dir: str):
         image_name,
         volumes={current_directory: {'bind': '/mnt', 'mode': 'rw'}},  # Mount the current directory to /mnt
         detach=True,  # Run in the background
-        working_dir='/mnt'  # Set the working directory inside the container to /mnt (host's current directory)
+        working_dir='/mnt',  # Set the working directory inside the container to /mnt (host's current directory)
+        name=name
     )
     
     container.start()
@@ -112,7 +114,7 @@ if not check_image_exists("atomic-python"):
         pinfo(log.get('stream', '').strip())
     pok(f"Image built with ID: {pyimage.id}")
 pinfo("Generating new container for Environment")
-runcontainer = run_container("atomic-python", "/tempWorking")
+runcontainer = run_container("atomic-python", "/tempWorking", "execution")
 
 if not check_image_exists("atomic-compile"):
     pwarn("No compiler image found, building one...")
@@ -284,7 +286,7 @@ def exec_with_timeout(container, cmd: list, timeout: float) -> Tuple[Optional[An
                     
         return None, execution_time, True
 
-def runAndGet(filedIn: bool, filedOut: bool, inputstr: str, filedInName: str = "", filedOutName: str = "", timeout: float = 1):
+def runAndGet(logfile, filedIn: bool, filedOut: bool, inputstr: str, filedInName: str = "", filedOutName: str = "", timeout: float = 1):
     """
     Runs a program in container and returns (return_code, output, execution_time)
     """
@@ -334,7 +336,8 @@ def runAndGet(filedIn: bool, filedOut: bool, inputstr: str, filedInName: str = "
                     ['sh', '-c', f"cd {work_dir} && pwd && ls -la"]
                 ).output.decode()
                 perr("Execution folder contents: " + execution_folder)
-                return exec_result.exit_code, None, execution_time, FileNotFoundError
+                logfile.write("[LỖI] Không tìm thấy file kết quả.\n")
+                return exec_result.exit_code, None, execution_time, FileNotFoundError, False, "Không tìm thấy file kết quả."
             
             # Read the output file
             exec_result_2 = runcontainer.exec_run(
@@ -352,7 +355,106 @@ def runAndGet(filedIn: bool, filedOut: bool, inputstr: str, filedInName: str = "
                     perr("Execution folder: " + execution_folder)
                     program_output = None
             except UnicodeDecodeError:
+                # This shouldn't happen at all
+                # Happened once on a faulty little C++ file
+                # Fuck it, it justs is BAD
                 perr("File returned non-utf8 bytes. Marking as wrong...")
+                logfile.write("Lỗi giải mã: Tìm thấy ký tự vượt quá phạm trù bảng mã UTF-8\n")
+                program_output = None
+                error = UnicodeDecodeError
+            except Exception as e:
+                perr("Error reading output file of submit. Error: " + str(e))
+                execution_folder = runcontainer.exec_run(
+                    ['sh', '-c', f"cd {work_dir} && pwd && ls -la"]
+                ).output.decode()
+                perr("Execution folder: " + execution_folder)
+                program_output = None
+                error = e
+        
+        # Clean up input file if it exists
+        if filedIn:
+            os.remove(filePath + "/tempWorking/" + filedInName)
+        
+        # Clean up working directory
+        runcontainer.exec_run(["sh", "-c", f"rm -rf {work_dir}"])
+        excmsg = None
+        return exec_result.exit_code, program_output, execution_time, error, timed_out, excmsg
+        
+    except Exception as e:
+        perr(f"Unexpected error in runAndGet: {str(e)}")
+        return -1, None, 0, e
+    
+def runPython(logfile, filedIn: bool, filedOut: bool, inputstr: str, filedInName: str = "", filedOutName: str = "", timeout: float = 1):
+    try:
+        # Create working directory and move there
+        work_dir = "/mnt/work"
+        runcontainer.exec_run(f"mkdir -p {work_dir}")
+        
+        # Move the python file into the working directory
+        runcontainer.exec_run(f"cp /mnt/a.py {work_dir}/a.py")
+        
+        # Construct command with time
+        if not filedIn:  # Straight input into the executing process
+            cmd = f"""cd {work_dir} && cat << 'EOF' | python ./a.py 2>&1
+        {inputstr}
+        EOF"""
+        else:  # Input from additional files
+            with open(filePath + "/tempWorking/" + filedInName, "w") as file:
+                file.write(inputstr)
+            # Copy input file to container work directory
+            runcontainer.exec_run(f"cp /mnt/tempWorking/{filedInName} {work_dir}/")
+            cmd = f"cd {work_dir} && python ./a.py 2>&1"
+
+        # Run the program with timeout
+        exec_result, execution_time, timed_out = exec_with_timeout(
+            runcontainer, 
+            ['sh', '-c', cmd],
+            timeout
+        )
+        
+        # Parse output
+        output = exec_result.output.decode()
+        lines = output.splitlines()
+        error = None
+        
+        if not filedOut:
+            # Everything else is program output
+            program_output = '\n'.join(lines[:-1])
+        else:
+            # Verify output file exists
+            file_check = runcontainer.exec_run(
+                ['sh', '-c', f"test -f {work_dir}/{filedOutName} && echo 'exists'"]
+            )
+            if b'exists' not in file_check.output:
+                perr(f"Output file {filedOutName} not found in execution directory")
+                execution_folder = runcontainer.exec_run(
+                    ['sh', '-c', f"cd {work_dir} && pwd && ls -la"]
+                ).output.decode()
+                perr("Execution folder contents: " + execution_folder)
+                logfile.write("[LỖI] Không tìm thấy file kết quả.\n")
+                return exec_result.exit_code, None, execution_time, FileNotFoundError, False, "Không tìm thấy file kết quả."
+            
+            # Read the output file
+            exec_result_2 = runcontainer.exec_run(
+                ['sh', '-c', f"cat {work_dir}/{filedOutName}"]
+            )
+            try:
+                program_output = exec_result_2.output.decode()
+                # Clean up output file
+                runcontainer.exec_run(["sh", "-c", f"rm -rf {work_dir}/{filedOutName}"])
+                if exec_result_2.exit_code != 0:
+                    perr("Error reading output file of submit. Error: " + program_output)
+                    execution_folder = runcontainer.exec_run(
+                        ['sh', '-c', f"cd {work_dir} && pwd && ls -la"]
+                    ).output.decode()
+                    perr("Execution folder: " + execution_folder)
+                    program_output = None
+            except UnicodeDecodeError:
+                # This shouldn't happen at all
+                # Happened once on a faulty little C++ file
+                # Fuck it, it justs is BAD
+                perr("File returned non-utf8 bytes. Marking as wrong...")
+                logfile.write("Lỗi giải mã: Tìm thấy ký tự vượt quá phạm trù bảng mã UTF-8\n")
                 program_output = None
                 error = UnicodeDecodeError
             except Exception as e:
@@ -371,14 +473,15 @@ def runAndGet(filedIn: bool, filedOut: bool, inputstr: str, filedInName: str = "
         # Clean up working directory
         runcontainer.exec_run(["sh", "-c", f"rm -rf {work_dir}"])
         
-        return exec_result.exit_code, program_output, execution_time, error, timed_out
+        excmsg = None
+        return exec_result.exit_code, program_output, execution_time, error, timed_out, excmsg
         
     except Exception as e:
         perr(f"Unexpected error in runAndGet: {str(e)}")
         return -1, None, 0, e
 
 # Judging function. Used for checking if a submit had done okay.
-def judge(filename: str):
+def judge(fullfilename: str):
     try:
         pinfo("Reloading contests information...")
         with open(filePath+CONTEST_PATH, "r", encoding="utf-8") as file:
@@ -388,22 +491,119 @@ def judge(filename: str):
         perr("No `contests.json` found in source. Please generate one or reinstall the software.")
         return [-4, None]
 
+    # Get file data in this format [username][submission_name].extension
+    # into a list: [username, submission_name, extension] ---> filedata
+    # The worst way to do this
+    pinfo("> Extracting contents...")
+    filedata = fullfilename.replace("][", ".").replace("[", "").replace("]", "").split(".")
+    filename = filedata[1].lower() # FUCK, I forgot this once and errors comes. FUCK
+    pok("[!] Extracted into LIST: " + str(filedata))
+
     # We test if the file's name is one of the things we need to judge, else just remove the file for storage's sake and return its name into result?
-    fileSubmitTarget = pathlib.Path(filename).stem.lower()
-    if fileSubmitTarget in normalized_contests:
+    if filename in normalized_contests:
         pinfo(f"Judging {filename}...")
-        root, ext = os.path.splitext(filename)
-        ext = ext[1:]
+
+        # Prepare to write logs
+        logfile = open(filePath+LOG_PATH+fullfilename+".log", "w", encoding="utf-8")
+        logfile.write("BÀI: " + fullfilename + "\n")
+        # Get extensions of file
+        ext = filedata[2]
         if ext == "py" or ext == "pyw" or ext == "python":
             pinfo("> Python file detected. Entering testing step")
-            pass
+            shutil.copy(filePath+"/workspace/queue/"+fullfilename, filePath+"/tempWorking/a.py")
+            logfile.write("Đang kiểm tra...\n")
+            score = 0.0
+            for i in range(normalized_contests[filename]["TestAmount"]):
+                # Write logs when we test the script with the tests in contests.json
+                logfile.write("\n------------------------------------\n" + filename + " :: Test " + str(i) + "\n------------------------------------\n") 
+                try: 
+                    inputFromFile = bool(normalized_contests[filename]["InputType"] == "file")
+                    outputFromFile = bool(normalized_contests[filename]["OutputType"] == "file")
+                    inputstr = normalized_contests[filename]['Tests'][i][0].strip()
+
+                    # Get data
+                    code, output, exectime, exc, timedOut, excmsg = runPython(
+                        logfile,
+                        inputFromFile,
+                        outputFromFile,
+                        inputstr + "\n",
+                        normalized_contests[filename]["InputFile"],
+                        normalized_contests[filename]["OutputFile"]
+                    )
+                    pok(f"Executed file with exit code {code} in {exectime} seconds")
+                    if exc or excmsg:
+                        # If an exception happened
+                        perr(f"> Exception happened during execution. Error: {exc.args[0]}")
+                        logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chính xác:\n{strippedDestine}\n\nChương trình chạy sinh lỗi: ")
+                        if excmsg:
+                            pinfo("> DEBUG: "+excmsg)
+                            logfile.write(excmsg)
+                        else:
+                            if exc == UnicodeDecodeError:
+                                # This shouldn't happen
+                                # Yet it does
+                                # Fuck
+                                perr("> File returned non-utf8 bytes.")
+                            logfile.write(f"[{str(exec)}]\nĐể biết thêm thông tin chi tiết, vui lòng tìm kiếm lỗi này trong ngôn ngữ lập trình Python.\n\n")
+                    else:
+                        # if no exception has happened. We check the results if it matches and is correct
+                        # also, write into the logs
+                        
+                        strippedOutput = output.strip()
+                        strippedDestine = normalized_contests[filename]["Tests"][i][1].strip()
+                        logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chương trình:\n{strippedOutput}\n\nĐầu ra chính xác:\n{strippedDestine}\n\n")
+
+                        # God bless this check. This is probably the worst way I could do this
+                        if not timedOut:
+                            logfile.write(f"Exit code {code} :: {exectime} seconds\n")
+                        else:
+                            logfile.write(f"Exit code {code} :: {exectime}+ seconds\n")
+
+                        # In case there is no time pass-through
+                        if exectime <= float(normalized_contests[filename]["TimeLimit"]) and not timedOut:
+                            # If the result/output matches with the supposed answer
+                            if strippedOutput == strippedDestine:
+                                pinfo(f"> Test {i} passed!")
+                                logfile.write("Đầu ra chương trình giống đầu ra dự kiến\n")
+                                score += 10
+                            else:
+                                pinfo(f"> Test {i} did not pass!")
+                                logfile.write("Đầu ra chương trình KHÁC đầu ra dự kiến\n")
+                        else:
+                            pinfo(f"> Test {i} timed out!")
+                            logfile.write("Chương trình chạy quá thời gian\n")
+                        
+                except Exception as e:
+                    perr(f"An error occurred during execution: {str(e)}")
+                    # logfile.write(f"Lỗi HỆ THỐNG: {str(e)}\n")
+                    logfile.write("Đã có lỗi xảy ra trong quá trình chạy chương trình.\n")
+                    continue
+            score /= normalized_contests[filename]["TestAmount"]
+            pinfo("> Result score: " + str(score))
+                    
+            try:
+                os.remove(filePath+"/tempWorking/a.py")
+            except:
+                perr("Cannot remove a.py in temporary working folder, probably deleted beforehand.")
+
+            # If an existing userdata json file exists
+            if os.path.exists(filePath+"/workspace/result/"+filedata[0]+".json"):
+                with open(filePath+"/workspace/result/"+filedata[0]+".json", "r") as file:
+                    userdata = json.loads(file.read())
+            else:
+                userdata = {}
+
+            userdata[filedata[1]] = score
+
+            with open(filePath+"/workspace/result/"+filedata[0]+".json", "w") as file:
+                file.write(json.dumps(userdata))
+
+            return [0, score]
         else:
-            logfile = open(filePath+LOG_PATH+filename+".log", "w", encoding="utf-8")
-            logfile.write("BÀI: " + filename + "\n")
             pinfo("> Not a Python file. Entering compilation step")
             pinfo("> Fetching filedata")
             try:
-                with open(filePath+"/workspace/queue/"+filename) as file:
+                with open(filePath+"/workspace/queue/"+fullfilename) as file:
                     filecontents = file.read()
                     logfile.write("Đã đọc được bài nộp. Đang biên soạn...\n")
             except:
@@ -413,62 +613,103 @@ def judge(filename: str):
                 return [-2, None]
             
             comres, exception = compile_code(filecontents, ext.lower()) # Compile results, too
-            if comres == 0:
+            if comres == 0: # If compilation successes
                 pok("> Compilation successful. Entering testing step")
                 logfile.write("Biên soạn thành công\nĐang kiểm tra...\n")
-                for i in range(normalized_contests[fileSubmitTarget]["TestAmount"]):
-                    logfile.write("\n------------------------------------\n" + filename + " :: Test " + str(i) + "\n------------------------------------\n")
+                score = 0.0
+                for i in range(normalized_contests[filename]["TestAmount"]):
+                    # Write logs when we test the script with the tests in contests.json
+                    logfile.write("\n------------------------------------\n" + filename + " :: Test " + str(i) + "\n------------------------------------\n") 
                     try: 
-                        inputFromFile = bool(normalized_contests[fileSubmitTarget]["InputType"] == "file")
-                        outputFromFile = bool(normalized_contests[fileSubmitTarget]["OutputType"] == "file")
-                        inputstr = normalized_contests[fileSubmitTarget]['Tests'][i][0].strip()
-                        code, output, exectime, exc, timedOut = runAndGet(
+                        inputFromFile = bool(normalized_contests[filename]["InputType"] == "file")
+                        outputFromFile = bool(normalized_contests[filename]["OutputType"] == "file")
+                        inputstr = normalized_contests[filename]['Tests'][i][0].strip()
+
+                        # Get data
+                        code, output, exectime, exc, timedOut, excmsg = runAndGet(
+                            logfile,
                             inputFromFile,
                             outputFromFile,
                             inputstr + "\n",
-                            normalized_contests[fileSubmitTarget]["InputFile"],
-                            normalized_contests[fileSubmitTarget]["OutputFile"]
+                            normalized_contests[filename]["InputFile"],
+                            normalized_contests[filename]["OutputFile"]
                         )
-
-                        if exc:
-                            # If an exception happened
-                            perr(f"> Exception happened during execution. Error: {str(exc)}")
-                            if exc == UnicodeDecodeError:
-                                perr("> File returned non-utf8 bytes.")
-
                         pok(f"Executed file with exit code {code} in {exectime} seconds")
-                        strippedOutput = output.strip()
-                        strippedDestine = normalized_contests[fileSubmitTarget]["Tests"][i][1].strip()
-                        logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chương trình:\n{strippedOutput}\n\nĐầu ra chính xác:\n{strippedDestine}\n\n")
-                        if not timedOut:
-                            logfile.write(f"Exit code {code} :: {exectime} seconds\n")
-                        else:
-                            logfile.write(f"Exit code {code} :: {exectime}+ seconds\n")
-                        if exectime <= float(normalized_contests[fileSubmitTarget]["TimeLimit"]) and not timedOut:
-                            if strippedOutput == strippedDestine:
-                                pinfo(f"> Test {i} passed!")
-                                logfile.write("Đầu ra chương trình giống đầu ra dự kiến\n")
+                        if exc or excmsg:
+                            # If an exception happened
+                            perr(f"> Exception happened during execution. Error: {exc.args[0]}")
+                            logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chính xác:\n{strippedDestine}\n\nChương trình chạy sinh lỗi: ")
+                            if excmsg:
+                                pinfo("> DEBUG: "+excmsg)
+                                logfile.write(excmsg)
                             else:
-                                pinfo(f"> Test {i} did not pass!")
-                                logfile.write("Đầu ra chương trình KHÁC đầu ra dự kiến\n")
+                                if exc == UnicodeDecodeError:
+                                    # This shouldn't happen
+                                    # Yet it does
+                                    # Fuck
+                                    perr("> File returned non-utf8 bytes.")
+                                logfile.write(f"[{str(exec)}]\nĐể biết thêm thông tin chi tiết, vui lòng tìm kiếm lỗi này trong ngôn ngữ lập trình Python.\n\n")
                         else:
-                            pinfo(f"> Test {i} timed out!")
-                            logfile.write("Chương trình chạy quá thời gian\n")
+                            # if no exception has happened. We check the results if it matches and is correct
+                            # also, write into the logs
+                            
+                            strippedOutput = output.strip()
+                            strippedDestine = normalized_contests[filename]["Tests"][i][1].strip()
+                            logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chương trình:\n{strippedOutput}\n\nĐầu ra chính xác:\n{strippedDestine}\n\n")
+
+                            # God bless this check. This is probably the worst way I could do this
+                            if not timedOut:
+                                logfile.write(f"Exit code {code} :: {exectime} seconds\n")
+                            else:
+                                logfile.write(f"Exit code {code} :: {exectime}+ seconds\n")
+
+                            # In case there is no time pass-through
+                            if exectime <= float(normalized_contests[filename]["TimeLimit"]) and not timedOut:
+                                # If the result/output matches with the supposed answer
+                                if strippedOutput == strippedDestine:
+                                    pinfo(f"> Test {i} passed!")
+                                    logfile.write("Đầu ra chương trình giống đầu ra dự kiến\n")
+                                    score += 10
+                                else:
+                                    pinfo(f"> Test {i} did not pass!")
+                                    logfile.write("Đầu ra chương trình KHÁC đầu ra dự kiến\n")
+                            else:
+                                pinfo(f"> Test {i} timed out!")
+                                logfile.write("Chương trình chạy quá thời gian\n")
                             
                     except Exception as e:
                         perr(f"An error occurred during execution: {str(e)}")
+                        # logfile.write(f"Lỗi HỆ THỐNG: {str(e)}\n")
+                        logfile.write("Đã có lỗi xảy ra trong quá trình chạy chương trình.\n")
                         continue
-                        
+                
+                score /= normalized_contests[filename]["TestAmount"]
+                pinfo("> Result score: " + str(score))
+
+                # If an existing userdata json file exists
+                if os.path.exists(filePath+"/workspace/result/"+filedata[0]+".json"):
+                    with open(filePath+"/workspace/result/"+filedata[0]+".json", "r") as file:
+                        userdata = json.loads(file.read())
+                else:
+                    userdata = {}
+
+                userdata[filedata[1]] = score
+
+                with open(filePath+"/workspace/result/"+filedata[0]+".json", "w") as file:
+                    file.write(json.dumps(userdata))
+
                 os.remove(filePath+"/tempWorking/a.out")
+                return [0, score]
             else:
                 perr(f"> Compilation failed with code {comres}. Please check the code's integrity.")
                 perr(f"> Exception:\n {exception}")
+                logfile.write("Lỗi trong quá trình biên soạn:\n"+str(exception))
                 return [-3, exception]
 
     else:
-        pinfo(f"Found submit not in line with any current contests, removing {filename}.")
-        os.remove(filePath+"/workspace/queue/"+filename)
-    return -1
+        pinfo(f"Found submit not in line with any current contests, removing {fullfilename}.")
+        os.remove(filePath+"/workspace/queue/"+fullfilename)
+        return [-1, None]
 
 
 pinfo("Now testing/judging current queued submissions.")
@@ -485,7 +726,10 @@ while running:
             # There is files, actual files
             for file in dirs:
                 judge(file)
-                os.remove(filePath+"/workspace/queue/"+file)
+                try: 
+                    os.remove(filePath+"/workspace/queue/"+file)
+                except:
+                    perr(f"Cannot remove {file}, probably deleted before.")
         # Reduce drive I/O stress
         if keyboard.is_pressed("a") and keyboard.is_pressed("x") and keyboard.is_pressed("z"):
             # Keybind: A + X + Z
@@ -498,9 +742,26 @@ while running:
         break
 
 # Remove the container for running tasks
-pinfo("Stopping execution container...")
-runcontainer.stop()
-pinfo("Removing execution container...")
-runcontainer.remove()
-pinfo("Stopping compilation container...")
-compilecontainer.stop()
+
+# Get all containers, both running and not running
+containers = client.containers.list(all=True)
+# pinfo("Currently running containers: ")
+# for container in containers:
+#     print(" - " + container.name)
+
+pinfo("Now cleaning up containers...")
+
+index = 0
+for container in containers:
+    index+=1
+    pinfo(f"(*)>=== Container ({index}/{len(containers)}): " + container.name)
+    if container.status == "running":
+        pinfo("Container is running, stopping...")
+        container.stop()
+    else:
+        pwarn("Container is not already running.")
+    if container.name != "compiler":
+        pinfo("Removing container...")
+        container.remove()
+    else:
+        pwarn("Compiler container detected, reservation enabled.")
