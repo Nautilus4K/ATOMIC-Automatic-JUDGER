@@ -26,6 +26,7 @@ LOG_PATH = "/workspace/result/logs/"
 CONTEST_PATH = "/source/contests.json"
 SETTINGS_PATH = "/source/settings.json"
 VERSION_PATH = "/source/version.json"
+STATUS_PATH = "/central/status.json"
 
 # Variables
 filePath = os.path.dirname(os.path.abspath(__file__))
@@ -481,7 +482,7 @@ def runPython(logfile, filedIn: bool, filedOut: bool, inputstr: str, filedInName
         return -1, None, 0, e
 
 # Judging function. Used for checking if a submit had done okay.
-def judge(fullfilename: str):
+def judge(fullfilename: str, show_test: bool):
     try:
         pinfo("Reloading contests information...")
         with open(filePath+CONTEST_PATH, "r", encoding="utf-8") as file:
@@ -534,7 +535,9 @@ def judge(fullfilename: str):
                     if exc or excmsg:
                         # If an exception happened
                         perr(f"> Exception happened during execution. Error: {exc.args[0]}")
-                        logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chính xác:\n{strippedDestine}\n\nChương trình chạy sinh lỗi: ")
+                        if show_test: logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chính xác:\n{strippedDestine}\n\nChương trình chạy sinh lỗi: ")
+                        else:
+                            logfile.write("Chương trình chạy sinh lỗi: ")
                         if excmsg:
                             pinfo("> DEBUG: "+excmsg)
                             logfile.write(excmsg)
@@ -551,7 +554,7 @@ def judge(fullfilename: str):
                         
                         strippedOutput = output.strip()
                         strippedDestine = normalized_contests[filename]["Tests"][i][1].strip()
-                        logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chương trình:\n{strippedOutput}\n\nĐầu ra chính xác:\n{strippedDestine}\n\n")
+                        if show_test: logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chương trình:\n{strippedOutput}\n\nĐầu ra chính xác:\n{strippedDestine}\n\n")
 
                         # God bless this check. This is probably the worst way I could do this
                         if not timedOut:
@@ -593,6 +596,7 @@ def judge(fullfilename: str):
             else:
                 userdata = {}
 
+            logfile.write("\nĐiểm TỔNG: " + str(score))
             userdata[filedata[1]] = score
 
             with open(filePath+"/workspace/result/"+filedata[0]+".json", "w") as file:
@@ -638,7 +642,8 @@ def judge(fullfilename: str):
                         if exc or excmsg:
                             # If an exception happened
                             perr(f"> Exception happened during execution. Error: {exc.args[0]}")
-                            logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chính xác:\n{strippedDestine}\n\nChương trình chạy sinh lỗi: ")
+                            if show_test: logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chính xác:\n{strippedDestine}\n\nChương trình chạy sinh lỗi: ")
+                            else: logfile.write("Chương trình chạy sinh lỗi: ")
                             if excmsg:
                                 pinfo("> DEBUG: "+excmsg)
                                 logfile.write(excmsg)
@@ -655,7 +660,7 @@ def judge(fullfilename: str):
                             
                             strippedOutput = output.strip()
                             strippedDestine = normalized_contests[filename]["Tests"][i][1].strip()
-                            logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chương trình:\n{strippedOutput}\n\nĐầu ra chính xác:\n{strippedDestine}\n\n")
+                            if show_test: logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chương trình:\n{strippedOutput}\n\nĐầu ra chính xác:\n{strippedDestine}\n\n")
 
                             # God bless this check. This is probably the worst way I could do this
                             if not timedOut:
@@ -693,6 +698,7 @@ def judge(fullfilename: str):
                 else:
                     userdata = {}
 
+                logfile.write("\nĐiểm TỔNG: " + str(score))
                 userdata[filedata[1]] = score
 
                 with open(filePath+"/workspace/result/"+filedata[0]+".json", "w") as file:
@@ -711,13 +717,30 @@ def judge(fullfilename: str):
         os.remove(filePath+"/workspace/queue/"+fullfilename)
         return [-1, None]
 
+def reload_containers():
+    global runcontainer
+
+    # Remove the current container if it exists
+    if runcontainer:
+        pinfo("Removed execution container with argument: force=True.")
+        runcontainer.remove(force=True)
+    else:
+        pwarn("Execution container did not exists beforehand, did something happen?")
+
+    # Start a new container and reassign to runcontainer
+    runcontainer = run_container("atomic-python", "/tempWorking", "execution")
+
+    # Log the action
+    pinfo("Reloaded execution container. This action was called to make sure containers are fresh, temporary, and arbitrary code execution cannot last long.")
 
 pinfo("Now testing/judging current queued submissions.")
 running = True
+lastReload = time.time()
 while running:
     try:
         with open(filePath+SETTINGS_PATH, "r", encoding="utf-8") as file:
-            wait_time = json.loads(file.read())["wait_time"]
+            settings = json.loads(file.read())
+            wait_time = settings["wait_time"]
     except Exception as e:
         perr(f"Failed to read settings.json: {str(e)}")
     try:
@@ -725,21 +748,59 @@ while running:
         if len(dirs) > 0:
             # There is files, actual files
             for file in dirs:
-                judge(file)
+                statusdata = {}
+                
+                statusdata["action"] = "judging"
+                statusdata["target"] = file
+
+                # Write status into file
+                # If file exists, delete it beforehand.
+                # That's the kind of description I like for this code segment
+                if os.path.exists(filePath+STATUS_PATH):
+                    os.remove(filePath+STATUS_PATH)
+                with open(filePath+STATUS_PATH, "w") as statusfile:
+                    statusfile.write(json.dumps(statusdata))
+
+                judge(file, settings["show_test"])
                 try: 
                     os.remove(filePath+"/workspace/queue/"+file)
                 except:
                     perr(f"Cannot remove {file}, probably deleted before.")
+        else:
+            # With nothing to judge/held onto, we returns as if we're idling
+            statusdata = {}
+
+            statusdata["action"] = "idling" # Yessir, this is because of my English vocabulary isn't quite as good
+            statusdata["target"] = None
+
+            if os.path.exists(filePath+STATUS_PATH):
+                os.remove(filePath+STATUS_PATH)
+            with open(filePath+STATUS_PATH, "w") as statusfile:
+                statusfile.write(json.dumps(statusdata))
         # Reduce drive I/O stress
         if keyboard.is_pressed("a") and keyboard.is_pressed("x") and keyboard.is_pressed("z"):
             # Keybind: A + X + Z
             input("Pausing...")
         
+        # Reloading functionality.
+        # This functionality is used to make sure abitrary code execution wouldn't last long.
+        # After all, we are dealing with containers, not real OSes, kind of.
+        curtime = time.time()
+        if curtime - lastReload >= settings["reload_time"]:
+            reload_containers()
+            lastReload = curtime
+
+        # This is just to make sure the stress on system components wouldn't hit quite as hard
         time.sleep(wait_time)
     except KeyboardInterrupt:
         pwarn("Process terminated with Keyboard. Shutting down ATOM/C...")
         running = False
         break
+    # except Exception as e:
+    #     perr("Error occurred: " + str(e))
+    #     pwarn("Terminating process due to error occurence...")
+    #     running = False
+    #     break
 
 # Remove the container for running tasks
 
@@ -754,7 +815,7 @@ pinfo("Now cleaning up containers...")
 index = 0
 for container in containers:
     index+=1
-    pinfo(f"(*)>=== Container ({index}/{len(containers)}): " + container.name)
+    pinfo(f"Container ({index}/{len(containers)}): " + container.name)
     if container.status == "running":
         pinfo("Container is running, stopping...")
         container.stop()
