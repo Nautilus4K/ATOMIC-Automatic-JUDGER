@@ -763,9 +763,16 @@ while running:
 
                 judge(file, settings["show_test"])
                 try: 
-                    os.remove(filePath+"/workspace/queue/"+file)
+                    # os.remove(filePath+"/workspace/queue/"+file)
+                    # Extract the file informations.
+                    # Now it has this list: [username, submission, extension]
+                    filedata = file.replace("][", ".").replace("[", "").replace("]", "").split(".")
+                    if not os.path.exists(filePath+"/userdata/"+filedata[0]+"/"):
+                        pwarn("User did not have a pre-existing directory, creating one...")
+                        os.mkdir(filePath+"/userdata/"+filedata[0]+"/")
+                    shutil.move(filePath+"/workspace/queue/"+file, filePath+"/userdata/"+filedata[0]+"/"+filedata[1]+"."+filedata[2])
                 except:
-                    perr(f"Cannot remove {file}, probably deleted before.")
+                    perr(f"Cannot move {file} to USERDATA, did something happen?")
         else:
             # With nothing to judge/held onto, we returns as if we're idling
             statusdata = {}

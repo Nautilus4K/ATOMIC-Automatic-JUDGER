@@ -1,18 +1,16 @@
-BÀI: [nautilus][Test1].cpp
-Đã đọc được bài nộp. Đang biên soạn...
-Biên soạn thành công
+BÀI: [abc][Test1].py
 Đang kiểm tra...
 
 ------------------------------------
 test1 :: Test 0
 ------------------------------------
-Exit code 0 :: 0.0578916072845459 seconds
+Exit code 0 :: 0.06741094589233398 seconds
 Đầu ra chương trình giống đầu ra dự kiến
 
 ------------------------------------
 test1 :: Test 1
 ------------------------------------
-Exit code 0 :: 0.042618513107299805 seconds
+Exit code 0 :: 0.0615541934967041 seconds
 Đầu ra chương trình KHÁC đầu ra dự kiến
 
 Điểm TỔNG: 5.0
