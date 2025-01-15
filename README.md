@@ -1,6 +1,6 @@
 # ATOMIC-Automatic-JUDGER
 A Vietnamese automatic testing software built on Python. Supports online submission and offline tests.
-This software uses Docker for its isolated environment, WSGI callable object and Flask for its web server, and SQLite, JSON for its database.
+This software uses Docker for its isolated environment, WSGI callable object for the server interface, and SQLite, JSON for its database.
 This software is designed by Vietnamese people, for Vietnamese people. So the UI is all Vietnamese
 If you don't understand Vietnamese and want to add English. Feel free to contribute, give a pull request, I will add in (No backdoor pls).
 
@@ -16,7 +16,6 @@ If you don't understand Vietnamese and want to add English. Feel free to contrib
 
 ## Dependencies
 - Python 3 (Probably 3.11)
-- Flask
 - WSGI caller. Like gunicorn, for example.
 - Docker (Both desktop and Python package)
 

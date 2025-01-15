@@ -1,7 +1,10 @@
 import os
 import mimetypes
+import json
 
 # Variables
+ALIASES_FILENAME = "aliases.json"
+
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved"]
 def application(environ, start_response):
@@ -46,13 +49,32 @@ def application(environ, start_response):
         )
 
     else:
-        if path in reservedPaths:
-            start_response('403 Forbidden', response_headers)
-            return ['Không có quyền truy cập vào trang này. Yêu cầu truy cập trực tiếp về mặt thể chất.'.encode('utf-8')]
+        # Check for reserved paths and handle them
+        # if path in reservedPaths:
+        #     # Block access to the folder itself
+        #     if os.path.isdir(dirPath + "/www" + path):
+        #         start_response('403 Forbidden', response_headers)
+        #         return ['Không có quyền truy cập vào thư mục này.'.encode('utf-8')]
+            
+        #     # Handle specific reserved paths (like "/debug")
+        #     start_response('403 Forbidden', response_headers)
+        #     return ['Không có quyền truy cập vào trang này. Yêu cầu truy cập trực tiếp về mặt thể chất.'.encode('utf-8')]
+        for reservedPath in reservedPaths:
+            if path == reservedPath:
+                start_response('403 Forbidden', response_headers)
+                return ['Không có quyền truy cập vào trang này. Yêu cầu truy cập trực tiếp về mặt thể chất.'.encode('utf-8')]
+            elif path.startswith(reservedPath):
+                start_response('403 Forbidden', response_headers)
+                return ['Không có quyền truy cập vào dữ liệu thư mục này. Yêu cầu truy cập trực tiếp về mặt thể chất.'.encode('utf-8')]
         
-        elif os.path.exists(dirPath + "/www"+path+"/index.html"):
+        if os.path.exists(dirPath + "/www"+path+"/index.html"):
             with open(dirPath + "/www"+path+"/index.html", "r", encoding='utf-8') as targetFile:
-                response_body = targetFile.read().encode('utf-8')
+                response_body = targetFile.read()
+                with open(dirPath + "/source/" + ALIASES_FILENAME, "r", encoding="utf-8") as aliasfile:
+                    aliases = json.load(aliasfile)
+                    for aliaskey in aliases:
+                        response_body = response_body.replace(aliaskey, aliases[aliaskey])
+                response_body = response_body.encode('utf-8')
                 response_headers = [('Content-Type', 'text/html; charset=utf-8')]
 
         elif os.path.exists(dirPath + "/www"+path):

@@ -1,0 +1,85 @@
+p {
+    margin: 0 80px;
+}
+
+h2 {
+    margin: 0 50px;
+}
+
+.section1 {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    /* border-radius: 20px; */
+    overflow: hidden;
+    z-index: 0;
+    flex-direction: column;
+}
+
+.section1::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 150%;
+    height: 150%;
+    background: radial-gradient(circle, #c8e9ff66, #71cbffcc, rgba(0, 0, 0, 0));
+    filter: blur(200px);
+    z-index: -1; /* Place it behind the content */
+    animation: moveGradient 8s infinite alternate ease-in-out;
+}
+
+@keyframes moveGradient {
+    0% {
+        transform: translate(0, 0);
+    }
+    25% {
+        transform: translate(-50px, 50px);
+    }
+    50% {
+        transform: translate(50px, -50px);
+    }
+    75% {
+        transform: translate(-50px, -50px);
+    }
+    100% {
+        transform: translate(50px, 50px);
+    }
+}
+
+.section1 h1 {
+    display: block;
+    font-size: 60px;
+    padding: 0;
+    margin: 0;
+    margin: 0 50px;
+}
+
+.slogan {
+    display: block;
+    font-size: 20px;
+    margin: 0 50px;
+}
+
+.section1 h2 {
+    display: block;
+    font-size: 30px;
+    margin-top: 80px;
+}
+
+.section1 h2 a {
+    text-decoration: none;
+    color: black;
+    transition: 0.5s;
+}
+
+.section1 h2 a:hover {
+    color: rgba(0, 0, 0, 0.5);
+    text-decoration: underline;
+    text-decoration-color: rgba(0, 0, 0, 0.5);
+    text-underline-offset: 10px;
+}
