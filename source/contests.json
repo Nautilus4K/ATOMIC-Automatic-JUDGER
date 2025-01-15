@@ -1,9 +1,9 @@
 {
     "Test1": {
         "Desc": "Prints out `Test` on execution",
-        "InputType": "file",
+        "InputType": "raw",
         "InputFile": "Test1.INP",
-        "OutputType": "file",
+        "OutputType": "raw",
         "OutputFile": "Test1.OUT",
         "TimeLimit": 1,
         "TestAmount": 2,

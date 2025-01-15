@@ -3,5 +3,5 @@
     "mem_limit": 1024,
     "time_limit": 1,
     "reload_time": 60,
-    "show_test": false
+    "show_test": true
 }

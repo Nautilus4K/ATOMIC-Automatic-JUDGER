@@ -301,9 +301,10 @@ def runAndGet(logfile, filedIn: bool, filedOut: bool, inputstr: str, filedInName
         
         # Construct command with time
         if not filedIn:  # Straight input into the executing process
+            # Ensure inputstr is properly formatted and remove leading/trailing spaces
             cmd = f"""cd {work_dir} && cat << 'EOF' | ./a.out 2>&1
-        {inputstr}
-        EOF"""
+{inputstr.strip()}
+EOF"""
         else:  # Input from additional files
             with open(filePath + "/tempWorking/" + filedInName, "w") as file:
                 file.write(inputstr)
@@ -320,6 +321,7 @@ def runAndGet(logfile, filedIn: bool, filedOut: bool, inputstr: str, filedInName
         
         # Parse output
         output = exec_result.output.decode()
+        # print(output)
         lines = output.splitlines()
         error = None
         
@@ -379,7 +381,7 @@ def runAndGet(logfile, filedIn: bool, filedOut: bool, inputstr: str, filedInName
         # Clean up working directory
         runcontainer.exec_run(["sh", "-c", f"rm -rf {work_dir}"])
         excmsg = None
-        return exec_result.exit_code, program_output, execution_time, error, timed_out, excmsg
+        return exec_result.exit_code, str(output).strip(), execution_time, error, timed_out, excmsg
         
     except Exception as e:
         perr(f"Unexpected error in runAndGet: {str(e)}")
@@ -397,8 +399,8 @@ def runPython(logfile, filedIn: bool, filedOut: bool, inputstr: str, filedInName
         # Construct command with time
         if not filedIn:  # Straight input into the executing process
             cmd = f"""cd {work_dir} && cat << 'EOF' | python ./a.py 2>&1
-        {inputstr}
-        EOF"""
+{inputstr.strip()}
+EOF"""
         else:  # Input from additional files
             with open(filePath + "/tempWorking/" + filedInName, "w") as file:
                 file.write(inputstr)
@@ -415,6 +417,7 @@ def runPython(logfile, filedIn: bool, filedOut: bool, inputstr: str, filedInName
         
         # Parse output
         output = exec_result.output.decode()
+        # print(output)
         lines = output.splitlines()
         error = None
         
@@ -475,7 +478,7 @@ def runPython(logfile, filedIn: bool, filedOut: bool, inputstr: str, filedInName
         runcontainer.exec_run(["sh", "-c", f"rm -rf {work_dir}"])
         
         excmsg = None
-        return exec_result.exit_code, program_output, execution_time, error, timed_out, excmsg
+        return exec_result.exit_code,str(output).strip(), execution_time, error, timed_out, excmsg
         
     except Exception as e:
         perr(f"Unexpected error in runAndGet: {str(e)}")
