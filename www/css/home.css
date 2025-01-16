@@ -6,50 +6,46 @@ h2 {
     margin: 0 50px;
 }
 
+/* Gradient background section */
 .section1 {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: relative; /* Ensures child elements are positioned relative to this container */
+    width: 100%; /* Full width */
+    min-height: 100vh; /* Ensures the section fills at least the viewport height */
+    display: flex; /* Flexbox for centering content */
+    align-items: center; /* Vertical centering */
+    justify-content: center; /* Horizontal centering */
     text-align: center;
-    /* border-radius: 20px; */
-    overflow: hidden;
+    overflow: hidden; /* Prevents background overflow */
     z-index: 0;
     flex-direction: column;
-}
+    padding-bottom: 100px;
 
-.section1::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 150%;
-    height: 150%;
+    /* Background gradient */
     background: radial-gradient(circle, #c8e9ff66, #71cbffcc, rgba(0, 0, 0, 0));
-    filter: blur(200px);
-    z-index: -1; /* Place it behind the content */
-    animation: moveGradient 8s infinite alternate ease-in-out;
+    background-size: 150%; /* Makes the gradient larger than the container */
+    background-position: 0 0; /* Starts gradient at the top left */
+    animation: moveGradient 15s infinite alternate ease-in-out;
+    background-attachment: fixed; /* Keeps the background fixed as the content scrolls */
 }
 
 @keyframes moveGradient {
     0% {
-        transform: translate(0, 0);
+        background-position: 0 0;
     }
     25% {
-        transform: translate(-50px, 50px);
+        background-position: -150px 150px;
     }
     50% {
-        transform: translate(50px, -50px);
+        background-position: 150px -150px;
     }
     75% {
-        transform: translate(-50px, -50px);
+        background-position: -150px -150px;
     }
     100% {
-        transform: translate(50px, 50px);
+        background-position: 150px 150px;
     }
 }
+
 
 .section1 h1 {
     display: block;
@@ -57,24 +53,38 @@ h2 {
     padding: 0;
     margin: 0;
     margin: 0 50px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    margin-top: 200px;
+    /* z-index: 1; */
 }
 
 .slogan {
     display: block;
     font-size: 20px;
     margin: 0 50px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
 }
 
 .section1 h2 {
     display: block;
     font-size: 30px;
     margin-top: 80px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
 }
 
 .section1 h2 a {
     text-decoration: none;
     color: black;
     transition: 0.5s;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
 }
 
 .section1 h2 a:hover {
@@ -82,4 +92,139 @@ h2 {
     text-decoration: underline;
     text-decoration-color: rgba(0, 0, 0, 0.5);
     text-underline-offset: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+
+.section1 p {
+    width: 700px;
+    margin-top: 20px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+/* Splitting between contents */
+.mainpage {
+    display: flex;
+    justify-content: center;  /* Centers horizontally */
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 0 100px;
+}
+
+.divide1 {
+    margin: 0 20px;
+}
+
+.divide2 {
+    margin: 0 20px;
+    display: flex;
+    justify-content: center;  /* Centers horizontally */
+    align-items: center;      /* Centers vertically */
+}
+
+.divide2 img {
+    width: 600px;
+    border-radius: 20px;
+    margin: 0 10px;
+    margin-top: 100px;
+    box-shadow: 0 0 40px rgba(113, 203, 255, 0.5);  /* Using the same color as your background gradient */
+    position: relative;
+    z-index: 1;
+}
+
+/* Features section */
+.features {
+    display: inline-flex;
+    justify-content: center;
+    margin: 0 auto;
+    flex-wrap: wrap;
+    perspective: 1000px;
+}
+
+.featurecards {
+    display: flex;
+    margin-top: 40px;
+    flex-direction: column;
+    width: 260px;
+    border-radius: 20px;
+    background-color: rgba(255, 255, 255, 0.603);
+    border: 2px solid transparent;
+    padding: 10px;
+    /* margin-left: auto;
+    margin-right: auto; */
+    margin: 40px 25px;
+    text-align: center;
+    transform-style: preserve-3d;
+    transition: 0.3s ease;
+}
+
+.featurecards:hover {
+    border: 2px solid #008cff;
+    box-shadow: 0px 0px 50px #008cff55;
+    /* transform: translateY(-10px); */
+}
+
+.featurecards a {
+    text-decoration: none;
+    font-size: x-small;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.featurecards a img {
+    object-fit: cover;
+    border-radius: 20px;
+    width: 260px;
+    height: 170px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+}
+
+.featurecards a h1 {
+    font-size: 20px;
+    margin: 20px 0;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    color: black;
+}
+
+/* Frames of fame */
+.frame {
+    width: 800px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.616);
+    border-radius: 20px;
+    margin-top: 30px;
+    justify-content: left;
+    align-items: start;
+    border: 2px solid transparent;
+    transition: 0.3s ease;
+}
+
+.frame:hover {
+    border: 2px solid #0099ff;
+    box-shadow: 0px 0px 50px #008cff55;
+}
+
+.frame h1 {
+    font-size: 35px;
+    margin: 15px 0;
+    text-align: left;
+    margin-left: 27px;
+}
+
+.frame p {
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    /* margin-right: auto; */
+    margin-left: 27px;
+    margin-bottom: 20px;
 }

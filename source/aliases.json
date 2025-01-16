@@ -1,6 +1,6 @@
 {
-    "%%website_name%%": "Phần mềm chấm bài tự động",
-    "%%slogan%%": "Càng học càng thích. Học nhiều hơn, hiểu nhiều hơn.",
-    "%%hostname%%": "Nguyễn Văn A",
-    "%%softwarelink%%": "https://example.com/"
+    "website_name": "Lớp dạy chuyên tin",
+    "slogan": "Càng học càng thích. Học nhiều hơn, hiểu nhiều hơn.",
+    "hostname": "Nguyễn Văn A",
+    "softwarelink": "https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER"
 }

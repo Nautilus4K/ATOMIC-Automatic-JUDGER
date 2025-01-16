@@ -3,7 +3,7 @@ import wsgiref.simple_server
 from wsgi_interface import *
 
 # Define the host and port to serve the application
-host = "localhost"
+host = "0.0.0.0"
 port = 80
 
 # Create a WSGI server and run the application

@@ -1,0 +1,44 @@
+body {
+    display: flex; /* Make the body a flex container */
+    justify-content: center; /* Horizontally center */
+    align-items: center; /* Vertically center */
+    height: 100vh; /* Ensure body takes full viewport height */
+    margin: 0; /* Remove default body margins */
+}
+
+a {
+    text-decoration: none;
+}
+
+.area {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    background-color: rgb(152, 205, 255);
+    box-shadow: 0px 0px 100px #0084ff9a;
+    color: rgb(0, 0, 0);
+    transition: .3s cubic-bezier(0.075, 0.82, 0.165, 1);
+    text-decoration: none;
+}
+
+.area:hover {
+    width: 600px;
+    height: 600px;
+}
+
+.area h1 {
+    font-size: 90px;
+    margin: 0;
+    text-decoration: none;
+}
+
+.aera p {
+    font-style: italic;
+    font-size: 30px;
+    width: 400px;
+    text-decoration: none;
+}
