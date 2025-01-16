@@ -5,6 +5,7 @@
         <link rel="stylesheet" href="/css/general.css">
         <link rel="stylesheet" href="/css/home.css">
         <link rel="icon" href="/assets/favicon.png" type="image/png">
+        <script src="/js/general.js" defer></script>
         <script src="/js/home_anim.js" defer></script>
         <title>Trang chủ - Phần mềm chấm bài tin học tự động</title>
     </head>
@@ -12,9 +13,12 @@
         <!-- NAVIGATION BAR -->
         <ul>
             <a href="/"><img src="/assets/favicon.png" alt="Logo" width="50" height="50"></a>
-            <li class="navbar_sel"><a href="#">TRANG CHỦ</a></li>
+            <li class="navbar_sel"><a href="/">TRANG CHỦ</a></li>
             <li><a href="/courses">BÀI TẬP</a></li>
             <li><a href="/credits">GHI CÔNG</a></li>
+            <li><a href="/scoreboard">XẾP HẠNG</a></li>
+            <li><a href="/forum">DIỄN ĐÀN</a></li>
+            <li class="navbar_darklight"><button onclick="switchMode()"><img src="/assets/light.png" alt="darklight_button" id="darklight_img"></button></li>
             <li class="navbar_user"><a href="#user">Bạn</a></li>
         </ul>
         <div class="section1">
@@ -46,7 +50,7 @@
 
             <!-- <br><br><br> -->
             <h2>Phần mềm chấm bài này được hỗ trợ bởi <strong><a href="%%softwarelink%%" target="_blank">ATOM://C</a></strong></h2>
-            <p><strong>ATOM://C</strong> là phần mềm chấm bài tự động có tốc độ cao, hỗ trợ sẵn hệ thống trang web và backend, với mức độ bảo mật cao, chống chọi khỏi Virus.</p>
+            <p><strong>ATOM://C</strong> là phần mềm chấm bài tự động làm bởi người Việt - dành cho người Việt có tốc độ cao, hỗ trợ sẵn hệ thống trang web và backend, với mức độ bảo mật cao, chống chọi khỏi Virus.</p>
 
             <div class="frame">
                 <h1>Bảo mật</h1>
@@ -69,10 +73,11 @@
                 <p>Đôi lúc, việc phân chia lớp có thể trở nên khá phức tạp cho các học sinh, ngoài ra một số lớp có thể trùng học sinh, từ đó gây ra sự lặp đi lặp lại trong việc thiết lập các học sinh. Vì thế, <strong>ATOM://C</strong> hỗ trợ sẵn việc phân chia lớp, người dùng, thông tin cá nhân, bài đăng, ...</p>
             </div>
         </div>
-
+    </body>
+    <footer>
         <div class="leg">
             <p>Powered by <strong>ATOM://C</strong> automatic tester</p>
             <p>More information can be found in GitHub</p>
         </div>
-    </body>
+    </footer>
 </html>

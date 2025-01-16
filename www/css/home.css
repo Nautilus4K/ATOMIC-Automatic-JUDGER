@@ -21,10 +21,10 @@ h2 {
     padding-bottom: 100px;
 
     /* Background gradient */
-    background: radial-gradient(circle, #c8e9ff66, #71cbffcc, rgba(0, 0, 0, 0));
+    background: radial-gradient(circle, var(--secondary_bg), var(--primary_bg), rgba(0, 0, 0, 0));
     background-size: 150%; /* Makes the gradient larger than the container */
     background-position: 0 0; /* Starts gradient at the top left */
-    animation: moveGradient 15s infinite alternate ease-in-out;
+    animation: moveGradient 45s infinite alternate ease-in-out;
     background-attachment: fixed; /* Keeps the background fixed as the content scrolls */
 }
 
@@ -80,17 +80,17 @@ h2 {
 
 .section1 h2 a {
     text-decoration: none;
-    color: black;
-    transition: 0.5s;
+    color: var(--page_fg);
     margin-left: auto;
     margin-right: auto;
     text-align: center;
+    transition: 0.2s;
 }
 
 .section1 h2 a:hover {
-    color: rgba(0, 0, 0, 0.5);
+    color: var(--primary);
     text-decoration: underline;
-    text-decoration-color: rgba(0, 0, 0, 0.5);
+    text-decoration-color: var(--primary);
     text-underline-offset: 10px;
     margin-left: auto;
     margin-right: auto;
@@ -131,7 +131,7 @@ h2 {
     border-radius: 20px;
     margin: 0 10px;
     margin-top: 100px;
-    box-shadow: 0 0 40px rgba(113, 203, 255, 0.5);  /* Using the same color as your background gradient */
+    box-shadow: 0 0 40px var(--secondary_shadow);  /* Using the same color as your background gradient */
     position: relative;
     z-index: 1;
 }
@@ -151,7 +151,7 @@ h2 {
     flex-direction: column;
     width: 260px;
     border-radius: 20px;
-    background-color: rgba(255, 255, 255, 0.603);
+    background-color: var(--overlay_bg);
     border: 2px solid transparent;
     padding: 10px;
     /* margin-left: auto;
@@ -160,11 +160,12 @@ h2 {
     text-align: center;
     transform-style: preserve-3d;
     transition: 0.3s ease;
+    color: var(--overlay_fg)
 }
 
 .featurecards:hover {
-    border: 2px solid #008cff;
-    box-shadow: 0px 0px 50px #008cff55;
+    border: 2px solid var(--secondary);
+    box-shadow: 0px 0px 50px var(--secondary_shadow);
     /* transform: translateY(-10px); */
 }
 
@@ -174,6 +175,7 @@ h2 {
     margin-left: auto;
     margin-right: auto;
     text-align: center;
+    color: var(--overlay_fg)
 }
 
 .featurecards a img {
@@ -184,6 +186,7 @@ h2 {
     margin-left: auto;
     margin-right: auto;
     text-align: center;
+    color: var(--overlay_fg)
 }
 
 .featurecards a h1 {
@@ -192,14 +195,14 @@ h2 {
     margin-left: auto;
     margin-right: auto;
     text-align: center;
-    color: black;
+    color: var(--overlay_fg)
 }
 
 /* Frames of fame */
 .frame {
     width: 800px;
     padding: 20px;
-    background: rgba(255, 255, 255, 0.616);
+    background: var(--overlay_bg);
     border-radius: 20px;
     margin-top: 30px;
     justify-content: left;
@@ -209,8 +212,8 @@ h2 {
 }
 
 .frame:hover {
-    border: 2px solid #0099ff;
-    box-shadow: 0px 0px 50px #008cff55;
+    border: 2px solid var(--secondary);
+    box-shadow: 0px 0px 50px var(--secondary_shadow);
 }
 
 .frame h1 {

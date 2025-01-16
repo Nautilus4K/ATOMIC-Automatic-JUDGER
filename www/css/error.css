@@ -1,13 +1,17 @@
 body {
-    display: flex; /* Make the body a flex container */
-    justify-content: center; /* Horizontally center */
-    align-items: center; /* Vertically center */
-    height: 100vh; /* Ensure body takes full viewport height */
     margin: 0; /* Remove default body margins */
 }
 
 a {
-    text-decoration: none;
+    text-decoration: underline;
+    color: var(--page_fg)
+    /* display: block; */
+    /* height: 100%; */
+}
+
+p {
+    text-align: center;
+    font-style: italic;
 }
 
 .area {
@@ -15,21 +19,15 @@ a {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    width: 500px;
-    height: 500px;
+    /* padding: 200px; */
+    height: 100%;
     border-radius: 50%;
-    background-color: rgb(152, 205, 255);
-    box-shadow: 0px 0px 100px #0084ff9a;
-    color: rgb(0, 0, 0);
+    color: var(--page_fg);
     transition: .3s cubic-bezier(0.075, 0.82, 0.165, 1);
     text-decoration: none;
-}
 
-.area:hover {
-    width: 600px;
-    height: 600px;
+    flex: 1;
 }
-
 .area h1 {
     font-size: 90px;
     margin: 0;

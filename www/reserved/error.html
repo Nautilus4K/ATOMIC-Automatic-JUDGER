@@ -5,6 +5,7 @@
         <link rel="stylesheet" href="/css/general.css">
         <link rel="stylesheet" href="/css/error.css">
         <link rel="icon" href="/assets/favicon.png" type="image/png">
+        <script src="/js/general.js" defer></script>
         <title>%%error_code%% - Phần mềm chấm bài tin học tự động</title>
     </head>
     <body>
@@ -13,13 +14,22 @@
             <li><a href="/">TRANG CHỦ</a></li>
             <li><a href="/courses">BÀI TẬP</a></li>
             <li><a href="/credits">GHI CÔNG</a></li>
+            <li><a href="/scoreboard">XẾP HẠNG</a></li>
+            <li><a href="/forum">DIỄN ĐÀN</a></li>
+            <li class="navbar_darklight"><button onclick="switchMode()"><img src="/assets/light.png" alt="darklight_button" id="darklight_img"></button></li>
             <li class="navbar_user"><a href="#user">Bạn</a></li>
         </ul>
-        <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Status" target="_blank">
-            <div class="area">
-                <h1>%%error_code%%</h1>
-                <p>%%error_description%%</p>
-            </div>
-        </a>
+        <div class="area">
+            <h1>%%error_code%%</h1>
+            <p>%%error_description%%</p>
+        </div>
+
+        <p>Mã lỗi này có ý nghĩa gì? <a href="https://developer-mozilla-org.translate.goog/en-US/docs/Web/HTTP/Status?_x_tr_sl=en&_x_tr_tl=vi&_x_tr_hl=vi&_x_tr_pto=wapp" target="_blank">Tìm hiểu thêm</a></p>
     </body>
+    <footer>
+        <div class="leg">
+            <p>Powered by <strong>ATOM://C</strong> automatic tester</p>
+            <p>More information can be found in GitHub</p>
+        </div>
+    </footer>
 </html>
