@@ -34,9 +34,9 @@ p {
     text-decoration: none;
 }
 
-.aera p {
-    font-style: italic;
-    font-size: 30px;
+.area p {
+    font-style: normal;
+    font-size: 18px;
     width: 400px;
     text-decoration: none;
 }

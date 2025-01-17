@@ -159,8 +159,9 @@ h2 {
     margin: 40px 25px;
     text-align: center;
     transform-style: preserve-3d;
+    color: var(--overlay_fg);
+    box-shadow: 0px 0px 30px var(--shadow);
     transition: 0.3s ease;
-    color: var(--overlay_fg)
 }
 
 .featurecards:hover {
@@ -208,6 +209,7 @@ h2 {
     justify-content: left;
     align-items: start;
     border: 2px solid transparent;
+    box-shadow: 0px 0px 30px var(--shadow);
     transition: 0.3s ease;
 }
 

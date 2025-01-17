@@ -3,7 +3,7 @@
     --page_fg: #000000;
     --navbar_bg: #ffffff77;
     --navbar_fg: #000000;
-    --navbar_fg_hover: #c1e3ff33;
+    --navbar_fg_hover: #ffffff4d;
     --navbar_fg_hover_underline: rgba(0, 0, 0, 0.219);
     --primary: rgb(0, 110, 255);
     --primary_text: #ffffff;
@@ -13,6 +13,7 @@
     --dark_section_fg: #ffffff;
     --secondary_bg: #c8e9ff66;
     --primary_bg: #71cbffcc;
+    --shadow: #00223866;
 
     --overlay_bg: rgba(255, 255, 255, 0.603);
     --overlay_fg: #000000;
@@ -32,9 +33,10 @@
     --dark_section: rgb(0, 17, 39);
     --dark_section_fg: #ffffff;
     --secondary_bg: #00121f66;
-    --primary_bg: #003350cc;
+    --primary_bg: #004369cc;
+    --shadow: #00111dad;
 
-    --overlay_bg: #00365f77;
+    --overlay_bg: #000b1377;
     --overlay_fg: #ffffff;
 }
 
@@ -47,7 +49,10 @@ html, body {
     margin: 0;
     padding: 0;
     background: var(--page_bg);
-    color: var(--page_fg)
+    color: var(--page_fg);
+    height: 100%;
+    width: 100%;
+    transition: .3s ease;
 }
 
 footer {
@@ -70,6 +75,7 @@ ul {
     backdrop-filter: blur(30px);
     -webkit-backdrop-filter: blur(30px); /* For Safari support */
     z-index: 1000;
+    transition: .3s ease;
 }
 
 ul a img {
@@ -207,4 +213,7 @@ ul li a:hover {
 .leg p {
     padding: 0;
     margin: 0;
+    text-align: center;
+    font-weight: normal;
+    font-style: normal;
 }
