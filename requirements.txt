@@ -1,3 +1,2 @@
 docker
 keyboard
-prettytable

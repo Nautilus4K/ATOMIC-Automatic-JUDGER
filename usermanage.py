@@ -1,80 +1,128 @@
-import sqlite3
 import os
-import time
+import json
 from hashlib import sha256
 
-try:
-    from prettytable import PrettyTable
-except ImportError:
-    os.system("pip install prettytable")
-    from prettytable import PrettyTable
+def printctr(content: str):
+    """
+    Like Python's `print()` function, but print in the center of screen
+    """
+    termsize = os.get_terminal_size()
+    content_length = len(content)
+    content_startpos = int((termsize[0] - content_length)/2)
+    for i in range(content_startpos):
+        print(" ", end='')
 
-filePath = os.path.dirname(os.path.abspath(__file__))
-db_name = "data.db"
-try:
-    db = sqlite3.connect(filePath+"/"+db_name)
-except Exception as e:
-    print("Oh hell nah. Error occured")
-    print(str(e))
-    exit()
+    print(content)
 
-cursor = db.cursor()
+dirPath = os.path.dirname(os.path.abspath(__file__))
+CLASSFILE_PATH = "/source/classes.json"
+USERFILE_PATH = "/source/users.json"
 
-# Create a table for users. This will be an SQLite database designed for storing userdata (EXCLUDING ADMINISTRATOR ACCOUNTS).
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users (
-        username TEXT NOT NULL UNIQUE,
-        password TEXT NOT NULL,
-        name TEXT,
-        date_created INTEGER,
-        desc TEXT,
-        class TEXT NOT NULL
-    )
-''')
+with open(dirPath+CLASSFILE_PATH, "r", encoding='utf-8') as classFile:
+    classdata = json.load(classFile)
 
-# Retrieve and display data using PrettyTable
-cursor.execute('SELECT * FROM users')
-rows = cursor.fetchall()
+printctr(">>>> CLASSES <<<<")
 
-# Print the data in a pretty table
-table = PrettyTable()
-table.field_names = ["Username", "Password", "Name", "Date created", "Description", "Class"]
+for cla in classdata:
+    print("Codename:", cla)
+    print("- Shortname (Useless)", classdata[cla]["shortname"])
+    print("- Fullname:", classdata[cla]["longname"])
 
-###########################################
-#   +--------------------------------+    #
-#   | Add rows to the PrettyTable to |    #
-#   |     display out with STYLE     |    #
-#   +--------------------------------+    #
-###########################################
+print("\n")
+nclass = str(input("Enter new class (BLANK IF IGNORE): "))
+if nclass != "":
+    print("Class detected. Proceeding...")
+    if len(nclass) > 6: print("[WARNING]: Class codename too long.")
+    if nclass in classdata:
+        print("Class already exists. Aborting...")
+    else:
+        print("Class doesn't exist. Proceeding...")
+        shortname = str(input("Enter a short name (BLANK IF SAME AS CODENAME): "))
+        if shortname == "":
+            print("Did not enter one. Defaulting to codename...")
+            shortname = nclass
+        
+        longname = str(input("Enter a long name (BLANK IF SAME AS CODENAME): "))
+        if longname == "":
+            print("Did not enter one. Defaulting to codename...")
+            longname = nclass
+        
+    print(f"\nCodename: {nclass}\nShort name: {shortname}\nLong name: {longname}")
+    classdata[nclass] = {
+        "shortname": shortname,
+        "longname": longname
+    }
 
-maxcharlimit = 20 # Limit to make sure the text don't go too long.
-                  # Applied so that hash strings and description
-                  # strings don't go overboard
-for row in rows:
-    # Assuming row is a tuple
-    row = tuple(str(item[:maxcharlimit-3]) + "..." if len(str(item)) > maxcharlimit else item for item in row)
-    table.add_row(row)
+with open(dirPath+CLASSFILE_PATH, "w", encoding='utf-8') as classFile:
+    json.dump(classdata, classFile)
 
-# Display the table
-print(table)
+print("\n\n")
 
-nusername=str(input("Enter new username (BLANK IF IGNORE): "))
-if (nusername != ""):
-    npasswd = sha256(str(input("Enter password: ")).encode("utf-8")).hexdigest() # Hash the password so that its extra private
-    nname = str(input("Enter new name (BLANK IF NULL): "))
-    if nname == "": nname = None
+with open(dirPath+USERFILE_PATH, "r", encoding='utf-8') as userFile:
+    userdata = json.load(userFile)
+
+# Print out the information of EACH user
+printctr(">>>> PRIVILLEGE SYSTEM <<<<")
+print("+-----------------------------------------------+")
+print("|[2] Administrator (Hardcoded) - Full Read/Write|")
+print("|[1] Teacher                   - Full Read      |")
+print("|[0] Student                   - Limited Read   |")
+print("+-----------------------------------------------+")
+print("\n\n")
+
+printctr(">>>> USERS <<<<")
+for user in userdata:
+    print(user)
+    print("- Password (Hashed):", userdata[user]["password"])
+    print("- Full name:", userdata[user]["fullname"])
+    print("- Class:", userdata[user]["class"])
+    print("- Description:\n----------------------------------\n" + str(userdata[user]["desc"]))
+    print("----------------------------------")
+    print("- Custom profile picture?", userdata[user]["picture"])
+
+    # This is how privillege level will work:
+    # ----------------------------------------------------
+    # 2 - Administrator (Only in hardcoded accounts) - FULL READ/WRITE
+    # 1 - Teacher - NO WRITE, FULL READ
+    # 0 - Standard students - NO WRITE, LIMITED READ
+    # ----------------------------------------------------
+    print("- Privillege level:", userdata[user]["priv"])
+    print("\n")
+
+username = str(input("Enter username (BLANK IF IGNORE): "))
+if username != "":
+    print("Username detected. Proceeding...")
+    password = str(sha256(str(input("Enter password (ASCII): ")).encode('ascii')).hexdigest())
+    print("Hashed Password:", password)
+    fullname = str(input("Full name: "))
+    print("Classes")
+    with open(dirPath+CLASSFILE_PATH, "r", encoding='utf-8') as classFile:
+        classdata = json.load(classFile)
+
+        classes = []
+        index = 0
+        for ncsl in classdata:
+            print(index, "-", ncsl)
+            classes.append(ncsl)
+            index+=1
+    classindex = int(input("Enter class index: "))
+    if classindex < index and classindex >= 0:
+        print("Selected class: " + classes[classindex])
+    else:
+        print("Error: OUT OF BOUNDS")
+        exit()
     
-    ndesc = str(input("Enter description (BLANK IF NULL): "))
-    if ndesc == "": ndesc = None
+    desc = str(input("Description: "))
+    priv = int(input("Privillege level: "))
 
-    nclass = str(input("Enter class: "))
+    userdata[username] = {
+        "password": password,
+        "fullname": fullname,
+        "class": classes[classindex],
+        "desc": desc,
+        "picture": False,
+        "priv": priv
+    }
 
-    data = (nusername, npasswd, nname, int(time.time()), ndesc, nclass)
-
-    # Insert data into the table
-    cursor.execute('''
-        INSERT OR IGNORE INTO users (username, password, name, date_created, desc, class)
-        VALUES (?, ?, ?, ?, ?, ?)
-    ''', data)
-
-    db.commit()
+with open(dirPath+USERFILE_PATH, "w", encoding='utf-8') as userFile:
+    json.dump(userdata, userFile)
