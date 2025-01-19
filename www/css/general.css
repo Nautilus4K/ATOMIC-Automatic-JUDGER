@@ -3,7 +3,7 @@
     --page_fg: #000000;
     --navbar_bg: #ffffff77;
     --navbar_fg: #000000;
-    --navbar_fg_hover: #ffffff4d;
+    --navbar_fg_hover: #00000009;
     --navbar_fg_hover_underline: rgba(0, 0, 0, 0.219);
     --primary: rgb(0, 110, 255);
     --primary_text: #ffffff;
@@ -13,6 +13,8 @@
     --dark_section_fg: #ffffff;
     --secondary_bg: #c8e9ff66;
     --primary_bg: #71cbffcc;
+    --input_bg: #ffffffa2;
+    --input_fg: #000;
     --shadow: #00223866;
 
     --overlay_bg: rgba(255, 255, 255, 0.603);
@@ -34,6 +36,8 @@
     --dark_section_fg: #ffffff;
     --secondary_bg: #00121f66;
     --primary_bg: #004369cc;
+    --input_bg: #000000a2;
+    --input_fg: #fff;
     --shadow: #00111dad;
 
     --overlay_bg: #000b1377;

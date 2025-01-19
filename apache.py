@@ -1,16 +1,4 @@
-import wsgiref.simple_server
+from waitress import serve
+from wsgi_interface import application
 
-from wsgi_interface import *
-
-# Define the host and port to serve the application
-host = "0.0.0.0"
-port = 80
-
-# Create a WSGI server and run the application
-with wsgiref.simple_server.make_server(host, port, application) as server:
-    print(f"Serving on http://{host}:{port} ...")
-    try:
-        # Serve until a keyboard interruption occurs
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\nServer stopped.")
+serve(application, host='0.0.0.0', port=80)

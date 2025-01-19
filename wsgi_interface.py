@@ -1,15 +1,118 @@
 import os
 import mimetypes
 import json
+import random
+import time
+import string
+from hashlib import sha256
 
 # Variables
 ALIASES_FILENAME = "aliases.json"
 WEBSITERULE_FILENAME = "websites.json"
 ERROR_WEBFILE = "/www/reserved/error.html"
 USERPROFILE_WEBFILE = "/www/reserved/userprofile.html"
+VERSION_JSON = "/source/version.json"
+USERDATA_JSON = "/source/users.json"
+LASTACCESS_JSON = "/central/lastaccess.json"
+SESSION_JSON = "/central/sessions.json"
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved"]
+
+def save_session(username: str):
+    with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionFile:
+        currentSessions = json.load(sessionFile)
+
+    randomizedKey = ''.join(random.choice(string.ascii_letters+string.digits) for _ in range(10))
+    while randomizedKey in currentSessions:
+        randomizedKey = ''.join(random.choice(string.ascii_letters+string.digits) for _ in range(10))
+
+    sessionFile[randomizedKey] = {
+        "username": username,
+        "created_time": int(time.time())
+    }
+
+    with open(dirPath+SESSION_JSON, "w", encoding='utf-8') as sessionFile:
+        json.dump(sessionFile, sessionFile)
+
+def api_interface(path, headers, ip_addr):
+    # print("API called from ANONYMOUS DEVICE")
+
+    json_response = {}
+    message = ""
+
+    if path == "/api/login" and "USERNAME" in headers and "PASSWD" in headers:
+        with open(dirPath+LASTACCESS_JSON, "r", encoding='utf-8') as lastAccessFile:
+            lastaccesses = json.load(lastAccessFile)
+        if "login" in lastaccesses:
+            # Login key exists
+            if ip_addr in lastaccesses["login"]:
+                # If we tried logging in by sending API key with this IP address
+                timePassed = int(time.time()) - lastaccesses["login"][ip_addr]["time"]
+                # print(timePassed)
+                if timePassed < 60:
+                    # If this guys spams
+                    if lastaccesses["login"][ip_addr]["amount"] > 5:
+                        # print("Exceeds")
+                        # Exceeds the recommended amount of API calls
+                        json_response = {
+                            "success": False,
+                            "message": "Vui lòng đợi và thử lại sau."
+                        }
+                        return json_response
+                else:
+                    del lastaccesses["login"][ip_addr]
+
+        else: lastaccesses["login"] = {}
+
+        with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
+            userdata = json.load(userdataFile)
+
+        if headers["USERNAME"] in userdata:
+            user = userdata[headers["USERNAME"]]
+
+            hashedpasswd = user["password"]
+            hashedrecievedpasswd = sha256(headers["PASSWD"].encode('ascii')).hexdigest()
+
+            # same = (hashedpasswd.strip() == hashedrecievedpasswd.strip())
+            if hashedpasswd.strip() == hashedrecievedpasswd.strip():
+                same = True
+                message = "OK"
+            else:
+                same = False
+                message = "Tên đăng nhập hoặc mật khẩu không đúng."
+                if ip_addr in lastaccesses["login"]:
+                    lastaccesses["login"][ip_addr]["amount"] += 1
+                    lastaccesses["login"][ip_addr]["time"] = int(time.time())
+                else:
+                    lastaccesses["login"][ip_addr] = {
+                        "time": int(time.time()),
+                        "amount": 1
+                    }
+
+        else: 
+            same = False
+            message = "Tên đăng nhập hoặc mật khẩu không đúng."
+            same = False
+            message = "Tên đăng nhập hoặc mật khẩu không đúng."
+            if ip_addr in lastaccesses["login"]:
+                lastaccesses["login"][ip_addr]["amount"] += 1
+            else:
+                lastaccesses["login"][ip_addr] = {
+                    "time": int(time.time()),
+                    "amount": 1
+                }
+            
+        json_response = {
+            "success": same,
+            "message": message
+        }
+
+        with open(dirPath+LASTACCESS_JSON, "w", encoding='utf-8') as lastAccessFile:
+            json.dump(lastaccesses, lastAccessFile)
+
+    return json_response
+
 def application(environ, start_response):
     # Get the HTTP method (GET or POST)
     method = environ.get('REQUEST_METHOD', 'GET')
@@ -47,6 +150,15 @@ def application(environ, start_response):
         if path == "/debug":
             # Create the response body
             response_body = (f"Method: {method}\n"+f"Path: {path}\n"+f"IP Address: {ip_address}\n"+f"Headers: {headers}\n"+f"Body: {request_body}\n").encode('utf-8')
+        elif path.startswith("/api/"):
+            # If trying to contact API
+            with open(dirPath+VERSION_JSON, "r", encoding='utf-8') as versionFile:
+                api_version = json.load(versionFile)["api"]
+            
+            json_base_response = {"api_version": api_version}
+            json_process_response = api_interface(path, headers, ip_address)
+            json_base_response.update(json_process_response)
+            response_body = json.dumps(json_base_response).encode('utf-8')
         else:
             # Check for reserved paths and handle them
             # if path in reservedPaths:
@@ -205,7 +317,7 @@ def application(environ, start_response):
             elif path.startswith("/user/"):
                 # Good, now the user is trying to look at a user
                 username = path[6:]
-                print(username)
+                # print(username)
 
                 # Now we got the username, we gather the informations specifically about THIS user
                 from usermanage import USERFILE_PATH, CLASSFILE_PATH

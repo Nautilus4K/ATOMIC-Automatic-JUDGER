@@ -25,7 +25,7 @@ h2 {
     background-size: 150%; /* Makes the gradient larger than the container */
     background-position: 0 0; /* Starts gradient at the top left */
     animation: moveGradient 45s infinite alternate ease-in-out;
-    background-attachment: fixed; /* Keeps the background fixed as the content scrolls */
+     /* Keeps the background fixed as the content scrolls */
 }
 
 @keyframes moveGradient {

@@ -1,4 +1,7 @@
 .userarea {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
     margin: 200px 0;
 }
 

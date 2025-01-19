@@ -1,0 +1,91 @@
+body {
+    background: radial-gradient(circle, var(--secondary_bg), var(--primary_bg), rgba(0, 0, 0, 0));
+    background-size: 400%;
+    animation: moveGradient 45s infinite alternate ease-in-out;
+}
+
+@keyframes moveGradient {
+    0% {
+        background-position: 0 0;
+    }
+    20% {
+        background-position: 300px 0;
+    }
+    40% {
+        background-position: 300px -300px;
+    }
+    60% {
+        background-position: 0 300px;
+    }
+    80% {
+        background-position: -300px 300px;
+    }
+    100% {
+        background-position: -300px 0;
+    }
+}
+
+.loginbody {
+    display: flex;
+    height: 100vh;
+}
+
+.loginarea {
+    display: flex;
+    height: 370px;
+    flex-direction: column;
+    margin-top: 200px;
+    margin-bottom: 300px;
+    margin-left: auto;
+    margin-right: auto;
+    width: 450px;
+    text-align: center;
+    justify-items: center;
+    padding: 20px;
+    border-radius: 14px;
+    background-color: var(--overlay_bg);
+    box-shadow: 0px 0px 40px var(--shadow);
+    transition: .3s ease;
+}
+
+.loginarea input {
+    border: 1px solid transparent;
+    background-color: var(--input_bg);
+    color: var(--input_fg);
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px;
+    transition: .3s ease;
+}
+
+.loginarea input:hover {
+    border: 1px solid var(--primary);
+    box-shadow: 0px 0px 50px var(--secondary_shadow);
+}
+
+.loginarea input:active {
+    box-shadow: 0px 0px 50px var(--page_fg);
+}
+
+.loginarea button {
+    border: 0;
+    background-color: var(--input_bg);
+    color: var(--input_fg);
+    width: 140px;
+    padding: 20px;
+    border-radius: 14px;
+    margin-top: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    transition: .3s cubic-bezier(0.075, 0.82, 0.165, 1);
+}
+
+.loginarea button:hover {
+    padding-left: 30px;
+    padding-right: 30px;
+    width: 200px;
+    background-color: var(--primary);
+    color: var(--primary_text);
+    cursor: pointer;
+    box-shadow: 0px 0px 50px var(--secondary_shadow);
+}
