@@ -6,6 +6,7 @@ import json
 ALIASES_FILENAME = "aliases.json"
 WEBSITERULE_FILENAME = "websites.json"
 ERROR_WEBFILE = "/www/reserved/error.html"
+USERPROFILE_WEBFILE = "/www/reserved/userprofile.html"
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved"]
@@ -198,6 +199,85 @@ def application(environ, start_response):
                     with open(dirPath + "/www"+path, "rb") as targetFile:
                         response_body = targetFile.read()
                     response_headers = [('Content-Type', f'{mimetype or "application/octet-stream"}')]
+
+            # Now, userprofile paths
+            # This will be called on when the user IS trying to look at a profile
+            elif path.startswith("/user/"):
+                # Good, now the user is trying to look at a user
+                username = path[6:]
+                print(username)
+
+                # Now we got the username, we gather the informations specifically about THIS user
+                from usermanage import USERFILE_PATH, CLASSFILE_PATH
+                try:
+                    with open(dirPath+USERFILE_PATH, "r", encoding='utf-8') as userFile:
+                        user = json.load(userFile)[username]
+                    with open(dirPath+CLASSFILE_PATH, "r", encoding='utf-8') as classFile:
+                        dcls = json.load(classFile)[user["class"]]
+                    with open(dirPath+USERPROFILE_WEBFILE, "r", encoding='utf-8') as profileWebContentFile:
+                        response_body = profileWebContentFile.read()
+                    with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
+                        websiteRules = json.load(websiteRuleFile)
+                        if websiteRules["home"]:
+                            response_body = response_body.replace("%%home_display%%", "inline-block")
+                        else:
+                            response_body = response_body.replace("%%home_display%%", "none")
+                        if websiteRules["courses"]:
+                            response_body = response_body.replace("%%courses_display%%", "inline-block")
+                        else:
+                            response_body = response_body.replace("%%courses_display%%", "none")
+                        if websiteRules["credits"]:
+                            response_body = response_body.replace("%%credits_display%%", "inline-block")  
+                        else:
+                            response_body = response_body.replace("%%credits_display%%", "none")
+                        if websiteRules["scoreboard"]:
+                            response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
+                        else:
+                            response_body = response_body.replace("%%scoreboard_display%%", "none")
+                        if websiteRules["forum"]:
+                            response_body = response_body.replace("%%forum_display%%", "inline-block")
+                        else:
+                            response_body = response_body.replace("%%forum_display%%", "none")
+                    response_body = response_body.replace("%%name%%", user["fullname"]).replace("%%codename%%", username).replace("%%class%%", user["class"]).replace("%%desc%%", user["desc"]).replace("%%fullclass%%", dcls["longname"])
+                    response_body = response_body.encode('utf-8')
+                    response_headers = [('Content-Type', 'text/html; charset=utf-8')]
+                    # start_response('200 OK', response_headers)
+
+                except Exception as e:
+                    print(e)
+                    print(str(e))
+                    if headers["USER_AGENT"].startswith("curl"):
+                        start_response('500 Internal Server Error', response_headers)
+                        return ['Đã có lỗi xảy ra trong hệ thống máy chủ, vui lòng báo lại với quản trị viên của trang Web.'.encode('utf-8')]
+                    else:
+                        response_headers = [('Content-Type', 'text/html; charset=utf-8')]
+                        start_response('500 Internal Server Error', response_headers)
+                        with open(dirPath + ERROR_WEBFILE, "r", encoding='utf-8') as errorNotify:
+                            response_body = errorNotify.read()
+                            with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
+                                websiteRules = json.load(websiteRuleFile)
+                                if websiteRules["home"]:
+                                    response_body = response_body.replace("%%home_display%%", "inline-block")
+                                else:
+                                    response_body = response_body.replace("%%home_display%%", "none")
+                                if websiteRules["courses"]:
+                                    response_body = response_body.replace("%%courses_display%%", "inline-block")
+                                else:
+                                    response_body = response_body.replace("%%courses_display%%", "none")
+                                if websiteRules["credits"]:
+                                    response_body = response_body.replace("%%credits_display%%", "inline-block")  
+                                else:
+                                    response_body = response_body.replace("%%credits_display%%", "none")
+                                if websiteRules["scoreboard"]:
+                                    response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
+                                else:
+                                    response_body = response_body.replace("%%scoreboard_display%%", "none")
+                                if websiteRules["forum"]:
+                                    response_body = response_body.replace("%%forum_display%%", "inline-block")
+                                else:
+                                    response_body = response_body.replace("%%forum_display%%", "none")
+                            response_body = response_body.replace("%%error_code%%", "500").replace("%%error_description%%", "Đã có lỗi xảy ra trong hệ thống máy chủ, vui lòng báo lại với quản trị viên của trang Web.")
+                            return [response_body.encode('utf-8')]
                     
             else:
                 if headers["USER_AGENT"].startswith("curl"):
