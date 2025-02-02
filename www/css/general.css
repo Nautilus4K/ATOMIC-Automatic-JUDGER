@@ -15,6 +15,7 @@
     --primary_bg: #71cbffcc;
     --input_bg: #ffffffa2;
     --input_fg: #000;
+    --fail: #f00;
     --shadow: #00223866;
 
     --overlay_bg: rgba(255, 255, 255, 0.603);
@@ -38,6 +39,7 @@
     --primary_bg: #004369cc;
     --input_bg: #000000a2;
     --input_fg: #fff;
+    --fail: #f00;
     --shadow: #00111dad;
 
     --overlay_bg: #000b1377;

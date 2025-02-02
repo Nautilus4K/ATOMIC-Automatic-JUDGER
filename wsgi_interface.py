@@ -19,21 +19,64 @@ SESSION_JSON = "/central/sessions.json"
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved"]
 
-def save_session(username: str):
+def save_session(username: str) -> str:
+    """
+    Function to save a new session
+    Returns:
+        randomizedKey: new session token:
+        ```python
+        (str)
+        ```
+    """
     with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionFile:
         currentSessions = json.load(sessionFile)
 
-    randomizedKey = ''.join(random.choice(string.ascii_letters+string.digits) for _ in range(10))
+    randomizedKey = ''.join(random.choice(string.ascii_letters+string.digits) for _ in range(50))
     while randomizedKey in currentSessions:
-        randomizedKey = ''.join(random.choice(string.ascii_letters+string.digits) for _ in range(10))
+        randomizedKey = ''.join(random.choice(string.ascii_letters+string.digits) for _ in range(50))
 
-    sessionFile[randomizedKey] = {
+    currentSessions[randomizedKey] = {
         "username": username,
-        "created_time": int(time.time())
+        "lastactive": int(time.time())
     }
 
     with open(dirPath+SESSION_JSON, "w", encoding='utf-8') as sessionFile:
-        json.dump(sessionFile, sessionFile)
+        json.dump(currentSessions, sessionFile)
+
+    return randomizedKey
+
+def get_session(token: str) -> str | None:
+    """
+    Function to get back the username of a session
+    Returns:
+        username:
+        ```python
+        (str | None)
+        ```
+    """
+    with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionFile:
+        currentSessions = json.load(sessionFile)
+
+    if token in currentSessions:
+        # If session exists already
+        currentSessions[token]["lastactive"] = int(time.time())
+        username = currentSessions[token]["username"]
+    else:
+        username = None
+
+    with open(dirPath+SESSION_JSON, "w", encoding='utf-8') as sessionFile:
+        json.dump(currentSessions, sessionFile)
+    
+    return username
+
+def del_session(token: str):
+    with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionFile:
+        currentSessions = json.load(sessionFile)
+
+    if token in currentSessions:
+        del currentSessions[token]
+    with open(dirPath+SESSION_JSON, "w", encoding='utf-8') as sessionFile:
+        json.dump(currentSessions, sessionFile)
 
 def api_interface(path, headers, ip_addr):
     # print("API called from ANONYMOUS DEVICE")
@@ -77,7 +120,7 @@ def api_interface(path, headers, ip_addr):
             # same = (hashedpasswd.strip() == hashedrecievedpasswd.strip())
             if hashedpasswd.strip() == hashedrecievedpasswd.strip():
                 same = True
-                message = "OK"
+                message = save_session(headers["USERNAME"])
             else:
                 same = False
                 message = "Tên đăng nhập hoặc mật khẩu không đúng."

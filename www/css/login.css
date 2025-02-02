@@ -32,7 +32,7 @@ body {
 
 .loginarea {
     display: flex;
-    height: 370px;
+    height: 430px;
     flex-direction: column;
     margin-top: 200px;
     margin-bottom: 300px;
@@ -88,4 +88,10 @@ body {
     color: var(--primary_text);
     cursor: pointer;
     box-shadow: 0px 0px 50px var(--secondary_shadow);
+}
+
+.loginarea p {
+    font-style: italic;
+    color: var(--fail);
+    /* kerning: 2000px; */
 }

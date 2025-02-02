@@ -55,3 +55,12 @@ function switchMode() {
   setCookie("displayMode", targetMode, 3650)
   // document.location.href = document.location.href
 }
+
+// Login functionality
+session_token = getCookie("token")
+if (session_token == "" || !session_token) {
+  setCookie("token", "0", 0)
+}
+else {
+  console.log("Token found. Getting user...")
+}
