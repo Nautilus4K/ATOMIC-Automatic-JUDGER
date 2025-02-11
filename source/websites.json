@@ -1,8 +1,2 @@
 {
-    "home": true,
-    "home_redirect": "/",
-    "courses": true,
-    "credits": true,
-    "scoreboard": true,
-    "forum": true
 }

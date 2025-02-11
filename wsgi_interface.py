@@ -161,53 +161,53 @@ def serve_website(path: str, response_headers):
         response_body = targetFile.read()
         response_code = "200 OK"
 
-        with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
-            websiteRules = json.load(websiteRuleFile)
-            if websiteRules["home"]:
-                response_body = response_body.replace("%%home_display%%", "inline-block")
-            else:
-                response_body = response_body.replace("%%home_display%%", "none")
-                print("No more home")
-                if path == "/":
-                    response_headers.append(('Location', websiteRules["home_redirect"]))
-                    response_code = "301 Moved Permanently"
-                    return ['Trang web đã được di dời'.encode('utf-8')]
+        # with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
+        #     websiteRules = json.load(websiteRuleFile)
+        #     if websiteRules["home"]:
+        #         response_body = response_body.replace("%%home_display%%", "inline-block")
+        #     else:
+        #         response_body = response_body.replace("%%home_display%%", "none")
+        #         print("No more home")
+        #         if path == "/":
+        #             response_headers.append(('Location', websiteRules["home_redirect"]))
+        #             response_code = "301 Moved Permanently"
+        #             return ['Trang web đã được di dời'.encode('utf-8')]
                 
-            if websiteRules["courses"]:
-                response_body = response_body.replace("%%courses_display%%", "inline-block")
-            else:
-                response_body = response_body.replace("%%courses_display%%", "none")
-                if path == "/courses":
-                    response_headers.append(('Location', "/"))
-                    response_code = "301 Moved Permanently"
-                    return ['Trang web đã được di dời'.encode('utf-8')]
+        #     if websiteRules["courses"]:
+        #         response_body = response_body.replace("%%courses_display%%", "inline-block")
+        #     else:
+        #         response_body = response_body.replace("%%courses_display%%", "none")
+        #         if path == "/courses":
+        #             response_headers.append(('Location', "/"))
+        #             response_code = "301 Moved Permanently"
+        #             return ['Trang web đã được di dời'.encode('utf-8')]
             
-            if websiteRules["credits"]:
-                response_body = response_body.replace("%%credits_display%%", "inline-block")
-            else:
-                response_body = response_body.replace("%%credits_display%%", "none")
-                if path == "/credits":
-                    response_headers.append(('Location', "/"))
-                    response_code = "301 Moved Permanently"
-                    return ['Trang web đã được di dời'.encode('utf-8')]
+        #     if websiteRules["credits"]:
+        #         response_body = response_body.replace("%%credits_display%%", "inline-block")
+        #     else:
+        #         response_body = response_body.replace("%%credits_display%%", "none")
+        #         if path == "/credits":
+        #             response_headers.append(('Location', "/"))
+        #             response_code = "301 Moved Permanently"
+        #             return ['Trang web đã được di dời'.encode('utf-8')]
                 
-            if websiteRules["scoreboard"]:
-                response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
-            else:
-                response_body = response_body.replace("%%scoreboard_display%%", "none")
-                if path == "/scoreboard":
-                    response_headers.append(('Location', "/"))
-                    response_code = "301 Moved Permanently"
-                    return ['Trang web đã được di dời'.encode('utf-8')]
+        #     if websiteRules["scoreboard"]:
+        #         response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
+        #     else:
+        #         response_body = response_body.replace("%%scoreboard_display%%", "none")
+        #         if path == "/scoreboard":
+        #             response_headers.append(('Location', "/"))
+        #             response_code = "301 Moved Permanently"
+        #             return ['Trang web đã được di dời'.encode('utf-8')]
 
-            if websiteRules["forum"]:
-                response_body = response_body.replace("%%forum_display%%", "inline-block")
-            else:
-                response_body = response_body.replace("%%forum_display%%", "none")
-                if path == "/forum":
-                    response_headers.append(('Location', "/"))
-                    response_code = "301 Moved Permanently"
-                    return ['Trang web đã được di dời'.encode('utf-8')]
+        #     if websiteRules["forum"]:
+        #         response_body = response_body.replace("%%forum_display%%", "inline-block")
+        #     else:
+        #         response_body = response_body.replace("%%forum_display%%", "none")
+        #         if path == "/forum":
+        #             response_headers.append(('Location', "/"))
+        #             response_code = "301 Moved Permanently"
+        #             return ['Trang web đã được di dời'.encode('utf-8')]
 
         with open(dirPath + "/source/" + ALIASES_FILENAME, "r", encoding="utf-8") as aliasfile:
             aliases = json.load(aliasfile)
