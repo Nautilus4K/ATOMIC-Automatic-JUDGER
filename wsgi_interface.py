@@ -156,6 +156,67 @@ def api_interface(path, headers, ip_addr):
 
     return json_response
 
+def serve_website(path: str, response_headers):
+    with open(path, "r", encoding='utf-8') as targetFile:
+        response_body = targetFile.read()
+        response_code = "200 OK"
+
+        with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
+            websiteRules = json.load(websiteRuleFile)
+            if websiteRules["home"]:
+                response_body = response_body.replace("%%home_display%%", "inline-block")
+            else:
+                response_body = response_body.replace("%%home_display%%", "none")
+                print("No more home")
+                if path == "/":
+                    response_headers.append(('Location', websiteRules["home_redirect"]))
+                    response_code = "301 Moved Permanently"
+                    return ['Trang web đã được di dời'.encode('utf-8')]
+                
+            if websiteRules["courses"]:
+                response_body = response_body.replace("%%courses_display%%", "inline-block")
+            else:
+                response_body = response_body.replace("%%courses_display%%", "none")
+                if path == "/courses":
+                    response_headers.append(('Location', "/"))
+                    response_code = "301 Moved Permanently"
+                    return ['Trang web đã được di dời'.encode('utf-8')]
+            
+            if websiteRules["credits"]:
+                response_body = response_body.replace("%%credits_display%%", "inline-block")
+            else:
+                response_body = response_body.replace("%%credits_display%%", "none")
+                if path == "/credits":
+                    response_headers.append(('Location', "/"))
+                    response_code = "301 Moved Permanently"
+                    return ['Trang web đã được di dời'.encode('utf-8')]
+                
+            if websiteRules["scoreboard"]:
+                response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
+            else:
+                response_body = response_body.replace("%%scoreboard_display%%", "none")
+                if path == "/scoreboard":
+                    response_headers.append(('Location', "/"))
+                    response_code = "301 Moved Permanently"
+                    return ['Trang web đã được di dời'.encode('utf-8')]
+
+            if websiteRules["forum"]:
+                response_body = response_body.replace("%%forum_display%%", "inline-block")
+            else:
+                response_body = response_body.replace("%%forum_display%%", "none")
+                if path == "/forum":
+                    response_headers.append(('Location', "/"))
+                    response_code = "301 Moved Permanently"
+                    return ['Trang web đã được di dời'.encode('utf-8')]
+
+        with open(dirPath + "/source/" + ALIASES_FILENAME, "r", encoding="utf-8") as aliasfile:
+            aliases = json.load(aliasfile)
+            for aliaskey in aliases:
+                response_body = response_body.replace('%%'+aliaskey+'%%', aliases[aliaskey])
+                
+        response_headers = [('Content-Type', 'text/html; charset=utf-8')]
+    return response_body, response_headers, response_code
+
 def application(environ, start_response):
     # Get the HTTP method (GET or POST)
     method = environ.get('REQUEST_METHOD', 'GET')
@@ -220,126 +281,33 @@ def application(environ, start_response):
                         return ['Không có quyền truy cập vào trang này. Yêu cầu truy cập trực tiếp về mặt thể chất.'.encode('utf-8')]
                     else:
                         response_headers = [('Content-Type', 'text/html; charset=utf-8')]
+                        if os.path.exists(dirPath + ERROR_WEBFILE):
+                            response_body, response_headers, response_code = serve_website(dirPath + ERROR_WEBFILE, response_headers)
+                        else:
+                            start_response('403 Forbidden', response_headers)
+                            return ['Không có quyền truy cập vào trang này. Yêu cầu truy cập trực tiếp về mặt thể chất.'.encode('utf-8')]
                         start_response('403 Forbidden', response_headers)
-                        with open(dirPath + ERROR_WEBFILE, "r", encoding='utf-8') as errorNotify:
-                            response_body = errorNotify.read()
-                            with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
-                                websiteRules = json.load(websiteRuleFile)
-                                if websiteRules["home"]:
-                                    response_body = response_body.replace("%%home_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%home_display%%", "none")
-                                if websiteRules["courses"]:
-                                    response_body = response_body.replace("%%courses_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%courses_display%%", "none")
-                                if websiteRules["credits"]:
-                                    response_body = response_body.replace("%%credits_display%%", "inline-block")  
-                                else:
-                                    response_body = response_body.replace("%%credits_display%%", "none")
-                                if websiteRules["scoreboard"]:
-                                    response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%scoreboard_display%%", "none")
-                                if websiteRules["forum"]:
-                                    response_body = response_body.replace("%%forum_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%forum_display%%", "none")
-                            response_body = response_body.replace("%%error_code%%", "403").replace("%%error_description%%", "Không có đủ quyền hạn truy cập vào trang web")
-                            return [response_body.encode('utf-8')]
+                        response_body = response_body.replace("%%error_code%%", "403").replace("%%error_description%%", "Không có đủ quyền hạn truy cập vào trang web")
+                        return [response_body.encode('utf-8')]
 
                 elif path.startswith(reservedPath):
                     if headers["USER_AGENT"].startswith("curl"):
                         start_response('403 Forbidden', response_headers)
                         return ['Không có quyền truy cập vào dữ liệu thư mục này. Yêu cầu truy cập trực tiếp về mặt thể chất.'.encode('utf-8')]
                     else:
-                        response_headers = [('Content-Type', 'text/html; charset=utf-8')]
+                        if os.path.exists(dirPath + ERROR_WEBFILE):
+                            response_body, response_headers, response_code = serve_website(dirPath + ERROR_WEBFILE, response_headers)
+                        else:
+                            start_response('403 Forbidden', response_headers)
+                            return ['Không có quyền truy cập vào trang này. Yêu cầu truy cập trực tiếp về mặt thể chất.'.encode('utf-8')]
                         start_response('403 Forbidden', response_headers)
-                        with open(dirPath + ERROR_WEBFILE, "r", encoding='utf-8') as errorNotify:
-                            response_body = errorNotify.read()
-                            with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
-                                websiteRules = json.load(websiteRuleFile)
-                                if websiteRules["home"]:
-                                    response_body = response_body.replace("%%home_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%home_display%%", "none")
-                                if websiteRules["courses"]:
-                                    response_body = response_body.replace("%%courses_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%courses_display%%", "none")
-                                if websiteRules["credits"]:
-                                    response_body = response_body.replace("%%credits_display%%", "inline-block")  
-                                else:
-                                    response_body = response_body.replace("%%credits_display%%", "none")
-                                if websiteRules["scoreboard"]:
-                                    response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%scoreboard_display%%", "none")
-                                if websiteRules["forum"]:
-                                    response_body = response_body.replace("%%forum_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%forum_display%%", "none")
-                            response_body = response_body.replace("%%error_code%%", "403").replace("%%error_description%%", "Không có đủ quyền hạn truy cập vào thư mục")
-                            return [response_body.encode('utf-8')]
+                        response_body = response_body.replace("%%error_code%%", "403").replace("%%error_description%%", "Không có đủ quyền hạn truy cập vào thư mục")
+                        return [response_body.encode('utf-8')]
             
             if os.path.exists(dirPath + "/www"+path+"/index.html"):
-                with open(dirPath + "/www"+path+"/index.html", "r", encoding='utf-8') as targetFile:
-                    response_body = targetFile.read()
-
-                    with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
-                        websiteRules = json.load(websiteRuleFile)
-                        if websiteRules["home"]:
-                            response_body = response_body.replace("%%home_display%%", "inline-block")
-                        else:
-                            response_body = response_body.replace("%%home_display%%", "none")
-                            print("No more home")
-                            if path == "/":
-                                response_headers.append(('Location', websiteRules["home_redirect"]))
-                                start_response("301 Moved Permanently", response_headers)
-                                return ['Trang web đã được di dời'.encode('utf-8')]
-                            
-                        if websiteRules["courses"]:
-                            response_body = response_body.replace("%%courses_display%%", "inline-block")
-                        else:
-                            response_body = response_body.replace("%%courses_display%%", "none")
-                            if path == "/courses":
-                                response_headers.append(('Location', "/"))
-                                start_response("301 Moved Permanently", response_headers)
-                                return ['Trang web đã được di dời'.encode('utf-8')]
-                        
-                        if websiteRules["credits"]:
-                            response_body = response_body.replace("%%credits_display%%", "inline-block")
-                        else:
-                            response_body = response_body.replace("%%credits_display%%", "none")
-                            if path == "/credits":
-                                response_headers.append(('Location', "/"))
-                                start_response("301 Moved Permanently", response_headers)
-                                return ['Trang web đã được di dời'.encode('utf-8')]
-                            
-                        if websiteRules["scoreboard"]:
-                            response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
-                        else:
-                            response_body = response_body.replace("%%scoreboard_display%%", "none")
-                            if path == "/scoreboard":
-                                response_headers.append(('Location', "/"))
-                                start_response("301 Moved Permanently", response_headers)
-                                return ['Trang web đã được di dời'.encode('utf-8')]
-
-                        if websiteRules["forum"]:
-                            response_body = response_body.replace("%%forum_display%%", "inline-block")
-                        else:
-                            response_body = response_body.replace("%%forum_display%%", "none")
-                            if path == "/forum":
-                                response_headers.append(('Location', "/"))
-                                start_response("301 Moved Permanently", response_headers)
-                                return ['Trang web đã được di dời'.encode('utf-8')]
-
-                    with open(dirPath + "/source/" + ALIASES_FILENAME, "r", encoding="utf-8") as aliasfile:
-                        aliases = json.load(aliasfile)
-                        for aliaskey in aliases:
-                            response_body = response_body.replace('%%'+aliaskey+'%%', aliases[aliaskey])
-                    response_body = response_body.encode('utf-8')
-                    response_headers = [('Content-Type', 'text/html; charset=utf-8')]
+                response_body, response_headers, response_code = serve_website(dirPath + "/www"+path+"/index.html", response_headers)
+                start_response(str(response_code), response_headers)
+                return [response_body.encode('utf-8')]
 
             elif os.path.exists(dirPath + "/www"+path):
                 mimetype, encoding = mimetypes.guess_type(path)
@@ -369,70 +337,32 @@ def application(environ, start_response):
                         user = json.load(userFile)[username]
                     with open(dirPath+CLASSFILE_PATH, "r", encoding='utf-8') as classFile:
                         dcls = json.load(classFile)[user["class"]]
-                    with open(dirPath+USERPROFILE_WEBFILE, "r", encoding='utf-8') as profileWebContentFile:
-                        response_body = profileWebContentFile.read()
-                    with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
-                        websiteRules = json.load(websiteRuleFile)
-                        if websiteRules["home"]:
-                            response_body = response_body.replace("%%home_display%%", "inline-block")
-                        else:
-                            response_body = response_body.replace("%%home_display%%", "none")
-                        if websiteRules["courses"]:
-                            response_body = response_body.replace("%%courses_display%%", "inline-block")
-                        else:
-                            response_body = response_body.replace("%%courses_display%%", "none")
-                        if websiteRules["credits"]:
-                            response_body = response_body.replace("%%credits_display%%", "inline-block")  
-                        else:
-                            response_body = response_body.replace("%%credits_display%%", "none")
-                        if websiteRules["scoreboard"]:
-                            response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
-                        else:
-                            response_body = response_body.replace("%%scoreboard_display%%", "none")
-                        if websiteRules["forum"]:
-                            response_body = response_body.replace("%%forum_display%%", "inline-block")
-                        else:
-                            response_body = response_body.replace("%%forum_display%%", "none")
+
+                    if os.path.exists(dirPath+USERPROFILE_WEBFILE):
+                        response_body, response_headers, response_code = serve_website(dirPath+USERPROFILE_WEBFILE, response_headers)
+                    else:
+                        start_response('404 Not Found', response_headers)
+                        return ['Không tìm thấy người dùng.'.encode('utf-8')]
+                    start_response(response_code, response_headers)
+
                     response_body = response_body.replace("%%name%%", user["fullname"]).replace("%%codename%%", username).replace("%%class%%", user["class"]).replace("%%desc%%", user["desc"]).replace("%%fullclass%%", dcls["longname"])
                     response_body = response_body.encode('utf-8')
                     response_headers = [('Content-Type', 'text/html; charset=utf-8')]
+
+                    return [response_body] 
                     # start_response('200 OK', response_headers)
 
                 except Exception as e:
                     print(e)
                     print(str(e))
-                    if headers["USER_AGENT"].startswith("curl"):
-                        start_response('500 Internal Server Error', response_headers)
-                        return ['Đã có lỗi xảy ra trong hệ thống máy chủ, vui lòng báo lại với quản trị viên của trang Web.'.encode('utf-8')]
+                    if os.path.exists(dirPath+ERROR_WEBFILE):
+                        response_body, response_headers, response_code = serve_website(dirPath+ERROR_WEBFILE, response_headers)
                     else:
-                        response_headers = [('Content-Type', 'text/html; charset=utf-8')]
                         start_response('500 Internal Server Error', response_headers)
-                        with open(dirPath + ERROR_WEBFILE, "r", encoding='utf-8') as errorNotify:
-                            response_body = errorNotify.read()
-                            with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
-                                websiteRules = json.load(websiteRuleFile)
-                                if websiteRules["home"]:
-                                    response_body = response_body.replace("%%home_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%home_display%%", "none")
-                                if websiteRules["courses"]:
-                                    response_body = response_body.replace("%%courses_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%courses_display%%", "none")
-                                if websiteRules["credits"]:
-                                    response_body = response_body.replace("%%credits_display%%", "inline-block")  
-                                else:
-                                    response_body = response_body.replace("%%credits_display%%", "none")
-                                if websiteRules["scoreboard"]:
-                                    response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%scoreboard_display%%", "none")
-                                if websiteRules["forum"]:
-                                    response_body = response_body.replace("%%forum_display%%", "inline-block")
-                                else:
-                                    response_body = response_body.replace("%%forum_display%%", "none")
-                            response_body = response_body.replace("%%error_code%%", "500").replace("%%error_description%%", "Đã có lỗi xảy ra trong hệ thống máy chủ, vui lòng báo lại với quản trị viên của trang Web.")
-                            return [response_body.encode('utf-8')]
+                        return ['Không tìm thấy người dùng.'.encode('utf-8')]
+                    start_response(response_code, response_headers)
+                    response_body = response_body.replace("%%error_code%%", "500").replace("%%error_description%%", "Đã có lỗi xảy ra trong quá trình tìm kiếm người dùng.")
+                    return [response_body.encode('utf-8')]
                     
             else:
                 if headers["USER_AGENT"].startswith("curl"):
@@ -441,32 +371,12 @@ def application(environ, start_response):
                 else:
                     response_headers = [('Content-Type', 'text/html; charset=utf-8')]
                     start_response('404 Not Found', response_headers)
-                    with open(dirPath + ERROR_WEBFILE, "r", encoding='utf-8') as errorNotify:
-                        response_body = errorNotify.read()
-                        with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
-                            websiteRules = json.load(websiteRuleFile)
-                            if websiteRules["home"]:
-                                response_body = response_body.replace("%%home_display%%", "inline-block")
-                            else:
-                                response_body = response_body.replace("%%home_display%%", "none")
-                            if websiteRules["courses"]:
-                                response_body = response_body.replace("%%courses_display%%", "inline-block")
-                            else:
-                                response_body = response_body.replace("%%courses_display%%", "none")
-                            if websiteRules["credits"]:
-                                response_body = response_body.replace("%%credits_display%%", "inline-block")  
-                            else:
-                                response_body = response_body.replace("%%credits_display%%", "none")
-                            if websiteRules["scoreboard"]:
-                                response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
-                            else:
-                                response_body = response_body.replace("%%scoreboard_display%%", "none")
-                            if websiteRules["forum"]:
-                                response_body = response_body.replace("%%forum_display%%", "inline-block")
-                            else:
-                                response_body = response_body.replace("%%forum_display%%", "none")
+                    if os.path.exists(dirPath+ERROR_WEBFILE):
+                        response_body, response_headers, response_code = serve_website(dirPath+ERROR_WEBFILE, response_headers)
                         response_body = response_body.replace("%%error_code%%", "404").replace("%%error_description%%", "Không tìm thấy địa chỉ")
                         return [response_body.encode('utf-8')]
+                    else:
+                        return ['Không tìm thấy địa chỉ.'.encode('utf-8')]
     except Exception as e:
         print(e)
         print(str(e))
@@ -476,32 +386,14 @@ def application(environ, start_response):
         else:
             response_headers = [('Content-Type', 'text/html; charset=utf-8')]
             start_response('500 Internal Server Error', response_headers)
-            with open(dirPath + ERROR_WEBFILE, "r", encoding='utf-8') as errorNotify:
-                response_body = errorNotify.read()
-                with open(dirPath + "/source/" + WEBSITERULE_FILENAME) as websiteRuleFile:
-                    websiteRules = json.load(websiteRuleFile)
-                    if websiteRules["home"]:
-                        response_body = response_body.replace("%%home_display%%", "inline-block")
-                    else:
-                        response_body = response_body.replace("%%home_display%%", "none")
-                    if websiteRules["courses"]:
-                        response_body = response_body.replace("%%courses_display%%", "inline-block")
-                    else:
-                        response_body = response_body.replace("%%courses_display%%", "none")
-                    if websiteRules["credits"]:
-                        response_body = response_body.replace("%%credits_display%%", "inline-block")  
-                    else:
-                        response_body = response_body.replace("%%credits_display%%", "none")
-                    if websiteRules["scoreboard"]:
-                        response_body = response_body.replace("%%scoreboard_display%%", "inline-block")
-                    else:
-                        response_body = response_body.replace("%%scoreboard_display%%", "none")
-                    if websiteRules["forum"]:
-                        response_body = response_body.replace("%%forum_display%%", "inline-block")
-                    else:
-                        response_body = response_body.replace("%%forum_display%%", "none")
-                response_body = response_body.replace("%%error_code%%", "500").replace("%%error_description%%", "Đã có lỗi xảy ra trong hệ thống máy chủ, vui lòng báo lại với quản trị viên của trang Web.")
-                return [response_body.encode('utf-8')]
+            if os.path.exists(dirPath+ERROR_WEBFILE):
+                response_body, response_headers, response_code = serve_website(dirPath+ERROR_WEBFILE, response_headers)
+            else:
+                start_response('500 Internal Server Error', response_headers)
+                return ['Không tìm thấy người dùng.'.encode('utf-8')]
+            start_response(response_code, response_headers)
+            response_body = response_body.replace("%%error_code%%", "500").replace("%%error_description%%", "Đã có lỗi xảy ra trong hệ thống máy chủ.")
+            return [response_body.encode('utf-8')]
 
     # Send the response status and headers
     start_response('200 OK', response_headers)
