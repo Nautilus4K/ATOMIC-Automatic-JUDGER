@@ -304,22 +304,30 @@ def application(environ, start_response):
                         response_body = response_body.replace("%%error_code%%", "403").replace("%%error_description%%", "Không có đủ quyền hạn truy cập vào thư mục")
                         return [response_body.encode('utf-8')]
             
-            if os.path.exists(dirPath + "/www"+path+"/index.html"):
-                response_body, response_headers, response_code = serve_website(dirPath + "/www"+path+"/index.html", response_headers)
+            if os.path.exists(dirPath + "/www"+path+".html"):
+                response_body, response_headers, response_code = serve_website(dirPath + "/www"+path+".html", response_headers)
                 start_response(str(response_code), response_headers)
                 return [response_body.encode('utf-8')]
 
-            elif os.path.exists(dirPath + "/www"+path):
+            elif os.path.exists(dirPath + "/www" + path):
                 mimetype, encoding = mimetypes.guess_type(path)
                 if not mimetype:
                     mimetype = "text/plain"
+                
                 if mimetype and mimetype.startswith('text/'):
-                    with open(dirPath + "/www"+path, "r", encoding='utf-8') as targetFile:
-                        response_body = targetFile.read().encode('utf-8')
-                        response_headers = [('Content-Type', f'{mimetype}; charset=utf-8')]
+                    # Handle text files
+                    try:
+                        with open(dirPath + "/www" + path, "r", encoding='utf-8') as targetFile:
+                            response_body = targetFile.read().encode('utf-8')
+                            response_headers = [('Content-Type', f'{mimetype}; charset=utf-8')]
+                    except UnicodeDecodeError:
+                        # If we can't decode as text, fall back to binary handling
+                        with open(dirPath + "/www" + path, "rb") as targetFile:
+                            response_body = targetFile.read()
+                            response_headers = [('Content-Type', f'{mimetype}')]
                 else:
-                    # Serve binary files
-                    with open(dirPath + "/www"+path, "rb") as targetFile:
+                    # Handle binary files
+                    with open(dirPath + "/www" + path, "rb") as targetFile:
                         response_body = targetFile.read()
                     response_headers = [('Content-Type', f'{mimetype or "application/octet-stream"}')]
 
@@ -385,13 +393,13 @@ def application(environ, start_response):
             return ['Đã có lỗi xảy ra trong hệ thống máy chủ, vui lòng báo lại với quản trị viên của trang Web.'.encode('utf-8')]
         else:
             response_headers = [('Content-Type', 'text/html; charset=utf-8')]
-            start_response('500 Internal Server Error', response_headers)
             if os.path.exists(dirPath+ERROR_WEBFILE):
+                start_response('500 Internal Server Error', response_headers)
                 response_body, response_headers, response_code = serve_website(dirPath+ERROR_WEBFILE, response_headers)
             else:
                 start_response('500 Internal Server Error', response_headers)
-                return ['Không tìm thấy người dùng.'.encode('utf-8')]
-            start_response(response_code, response_headers)
+                return ['Lỗi hệ thống.'.encode('utf-8')]
+            # start_response(response_code, response_headers)
             response_body = response_body.replace("%%error_code%%", "500").replace("%%error_description%%", "Đã có lỗi xảy ra trong hệ thống máy chủ.")
             return [response_body.encode('utf-8')]
 

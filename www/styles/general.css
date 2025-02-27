@@ -1,0 +1,135 @@
+:root {
+    --background: rgb(245, 245, 245);
+    --background-active: rgb(202, 202, 202);
+    --text-color: black;
+    --primary: rgb(0, 110, 255);
+    --primary-color: white;
+    --secondary: #0057b9;
+    --footer: #002249;
+    --footer-color: white;
+    --accent-shadow: #0071f383;
+    --shadow: rgba(0, 0, 0, 0.452);
+}
+
+.dark {
+    --background: rgb(15, 15, 15);
+    --background-active: rgb(44, 44, 44);
+    --text-color: white;
+    --primary: rgb(0, 110, 255);
+    --primary-color: white;
+    --secondary: #3b96ff;
+    --footer: #002249;
+    --footer-color: white;
+    --accent-shadow: #0071f383;
+    --shadow: rgba(0, 0, 0, 0.452);
+}
+
+/* Initialize custom font: Montserrat */
+/* @font-face {
+    font-family: 'Montserrat';
+    src: url('/fonts/Montserrat.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+} */
+
+html, body {
+    background-color: var(--background);
+    color: var(--text-color);
+
+    /* Long to make sure it works */
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Source Code Pro', 'Ubuntu Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', 'Menlo', 'Monaco', 'Roboto Mono', 'Lucida Console', 'JetBrains Mono', 'SF Mono', 'PT Mono', 'Andale Mono', monospace;
+
+    padding: 0;
+    margin: 0;
+    font-weight: 350;
+    display: flex;
+    flex-direction: column;
+    min-height: 95%;
+}
+
+footer {
+    margin-top: 200px;
+    text-align: center;
+    align-items: center;
+    justify-content: center;
+
+    padding: 30px;
+    background-color: var(--footer);
+    color: var(--footer-color)
+}
+
+.statsbar {
+    display: flex;
+    flex-direction: row;
+    padding: 0 20px;
+    /* background-color: var(--statsbar-bg); */
+    background-color: var(--background);
+    color: var(--text-color);
+
+    position: fixed;
+    box-sizing: border-box; /* Preventing overflows */
+    width: 100%;
+}
+
+.statsbar .pagename {
+    padding: 0;
+    margin: 0;
+    line-height: 20px;
+    margin-right: auto;
+    /* font-weight: bolder; */
+    font-size: 20px;
+    /* margin-top: auto;
+    margin-bottom: auto; */
+    padding: 20px 10px;
+}
+
+.statsbar a {
+    padding: 0 20px;
+    padding-top: 20px;
+    text-decoration: none;
+    transition: .15s;
+}
+
+.statsbar a:hover {
+    background-color: var(--background-active);
+}
+
+.statsbar .user {
+    margin-left: auto;
+    background-color: transparent;
+    padding: 0 10px;
+    padding-top: 10px;
+}
+
+.statsbar .user:hover {
+    background-color: transparent;
+}
+
+.statsbar .user img {
+    padding: 0;
+    /* margin: 0; */
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    box-shadow: var(--shadow) 0px 0px 10px;
+    /* border: 3px solid var(--shadow); */
+    transition: .3s;
+    background-color: transparent;
+}
+
+.statsbar .user img:hover {
+    box-shadow: var(--accent-shadow) 0px 0px 15px;
+    mask-image: radial-gradient(circle closest-corner at center, var(--primary));
+    background-color: transparent;
+}
+/* .statsbar .user {
+    padding: 15px;
+    margin: 0;
+    line-height: 20px;
+    font-size: 17px;
+    background-color: var(--primary);
+    color: var(--primary-color);
+    box-shadow: var(--shadow) 0px 0px 20px;
+    border-radius: 8px;
+    transition: .3s;
+} */
