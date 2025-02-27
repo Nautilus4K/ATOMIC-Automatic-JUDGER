@@ -6,6 +6,9 @@
         <link rel="stylesheet" href="/styles/general.css">
         <link rel="stylesheet" href="/styles/home.css">
         <title>%%website_name%%</title>
+
+        <script src="/js/general.js"></script>
+        <script src="/js/generalDeferred.js" defer></script>
     </head>
     <body>
         <!-- STATUS BAR -->
@@ -13,10 +16,14 @@
             <!-- Left side -->
             <p class="pagename">%%website_name%%</p>
 
-            <a>Bài tập</a>
-            <a>Bảng điểm</a>
+            <a href="/">Bài tập</a>
+            <a href="scoreboard">Bảng điểm</a>
 
             <!-- Right side -->
+            <button class="darklighttoggle" onclick="modeToggle()">
+                <img alt="darklighttoggle" src="/assets/light.png" id="darklighticon">
+            </button>
+
             <a class="user">
                 <img alt="defaultusericon" src="/assets/defaultuser.png">
             </a>
@@ -33,23 +40,9 @@
         <br><br>
         <div class="content">
             <div class="listview">
-                <p class="header">Bài tập</p>
+                <p class="header">Bài thi</p>
                 <div class="list">
-                    <p>Bai tap 1</p>
-                    <p>Bai tap 2</p>
-                    <p>Bai tap 1</p>
-                    <p>Bai tap 2</p>
-                    <p>Bai tap 1</p>
-                    <p>Bai tap 2</p>
-                    <p>Bai tap 1</p>
-                    <p>Bai tap 2</p>
-                    <p>Bai tap 1</p>
-                    <p>Bai tap 2</p>
-                    <p>Bai tap 1</p>
-                    <p>Bai tap 2</p>
-                    <p>Bai tap 1</p>
-                    <p>Bai tap 2</p>
-                    
+                    %%Contests%%
                 </div>
             </div>
 
