@@ -1,2 +1,5 @@
+main/__pycache__/
+main/.venv/
+
 __pycache__/
 .venv/
