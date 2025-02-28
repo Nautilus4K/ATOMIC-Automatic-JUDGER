@@ -10,6 +10,7 @@
     --accent-shadow: #0071f383;
     --shadow: rgba(0, 0, 0, 0.452);
     --mode-change-duration: 0.1s;
+    --dangerous: rgb(209, 0, 0);
 }
 
 .dark {
@@ -24,6 +25,7 @@
     --accent-shadow: #0071f383;
     --shadow: rgba(0, 0, 0, 0.452);
     --mode-change-duration: 0.1s;
+    --dangerous: rgb(255, 40, 40);
 }
 
 /* Initialize custom font: Montserrat */
@@ -103,7 +105,9 @@ footer {
     background-color: transparent;
     padding: 0 10px;
     padding-left: 20px;
-    padding-top: 10px;
+    padding-top: 0px;
+    border: 0;
+    margin: 0;
 }
 
 .statsbar .user:hover {
@@ -126,6 +130,60 @@ footer {
     box-shadow: var(--accent-shadow) 0px 0px 15px;
     mask-image: radial-gradient(circle closest-corner at center, var(--primary));
     background-color: transparent;
+}
+
+.dropdown {
+    /* display: none; */
+    opacity: 0;
+    visibility: hidden;
+
+    position: fixed;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    right: 15px;
+    top: 40px;
+    color: var(--text-color);
+    border: 1px solid var(--background-active);
+    background-color: var(--background);
+    /* padding: 20px; */
+    border-radius: 10px;
+    text-align: right;
+    text-decoration: none;
+    /* margin-top: 100px; */
+    transition: .15s;
+}
+
+.dropdown.show {
+    opacity: 1;
+    top: 70px;
+    visibility: visible;
+}
+
+.dropdown .dropdownbtn {
+    opacity: 0;
+    visibility: hidden;
+    
+    text-decoration: none;
+    color: var(--text-color);
+    padding: 15px;
+    background-color: transparent;
+    border-radius: 10px;
+    font-size: 13px;
+    transition: .15s;
+}
+
+.dropdown .dropdownbtn.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.dropdown .signoutbtn {
+    color: var(--dangerous);
+}
+
+.dropdown .dropdownbtn:hover {
+    background-color: var(--background-active);
 }
 /* .statsbar .user {
     padding: 15px;
