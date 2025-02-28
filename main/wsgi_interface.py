@@ -15,6 +15,7 @@ VERSION_JSON = "/source/version.json"
 USERDATA_JSON = "/source/users.json"
 LASTACCESS_JSON = "/central/lastaccess.json"
 SESSION_JSON = "/central/sessions.json"
+STATSBAR_HTML = "/www/reserved/statsbar.html"
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved"]
@@ -208,6 +209,9 @@ def serve_website(path: str, response_headers):
         #             response_headers.append(('Location', "/"))
         #             response_code = "301 Moved Permanently"
         #             return ['Trang web đã được di dời'.encode('utf-8')]
+
+        with open(dirPath + STATSBAR_HTML, "r", encoding='utf-8') as statsbarfile:
+            response_body = response_body.replace("%%statsbar%%", statsbarfile.read())
 
         with open(dirPath + "/source/" + ALIASES_FILENAME, "r", encoding="utf-8") as aliasfile:
             aliases = json.load(aliasfile)

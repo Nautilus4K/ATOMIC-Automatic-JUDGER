@@ -1,0 +1,52 @@
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    /* padding-top: 10%; */
+}
+
+.error_info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+.error_info h1 {
+    font-size: 200px;
+    margin: 0;
+    padding: 0;
+}
+
+.error_info p {
+    font-size: 20px;
+}
+
+.error_info a {
+    color: var(--text-color);
+}
+
+.findout {
+    color: var(--text-color);
+    /* text-decoration: underline; */
+    font-weight: 300;
+    text-align: center;
+    font-size: 13px;
+}
+
+.findout a {
+    color: var(--text-color);
+    text-decoration: underline;
+    font-style: italic;
+}
