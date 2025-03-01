@@ -1,0 +1,56 @@
+html, body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.loginframe {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    width: 40%;
+    margin: auto;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--background-active);
+    border-radius: 10px;
+}
+
+.loginframe h1 {
+    
+}
+
+.loginframe input {
+    padding: 10px;
+    border: 2px solid transparent;
+    background-color: var(--background);
+    border-radius: 10px;
+    margin: 10px;
+    transition: .15s;
+    color: var(--text-color);
+    width: 80%;
+}
+
+.loginframe input:hover {
+    border: 2px solid var(--primary);
+}
+
+.loginframe button {
+    padding: 15px 20px;
+    border: 2px solid transparent;
+    background-color: var(--background);
+    border-radius: 10px;
+    margin: 20px;
+    color: var(--text-color);
+    /* width: 140px; */
+    transition: .25s;
+}
+
+.loginframe button:hover {
+    cursor: pointer;
+    padding: 15px 40px;
+    background-color: var(--primary);
+    color: var(--primary-color)
+}

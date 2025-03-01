@@ -1,6 +1,7 @@
 {
     "Test1": {
         "Desc": "Prints out `Test` on execution",
+        "Classes": ["A1", "A2"],
         "InputType": "raw",
         "InputFile": "Test1.INP",
         "OutputType": "raw",
