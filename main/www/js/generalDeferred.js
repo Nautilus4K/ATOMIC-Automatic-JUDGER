@@ -56,5 +56,16 @@ document.addEventListener("click", function(event) {
 const session_token = getCookie("token")
 if ((session_token == "" || !session_token) && window.location.href != "/login") window.location.href = "/login"
 else {
-    
+    fetch("/api/getinfo", {
+        method: "GET",
+        headers: {
+            "TOKEN": session_token
+        }
+    }).then(response => response.json()).then((json) => {
+        if (json["username"] != "") document.getElementById("usersettings").textContent = json["fullname"]
+        else {
+            setCookie("token", "", 0)
+            window.location.href = "/login"
+        }
+    })
 }

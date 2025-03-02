@@ -16,6 +16,7 @@ USERDATA_JSON = "/source/users.json"
 LASTACCESS_JSON = "/central/lastaccess.json"
 SESSION_JSON = "/central/sessions.json"
 STATSBAR_HTML = "/www/reserved/statsbar.html"
+SETTINGS_JSON = "/source/settings.json"
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved", "/api"]
@@ -154,6 +155,34 @@ def api_interface(path, headers, ip_addr):
 
         with open(dirPath+LASTACCESS_JSON, "w", encoding='utf-8') as lastAccessFile:
             json.dump(lastaccesses, lastAccessFile)
+
+    elif path == "/api/getinfo" and "TOKEN" in headers:
+        username = ""
+        fullname = ""
+        _class = ""
+        priv = ""
+        with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+            with open(dirPath+SETTINGS_JSON, "r", encoding='utf-8') as settingsFile:
+                with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userData:
+                    sessions = json.load(sessionsFile)
+                    settings = json.load(settingsFile)
+                    users = json.load(userData)
+
+                    # If TOKEN actually exists in the list of sessions
+                    if headers["TOKEN"] in sessions:
+                        # If last active time does not exceed the maximum time before deactivation of session
+                        if time.time() - sessions[headers["TOKEN"]]["lastactive"] <= settings["max_not_logged_in_session_seconds"]:
+                            username = sessions[headers["TOKEN"]]["username"]
+                            fullname = users[sessions[headers["TOKEN"]]["username"]]["fullname"]
+                            _class = users[sessions[headers["TOKEN"]]["username"]]["class"]
+                            priv = users[sessions[headers["TOKEN"]]["username"]]["priv"]
+
+        json_response = {
+            "username": username,
+            "fullname": fullname,
+            "class": _class,
+            "priv": priv,
+        }
 
     return json_response
 

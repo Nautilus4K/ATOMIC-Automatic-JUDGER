@@ -23,9 +23,9 @@ html, body {
     background: linear-gradient(90deg, var(--background-active) 0%, var(--secondary) 1080%);
 }
 
-.loginframe h1 {
+/* .loginframe h1 {
     
-}
+} */
 
 .loginframe input {
     padding: 10px;

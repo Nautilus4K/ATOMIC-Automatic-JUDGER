@@ -3,5 +3,6 @@
     "mem_limit": 1024,
     "time_limit": 1,
     "reload_time": 60,
-    "show_test": true
+    "show_test": true,
+    "max_not_logged_in_session_seconds": 31536000
 }

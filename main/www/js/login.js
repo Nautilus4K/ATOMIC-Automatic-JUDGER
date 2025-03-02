@@ -1,3 +1,6 @@
+const session_token = getCookie("token")
+if (session_token != "") window.location.href = "/"
+
 const notifyLabel = document.getElementById("label");
 
 // Set the notify label hidden first

@@ -183,6 +183,7 @@ footer {
 
 .dropdown .signoutbtn {
     color: var(--dangerous);
+    font-weight: 570;
 }
 
 .dropdown .dropdownbtn:hover {
