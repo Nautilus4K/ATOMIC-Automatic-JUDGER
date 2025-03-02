@@ -56,14 +56,30 @@ document.addEventListener("click", function(event) {
 const session_token = getCookie("token")
 if ((session_token == "" || !session_token) && window.location.href != "/login") window.location.href = "/login"
 else {
-    fetch("/api/getinfo", {
+    fetch("/api/getbroadinfo", {
         method: "GET",
         headers: {
             "TOKEN": session_token
         }
     }).then(response => response.json()).then((json) => {
-        if (json["username"] != "") document.getElementById("usersettings").textContent = json["fullname"]
-        else {
+        if (json["username"] != "") {
+            document.getElementById("usersettings").textContent = json["fullname"]
+            document.getElementById("profilepage").href = "/user/"+json["username"]
+
+            document.getElementById("info_name").textContent = "Tên: " + json["fullname"]
+            document.getElementById("info_class").textContent = "Lớp: " + json["class"]
+            
+            if (json["priv"] == false) {
+                document.getElementById("info_priv").textContent = "Riêng tư: Không"
+            } else {
+                document.getElementById("info_priv").textContent = "Riêng tư: Có"
+            }
+
+            // Profile picture
+            if (json["picture"] == true) {
+                document.getElementById("userpic").src = "/userpictures/"+json["username"]+".jpg"
+            }
+        } else {
             setCookie("token", "", 0)
             window.location.href = "/login"
         }

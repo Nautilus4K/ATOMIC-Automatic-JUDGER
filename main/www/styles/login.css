@@ -19,7 +19,7 @@ html, body {
     /* background-color: var(--background-active); */
     border-radius: 10px;
 
-    background: rgb(0,0,0);
+    background: var(--background-active);
     background: linear-gradient(90deg, var(--background-active) 0%, var(--secondary) 1080%);
 }
 

@@ -17,6 +17,7 @@ LASTACCESS_JSON = "/central/lastaccess.json"
 SESSION_JSON = "/central/sessions.json"
 STATSBAR_HTML = "/www/reserved/statsbar.html"
 SETTINGS_JSON = "/source/settings.json"
+DEFAULTUSER_IMAGE = "/assets/defaultuser.png"
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved", "/api"]
@@ -156,9 +157,10 @@ def api_interface(path, headers, ip_addr):
         with open(dirPath+LASTACCESS_JSON, "w", encoding='utf-8') as lastAccessFile:
             json.dump(lastaccesses, lastAccessFile)
 
-    elif path == "/api/getinfo" and "TOKEN" in headers:
+    elif path == "/api/getbroadinfo" and "TOKEN" in headers:
         username = ""
         fullname = ""
+        picture = ""
         _class = ""
         priv = ""
         with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
@@ -174,12 +176,14 @@ def api_interface(path, headers, ip_addr):
                         if time.time() - sessions[headers["TOKEN"]]["lastactive"] <= settings["max_not_logged_in_session_seconds"]:
                             username = sessions[headers["TOKEN"]]["username"]
                             fullname = users[sessions[headers["TOKEN"]]["username"]]["fullname"]
+                            picture = users[sessions[headers["TOKEN"]]["username"]]["picture"]
                             _class = users[sessions[headers["TOKEN"]]["username"]]["class"]
                             priv = users[sessions[headers["TOKEN"]]["username"]]["priv"]
 
         json_response = {
             "username": username,
             "fullname": fullname,
+            "picture": picture,
             "class": _class,
             "priv": priv,
         }
@@ -387,6 +391,15 @@ def application(environ, start_response):
                     start_response(response_code, response_headers)
 
                     response_body = response_body.replace("%%name%%", user["fullname"]).replace("%%codename%%", username).replace("%%class%%", user["class"]).replace("%%desc%%", user["desc"]).replace("%%fullclass%%", dcls["longname"])
+
+                    # Checking if user has custom profile picture
+                    if user["picture"]:
+                        response_body = response_body.replace("%%usericon%%", str("/assets/" + username + ".jpg"))
+                        # print("Y")
+                    else:
+                        # print("F")
+                        response_body = response_body.replace("%%usericon%%", DEFAULTUSER_IMAGE)
+
                     response_body = response_body.encode('utf-8')
                     response_headers = [('Content-Type', 'text/html; charset=utf-8')]
 

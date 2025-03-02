@@ -1,0 +1,60 @@
+html, body {
+    flex: 1;
+    flex-direction: column;
+    min-height: 100%;
+}
+
+.nameframe {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 80px;
+    margin-left: 10%;
+    margin-right: 20px;
+    margin-top: 140px;
+    align-items: center;
+}
+
+.nameframe img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+}
+
+.nameframe h1 {
+    margin: 0 20px;
+    font-size: 40px;
+}
+
+.nameframe p {
+    font-size: 20px;
+}
+
+.frames {
+    display: flex;
+    flex: 1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin: 10%;
+    margin-bottom: 80px;
+    margin-top: 80px;
+    align-items: flex-start;
+}
+
+.detailsframe {
+    display: flex;
+    flex-direction: column;
+    margin: 10px;
+    /* align-items: center; */
+    padding: 20px 40px;
+    border-radius: 10px;
+    background-color: var(--background-active);
+    border: 2px solid transparent;
+    box-shadow: transparent 0px 0px 10px;
+    transition: .3s;
+}
+
+.detailsframe:hover {
+    padding: 30px 50px;
+    border: 2px solid var(--primary);
+    box-shadow: var(--shadow) 0px 0px 10px;
+}

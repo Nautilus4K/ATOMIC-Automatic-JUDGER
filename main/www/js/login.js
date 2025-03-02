@@ -30,3 +30,13 @@ function login() {
         }
     })
 }
+
+addEventListener("keydown", (event) => {
+    if (event.key == "Enter" && document.activeElement.id == "username") {
+        document.getElementById("password").focus();
+    } else if (event.key == "Enter" && document.activeElement.id == "password") {
+        login();
+    } else {
+        console.log(event.key + " --- " + document.activeElement.id)
+    }
+});
