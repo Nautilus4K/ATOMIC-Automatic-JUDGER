@@ -18,7 +18,7 @@ SESSION_JSON = "/central/sessions.json"
 STATSBAR_HTML = "/www/reserved/statsbar.html"
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
-reservedPaths = ["/debug", "/reserved"]
+reservedPaths = ["/debug", "/reserved", "/api"]
 
 def save_session(username: str) -> str:
     """

@@ -9,14 +9,16 @@
         <title>Đăng nhập - %%website_name%%</title>
 
         <script src="/js/general.js"></script>
+        <script src="/js/login.js" defer></script>
         <!-- <script src="/js/generalDeferred.js" defer></script> -->
     </head>
     <body>
         <div class="loginframe">
             <h1>Đăng nhập</h1>
-            <input type="text" placeholder="Tên đăng nhập">
-            <input type="password" placeholder="Mật khẩu">
-            <button>Đăng nhập</button>
+            <input type="text" placeholder="Tên đăng nhập" id="username">
+            <input type="password" placeholder="Mật khẩu" id="password">
+            <p id="label"></p>
+            <button onclick="login()">Đăng nhập</button>
         </div>
 
         <footer>

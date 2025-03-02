@@ -51,3 +51,10 @@ document.addEventListener("click", function(event) {
         }
     })
 });
+
+// User account manager
+const session_token = getCookie("token")
+if ((session_token == "" || !session_token) && window.location.href != "/login") window.location.href = "/login"
+else {
+    
+}
