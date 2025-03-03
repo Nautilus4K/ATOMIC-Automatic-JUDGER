@@ -172,6 +172,8 @@ footer {
     background-color: transparent;
     border-radius: 10px;
     font-size: 13px;
+    text-align: right;
+    border: 0;
     transition: .15s;
 }
 
@@ -188,6 +190,7 @@ footer {
 
 .dropdown .dropdownbtn:hover {
     background-color: var(--background-active);
+    cursor: pointer;
 }
 /* .statsbar .user {
     padding: 15px;

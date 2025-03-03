@@ -187,6 +187,14 @@ def api_interface(path, headers, ip_addr):
             "class": _class,
             "priv": priv,
         }
+    elif path == "/api/delsession" and "TOKEN" in headers:
+        with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+            sessions = json.load(sessionsFile)
+        with open(dirPath+SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
+            sessions.pop(headers["TOKEN"], None)
+            json.dump(sessions, sessionsFile)
+
+        json_response = {}
 
     return json_response
 

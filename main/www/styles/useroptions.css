@@ -1,0 +1,12 @@
+.option_picture {
+    background-color: var(--background-active);
+    padding: 20px;
+    border-radius: 10px;
+    margin: 100px 10%;
+    border: 2px solid transparent;
+    transition: .3s;
+}
+
+.option_picture:hover {
+    border: 2px solid var(--primary);
+}

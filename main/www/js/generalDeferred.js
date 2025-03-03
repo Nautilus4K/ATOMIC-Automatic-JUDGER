@@ -85,3 +85,15 @@ else {
         }
     })
 }
+
+// Handles user sign out of account
+function signout() {
+    fetch("/api/delsession", {
+        headers: {
+            "TOKEN": session_token
+        }
+    }).then(response => response.json()).then((json) => {
+        setCookie("token", "0", 0)
+        window.location.href = "/login"
+    })
+}
