@@ -14,6 +14,7 @@ html, body {
     padding: 20px 40px;
     border-radius: 10px;
     margin: 100px 10%;
+    margin-bottom: 35px;
     border: 2px solid transparent;
     /* justify-content: center; */
     /* align-items: center; */
@@ -69,4 +70,171 @@ h1 {
     font-size: 20px;
     text-align: left;
     /* margin-left: 20px; */
+}
+
+.option_details {
+    display: flex;
+    flex-direction: column;
+    /* flex: 1; */
+
+    background-color: var(--background-active);
+    padding: 20px 40px;
+    border-radius: 10px;
+    margin: 35px 10%;
+    margin-top: 0;
+    border: 2px solid transparent;
+    /* justify-content: center; */
+    /* align-items: center; */
+    transition: .3s;
+}
+
+.option_details:hover {
+    border: 2px solid var(--primary);
+}
+
+.option_details input {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Source Code Pro', 'Ubuntu Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', 'Menlo', 'Monaco', 'Roboto Mono', 'Lucida Console', 'JetBrains Mono', 'SF Mono', 'PT Mono', 'Andale Mono', monospace;
+    border: 0;
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--background);
+    color: var(--text-color);
+}
+
+.option_details textarea {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Source Code Pro', 'Ubuntu Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', 'Menlo', 'Monaco', 'Roboto Mono', 'Lucida Console', 'JetBrains Mono', 'SF Mono', 'PT Mono', 'Andale Mono', monospace;
+    border: 0;
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--background);
+    color: var(--text-color);
+    resize: vertical;
+    height: 100px;
+}
+
+.option_details button {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Source Code Pro', 'Ubuntu Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', 'Menlo', 'Monaco', 'Roboto Mono', 'Lucida Console', 'JetBrains Mono', 'SF Mono', 'PT Mono', 'Andale Mono', monospace;
+    border: 0;
+    background: var(--background);
+    color: var(--text-color);
+    /* margin: 20px; */
+    margin-top: 20px; 
+    margin-bottom: 10px;
+
+    padding: 20px;
+    border-radius: 10px;
+
+    margin-left: auto;
+    margin-right: auto;
+    /* width: 150px; */
+
+    transition: .2s;
+}
+
+.option_details button:hover {
+    cursor: pointer;
+    padding: 20px 45px;
+    background-color: var(--primary);
+    color: var(--primary-color)
+}
+
+.option_passwd {
+    display: flex;
+    flex-direction: column;
+    /* flex: 1; */
+
+    background-color: var(--background-active);
+    padding: 20px 40px;
+    border-radius: 10px;
+    margin: 35px 10%;
+    margin-top: 0;
+    border: 2px solid transparent;
+    /* justify-content: center; */
+    /* align-items: center; */
+    transition: .3s;
+}
+
+.option_passwd:hover {
+    border: 2px solid var(--primary);
+}
+
+.option_passwd input {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Source Code Pro', 'Ubuntu Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', 'Menlo', 'Monaco', 'Roboto Mono', 'Lucida Console', 'JetBrains Mono', 'SF Mono', 'PT Mono', 'Andale Mono', monospace;
+    border: 0;
+    padding: 10px;
+    border-radius: 10px;
+    background: var(--background);
+    color: var(--text-color);
+}
+
+.option_passwd button {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Source Code Pro', 'Ubuntu Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', 'Menlo', 'Monaco', 'Roboto Mono', 'Lucida Console', 'JetBrains Mono', 'SF Mono', 'PT Mono', 'Andale Mono', monospace;
+    border: 0;
+    background: var(--background);
+    color: var(--text-color);
+    /* margin: 20px; */
+    margin-top: 20px; 
+    margin-bottom: 10px;
+
+    padding: 20px;
+    border-radius: 10px;
+
+    margin-left: auto;
+    margin-right: auto;
+    /* width: 150px; */
+
+    transition: .2s;
+}
+
+.option_passwd button:hover {
+    cursor: pointer;
+    padding: 20px 45px;
+    background-color: var(--primary);
+    color: var(--primary-color)
+}
+
+.option_signout {
+    display: flex;
+    flex-direction: column;
+    /* flex: 1; */
+
+    background-color: var(--background-active);
+    padding: 20px 40px;
+    border-radius: 10px;
+    margin: 35px 10%;
+    margin-top: 0;
+    border: 2px solid transparent;
+    /* justify-content: center; */
+    /* align-items: center; */
+    transition: .3s;
+}
+
+.option_signout:hover {
+    border: 2px solid var(--dangerous);
+}
+
+.option_signout button {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Source Code Pro', 'Ubuntu Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', 'Menlo', 'Monaco', 'Roboto Mono', 'Lucida Console', 'JetBrains Mono', 'SF Mono', 'PT Mono', 'Andale Mono', monospace;
+    border: 0;
+    background: var(--background);
+    color: var(--text-color);
+    /* margin: 20px; */
+    margin-top: 20px; 
+    margin-bottom: 10px;
+
+    padding: 20px;
+    border-radius: 10px;
+
+    margin-left: auto;
+    margin-right: auto;
+    /* width: 150px; */
+
+    transition: .2s;
+}
+
+.option_signout button:hover {
+    cursor: pointer;
+    padding: 20px 45px;
+    background-color: var(--dangerous);
+    color: var(--dangerous-color)
 }

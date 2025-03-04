@@ -1,6 +1,6 @@
 :root {
     --background: rgb(255, 255, 255);
-    --background-active: rgb(232, 232, 232);
+    --background-active: rgb(241, 241, 241);
     --text-color: black;
     --primary: rgb(0, 110, 255);
     --primary-color: white;
@@ -11,6 +11,7 @@
     --shadow: rgba(0, 0, 0, 0.452);
     --mode-change-duration: 0.1s;
     --dangerous: rgb(209, 0, 0);
+    --dangerous-color: white;
 }
 
 .dark {
@@ -26,6 +27,7 @@
     --shadow: rgba(0, 0, 0, 0.452);
     --mode-change-duration: 0.1s;
     --dangerous: rgb(255, 40, 40);
+    --dangerous-color: white;
 }
 
 /* Initialize custom font: Montserrat */

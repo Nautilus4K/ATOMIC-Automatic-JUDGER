@@ -17,13 +17,15 @@
 .content {
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
+    flex: 1;
     margin: 0 10%;
     margin-bottom: 100px;
 }
 
 .content .info {
     display: block;
-    width: 700px;
+    width: 40%;
     border-radius: 10px;
     align-items: center;
     text-align: center;
@@ -37,7 +39,6 @@
 }
 
 .content .info .header {
-    width: 100%;
     font-weight: 440;
     background-image: url('/assets/techiebanner.jpg');
     color: white;
@@ -49,7 +50,7 @@
 }
 
 .content .listview .header {
-    width: 100%;
+    /* width: 100%; */
     font-weight: 440;
     background-image: url('/assets/techiebanner.jpg');
     color: white;
@@ -61,13 +62,16 @@
 }
 
 .content .listview {
-    width: 100%;
+    /* width: 100%; */
+    min-width: 300px;
+    flex: 1;
     border-radius: 10px;
     align-items: center;
     text-align: center;
     justify-content: center;
     border: 1px solid var(--background-active);
     margin-right: 10px;
+    margin-bottom: 10px;
 }
 
 .content .listview .list {
