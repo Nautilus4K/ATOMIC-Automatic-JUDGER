@@ -5,6 +5,8 @@ import random
 import time
 import string
 from hashlib import sha256
+from PIL import Image
+import io
 
 # Variables
 ALIASES_FILENAME = "aliases.json"
@@ -18,6 +20,7 @@ SESSION_JSON = "/central/sessions.json"
 STATSBAR_HTML = "/www/reserved/statsbar.html"
 SETTINGS_JSON = "/source/settings.json"
 DEFAULTUSER_IMAGE = "/assets/defaultuser.png"
+USERPROFILEPICTURE_PATH = "/www/userpictures/"
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved", "/api"]
@@ -81,7 +84,7 @@ def del_session(token: str):
     with open(dirPath+SESSION_JSON, "w", encoding='utf-8') as sessionFile:
         json.dump(currentSessions, sessionFile)
 
-def api_interface(path, headers, ip_addr):
+def api_interface(path, headers, ip_addr, body):
     # print("API called from ANONYMOUS DEVICE")
 
     json_response = {}
@@ -187,6 +190,7 @@ def api_interface(path, headers, ip_addr):
             "class": _class,
             "priv": priv,
         }
+
     elif path == "/api/delsession" and "TOKEN" in headers:
         with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
             sessions = json.load(sessionsFile)
@@ -195,6 +199,40 @@ def api_interface(path, headers, ip_addr):
             json.dump(sessions, sessionsFile)
 
         json_response = {}
+
+    elif path == "/api/uploadprofilepic" and "TOKEN" in headers and "TYPE" in headers:
+        try:
+            success = True
+            message = ""
+            with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+                sessions = json.load(sessionsFile)
+
+                # Get user's username from the session token
+                username = sessions[headers["TOKEN"]]["username"]
+
+            with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
+                userdata = json.load(userdataFile)
+
+            userdata[username]["picture"] = True
+
+            with open(dirPath+USERDATA_JSON, "w", encoding='utf-8') as userdataFile:
+                json.dump(userdata, userdataFile)
+
+            # imgdata = body
+            # Read image
+            imgdata = Image.open(io.BytesIO(body))
+            with open(dirPath+USERPROFILEPICTURE_PATH+username+".jpg", "wb") as userprofilepicturefile:
+                # Make sure it's always gonna be RGB
+                image = image.convert("RGB")
+                imgdata.save(userprofilepicturefile, format="JPEG", quality=95)
+        except Exception as e:
+            success = False
+            message = str(e)
+
+        json_response = {
+            "success": success,
+            "message": message
+        }
 
     return json_response
 
@@ -288,7 +326,7 @@ def application(environ, start_response):
         content_length = 0
 
     if content_length > 0:
-        request_body = environ['wsgi.input'].read(content_length).decode('utf-8')
+        request_body = environ['wsgi.input'].read(content_length)
     else:
         request_body = None
 
@@ -303,9 +341,9 @@ def application(environ, start_response):
             # If trying to contact API
             with open(dirPath+VERSION_JSON, "r", encoding='utf-8') as versionFile:
                 api_version = json.load(versionFile)["api"]
-            
+
             json_base_response = {"api_version": api_version}
-            json_process_response = api_interface(path, headers, ip_address)
+            json_process_response = api_interface(path, headers, ip_address, request_body)
             json_base_response.update(json_process_response)
             response_body = json.dumps(json_base_response).encode('utf-8')
         else:
