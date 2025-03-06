@@ -190,6 +190,40 @@ def api_interface(path, headers, ip_addr, body):
             "priv": priv,
         }
 
+    elif path == "/api/getfullinfo" and "TOKEN" in headers:
+        username = ""
+        fullname = ""
+        picture = ""
+        _class = ""
+        priv = ""
+        desc = ""
+        with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+            with open(dirPath+SETTINGS_JSON, "r", encoding='utf-8') as settingsFile:
+                with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userData:
+                    sessions = json.load(sessionsFile)
+                    settings = json.load(settingsFile)
+                    users = json.load(userData)
+
+                    # If TOKEN actually exists in the list of sessions
+                    if headers["TOKEN"] in sessions:
+                        # If last active time does not exceed the maximum time before deactivation of session
+                        if time.time() - sessions[headers["TOKEN"]]["lastactive"] <= settings["max_not_logged_in_session_seconds"]:
+                            username = sessions[headers["TOKEN"]]["username"]
+                            fullname = users[sessions[headers["TOKEN"]]["username"]]["fullname"]
+                            picture = users[sessions[headers["TOKEN"]]["username"]]["picture"]
+                            _class = users[sessions[headers["TOKEN"]]["username"]]["class"]
+                            priv = users[sessions[headers["TOKEN"]]["username"]]["priv"]
+                            desc = users[sessions[headers["TOKEN"]]["username"]]["desc"]
+
+        json_response = {
+            "username": username,
+            "fullname": fullname,
+            "picture": picture,
+            "class": _class,
+            "priv": priv,
+            "desc": desc
+        }
+
     elif path == "/api/delsession" and "TOKEN" in headers:
         with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
             sessions = json.load(sessionsFile)
@@ -240,6 +274,16 @@ def api_interface(path, headers, ip_addr, body):
             "success": success,
             "message": message
         }
+
+    # Path for updating user details (which is display name and description)
+    elif path == "/api/updatedetails" and "TOKEN" in headers and "NAME" in headers and "DESC" in headers:
+        try:
+            success = True
+            message = ""
+        except Exception as e:
+            success = False
+            message = str(e)
+            print(str(e))
 
     return json_response
 

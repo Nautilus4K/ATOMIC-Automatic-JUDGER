@@ -58,7 +58,7 @@ function uploadProfilePicture(base64String) {
 }
 
 // Set the display of the profile picture
-fetch("/api/getbroadinfo", {
+fetch("/api/getfullinfo", {
     method: "GET",
     headers: {
         "TOKEN": getCookie("token")
@@ -69,6 +69,7 @@ fetch("/api/getbroadinfo", {
     if (json["picture"] == true) {
         // document.getElementById("userpic").src = "/userpictures/"+json["username"]+".jpg"
         document.getElementById("currentuserprofilepic").src = "/userpictures/"+json["username"]+".jpg";
+        document.getElementById("displayname").value = json["fullname"];
+        document.getElementById("desc").value = json["desc"]
     }
-
 })

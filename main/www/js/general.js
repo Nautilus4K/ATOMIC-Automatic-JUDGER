@@ -27,8 +27,14 @@ function getCookie(cname) {
 }
 
 var darkmode = getCookie("darkmode")
-if (darkmode == "" || !darkmode || darkmode == "0") {
+if (darkmode == "0") {
     // If cookie is not set or set to light
+    document.documentElement.classList.remove("dark")
+} else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches && (darkmode == "" || !darkmode)) {
+    setCookie("darkmode", "1", 365)
+    document.documentElement.classList.add("dark")
+} else if (darkmode != "1"){
+    setCookie("darkmode", "0", 365)
     document.documentElement.classList.remove("dark")
 } else {
     document.documentElement.classList.add("dark")
