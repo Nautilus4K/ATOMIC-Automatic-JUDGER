@@ -124,6 +124,7 @@ footer {
     width: 40px;
     height: 40px;
     box-shadow: var(--shadow) 0px 0px 10px;
+    object-fit: cover;
     /* border: 3px solid var(--shadow); */
     transition: .3s;
     background-color: transparent;

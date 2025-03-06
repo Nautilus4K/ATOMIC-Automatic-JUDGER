@@ -63,17 +63,19 @@ else {
         }
     }).then(response => response.json()).then((json) => {
         if (json["username"] != "") {
+            if (window.location.href == "/") {
+                document.getElementById("info_name").textContent = "Tên: " + json["fullname"]
+                document.getElementById("info_class").textContent = "Lớp: " + json["class"]
+                
+                if (json["priv"] == false) {
+                    document.getElementById("info_priv").textContent = "Riêng tư: Không"
+                } else {
+                    document.getElementById("info_priv").textContent = "Riêng tư: Có"
+                }
+            }
+
             document.getElementById("usersettings").textContent = json["fullname"]
             document.getElementById("profilepage").href = "/user/"+json["username"]
-
-            document.getElementById("info_name").textContent = "Tên: " + json["fullname"]
-            document.getElementById("info_class").textContent = "Lớp: " + json["class"]
-            
-            if (json["priv"] == false) {
-                document.getElementById("info_priv").textContent = "Riêng tư: Không"
-            } else {
-                document.getElementById("info_priv").textContent = "Riêng tư: Có"
-            }
 
             // Profile picture
             if (json["picture"] == true) {

@@ -5,8 +5,7 @@ import random
 import time
 import string
 from hashlib import sha256
-from PIL import Image
-import io
+from base64 import b64decode
 
 # Variables
 ALIASES_FILENAME = "aliases.json"
@@ -200,34 +199,42 @@ def api_interface(path, headers, ip_addr, body):
 
         json_response = {}
 
-    elif path == "/api/uploadprofilepic" and "TOKEN" in headers and "TYPE" in headers:
+    elif path == "/api/uploadprofilepic" and "TOKEN" in headers:
         try:
             success = True
             message = ""
-            with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+            with open(dirPath + SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
                 sessions = json.load(sessionsFile)
 
                 # Get user's username from the session token
                 username = sessions[headers["TOKEN"]]["username"]
 
-            with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
+            with open(dirPath + USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
                 userdata = json.load(userdataFile)
 
             userdata[username]["picture"] = True
 
-            with open(dirPath+USERDATA_JSON, "w", encoding='utf-8') as userdataFile:
+            with open(dirPath + USERDATA_JSON, "w", encoding='utf-8') as userdataFile:
                 json.dump(userdata, userdataFile)
 
-            # imgdata = body
-            # Read image
-            imgdata = Image.open(io.BytesIO(body))
-            with open(dirPath+USERPROFILEPICTURE_PATH+username+".jpg", "wb") as userprofilepicturefile:
-                # Make sure it's always gonna be RGB
-                image = image.convert("RGB")
-                imgdata.save(userprofilepicturefile, format="JPEG", quality=95)
+            # # Read image from body (raw bytes)
+            # imgdata = io.BytesIO(body)
+            # img = Image.open(imgdata)
+
+            # # Convert to RGB (if it's PNG or another format)
+            # img = img.convert("RGB")
+
+            # # Save the image as JPEG
+            # print("Saved to", dirPath + USERPROFILEPICTURE_PATH + username + ".jpg")
+            with open(dirPath + USERPROFILEPICTURE_PATH + username + ".jpg", "wb") as userprofilepicturefile:
+                # img.save(userprofilepicturefile, format="JPEG", quality=95)
+                # print(body.decode('utf-8'))
+                userprofilepicturefile.write(b64decode(body.decode('utf-8')))
+
         except Exception as e:
             success = False
             message = str(e)
+            print(str(e))
 
         json_response = {
             "success": success,
@@ -440,7 +447,7 @@ def application(environ, start_response):
 
                     # Checking if user has custom profile picture
                     if user["picture"]:
-                        response_body = response_body.replace("%%usericon%%", str("/assets/" + username + ".jpg"))
+                        response_body = response_body.replace("%%usericon%%", str("/userpictures/" + username + ".jpg"))
                         # print("Y")
                     else:
                         # print("F")

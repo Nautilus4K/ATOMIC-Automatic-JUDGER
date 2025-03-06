@@ -42,6 +42,7 @@ html, body {
     border-radius: 50%;
     width: 200px;
     height: 200px;
+    object-fit: cover;
 }
 
 .option_picture_sel label {

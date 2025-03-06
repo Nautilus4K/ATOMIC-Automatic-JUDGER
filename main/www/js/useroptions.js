@@ -1,16 +1,74 @@
 document.getElementById("file-upload").addEventListener("change", function(event) {
     const file = event.target.files[0]; // Get the uploaded file
     if (file) {
-        //   console.log("File uploaded:", file.name);
-        //   console.log("File type:", file.type);
-        uploadProfilePicture(file.type);
+        convertFileToBase64(file);
     }
+    // Reset the input to allow the same file to be selected again
+    event.target.value = "";  // Clear the input value after the file is uploaded
 });
 
-function uploadProfilePicture(filetype) {
-    if (filetype == "image/jpeg") filetype = "jpeg";
-    else filetype = "png";
-    console.log(filetype);
+function convertFileToBase64(file) {
+    // Create a FileReader to read the file as base64
+    const reader = new FileReader();
 
-    
+    reader.onloadend = function() {
+        // The result is the base64-encoded string
+        const base64String = reader.result.split(',')[1]; // Remove the "data:image/jpeg;base64," part
+
+        // Now send the base64 string to the server
+        uploadProfilePicture(base64String);
+    };
+
+    // Read the file as a data URL (base64-encoded string)
+    reader.readAsDataURL(file);
 }
+
+function uploadProfilePicture(base64String) {
+    // Prepare the data to send to the server
+    let token = getCookie("token");  // Get the session token dynamically
+    let filetype = base64String.startsWith("data:image/jpeg") ? "jpeg" : "png"; // You can check for other file types
+
+    // // Create a JSON object with the base64 string
+    // const data = {
+    //     profilepic: base64String,  // Send the base64 string of the image
+    //     filetype: filetype,        // Send the file type (jpeg or png)
+    // };
+
+    // Send the base64 string to the server using Fetch API
+    fetch('/api/uploadprofilepic', {
+        method: 'POST',
+        headers: {
+            'TOKEN': token,  // Include the session token
+        },
+        body: JSON.stringify(base64String),  // Send the base64-encoded data in the body
+    })
+    .then(response => response.json())
+    .then(json => {
+        if (json.success) {
+            alert("Thành công tải ảnh.");
+            window.location.href = window.location.href;
+        } else {
+            alert("Lỗi: " + json.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error uploading profile picture:', error);
+        alert("An error occurred during the upload.");
+    });
+}
+
+// Set the display of the profile picture
+fetch("/api/getbroadinfo", {
+    method: "GET",
+    headers: {
+        "TOKEN": getCookie("token")
+    }
+}).then(response => response.json()).then((json) => {
+
+    // Profile picture
+    if (json["picture"] == true) {
+        // document.getElementById("userpic").src = "/userpictures/"+json["username"]+".jpg"
+        document.getElementById("currentuserprofilepic").src = "/userpictures/"+json["username"]+".jpg";
+    }
+
+})

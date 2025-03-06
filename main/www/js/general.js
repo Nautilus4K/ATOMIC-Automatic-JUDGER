@@ -1,3 +1,6 @@
+// Function for setting cookies
+// Also can be used to delete cookies by overwriting with a ghost
+// cookie with the exdays of 0
 function setCookie(cname, cvalue, exdays) {
     const d = new Date();
     d.setTime(d.getTime() + (exdays*24*60*60*1000));
@@ -5,7 +8,9 @@ function setCookie(cname, cvalue, exdays) {
     document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
 }
 
+// Getting cookies. s1mple as that.
 function getCookie(cname) {
+    // "a"
     let name = cname + "=";
     let decodedCookie = decodeURIComponent(document.cookie);
     let ca = decodedCookie.split(';');
