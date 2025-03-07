@@ -540,8 +540,6 @@ def application(environ, start_response):
                 try:
                     with open(dirPath+USERFILE_PATH, "r", encoding='utf-8') as userFile:
                         user = json.load(userFile)[username]
-                    with open(dirPath+CLASSFILE_PATH, "r", encoding='utf-8') as classFile:
-                        dcls = json.load(classFile)[user["class"]]
 
                     if os.path.exists(dirPath+USERPROFILE_WEBFILE):
                         response_body, response_headers, response_code = serve_website(dirPath+USERPROFILE_WEBFILE, response_headers)
@@ -550,7 +548,22 @@ def application(environ, start_response):
                         return ['Không tìm thấy người dùng.'.encode('utf-8')]
                     start_response(response_code, response_headers)
 
-                    response_body = response_body.replace("%%name%%", user["fullname"]).replace("%%codename%%", username).replace("%%class%%", user["class"]).replace("%%desc%%", user["desc"]).replace("%%fullclass%%", dcls["longname"])
+                    response_body = response_body.replace("%%name%%", user["fullname"]).replace("%%codename%%", username).replace("%%desc%%", user["desc"])
+                    #.replace("%%class%%", user["class"]).replace("%%fullclass%%", dcls["longname"])
+
+                    # Because there are many classes in one user, we might as well just add them in one by one
+                    # But first, we need the classes variable
+                    with open(dirPath+CLASSFILE_PATH, "r", encoding='utf-8') as classFile:
+                        classes = json.load(classFile)
+                    
+                    # Now, we run one by one in user's classes
+                    fullstring = ""
+                    for _class in user["class"]:
+                        # Get the full name of class
+                        fullname = classes[_class]["longname"]
+                        fullstring += f"<p class=\"class\">{_class} - {fullname}</p>"
+
+                    response_body = response_body.replace("%%class%%", fullstring)
 
                     # Checking if user has custom profile picture
                     if user["picture"]:
@@ -568,12 +581,12 @@ def application(environ, start_response):
 
                 except Exception as e:
                     print(e)
-                    print(str(e))
+                    print("USER ERRROR",str(e))
                     if os.path.exists(dirPath+ERROR_WEBFILE):
                         response_body, response_headers, response_code = serve_website(dirPath+ERROR_WEBFILE, response_headers)
                     else:
                         start_response('500 Internal Server Error', response_headers)
-                        return ['Không tìm thấy người dùng.'.encode('utf-8')]
+                        return ['Lỗi trong quá trình tìm kiếm người dùng.'.encode('utf-8')]
                     start_response(response_code, response_headers)
                     response_body = response_body.replace("%%error_code%%", "500").replace("%%error_description%%", "Đã có lỗi xảy ra trong quá trình tìm kiếm người dùng.")
                     return [response_body.encode('utf-8')]
