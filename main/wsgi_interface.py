@@ -167,10 +167,10 @@ def api_interface(path, headers, ip_addr, body):
         priv = ""
         with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
             with open(dirPath+SETTINGS_JSON, "r", encoding='utf-8') as settingsFile:
-                with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userData:
+                with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
                     sessions = json.load(sessionsFile)
                     settings = json.load(settingsFile)
-                    users = json.load(userData)
+                    users = json.load(userdataFile)
 
                     # If TOKEN actually exists in the list of sessions
                     if headers["TOKEN"] in sessions:
@@ -199,10 +199,10 @@ def api_interface(path, headers, ip_addr, body):
         desc = ""
         with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
             with open(dirPath+SETTINGS_JSON, "r", encoding='utf-8') as settingsFile:
-                with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userData:
+                with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
                     sessions = json.load(sessionsFile)
                     settings = json.load(settingsFile)
-                    users = json.load(userData)
+                    users = json.load(userdataFile)
 
                     # If TOKEN actually exists in the list of sessions
                     if headers["TOKEN"] in sessions:
@@ -280,10 +280,36 @@ def api_interface(path, headers, ip_addr, body):
         try:
             success = True
             message = ""
+            
+            # Get username from token
+            with open(dirPath + SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+                sessions = json.load(sessionsFile)
+            
+            # Extract username from dictionary (JSON-like/map-like) object
+            username = sessions[headers["TOKEN"]]["username"]
+
+            # Get users information
+            with open(dirPath + USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
+                users = json.load(userdataFile)
+
+            # Modify intended user's information from within dictionary object
+            users[username]["fullname"] = headers["NAME"]
+            users[username]["desc"] = headers["DESC"]
+
+            # Save modified user's information into users file
+            with open(dirPath + USERDATA_JSON, "w", encoding='utf-8') as userdataFile:
+                json.dump(users, userdataFile)
+
         except Exception as e:
+            # Throw an exception
             success = False
             message = str(e)
             print(str(e))
+
+        json_response = {
+            "success": success,
+            "message": message
+        }
 
     return json_response
 

@@ -139,6 +139,15 @@ h1 {
     color: var(--primary-color)
 }
 
+.option_details .notice {
+    display: none;
+    font-style: oblique;
+    color: var(--dangerous);
+    text-align: center;
+    margin-bottom: 0;
+    margin-top: 20px;
+}
+
 .option_passwd {
     display: flex;
     flex-direction: column;

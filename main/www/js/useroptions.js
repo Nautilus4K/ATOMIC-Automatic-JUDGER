@@ -1,3 +1,5 @@
+const token = getCookie("token");  // Get the session token
+
 document.getElementById("file-upload").addEventListener("change", function(event) {
     const file = event.target.files[0]; // Get the uploaded file
     if (file) {
@@ -25,7 +27,6 @@ function convertFileToBase64(file) {
 
 function uploadProfilePicture(base64String) {
     // Prepare the data to send to the server
-    let token = getCookie("token");  // Get the session token dynamically
     let filetype = base64String.startsWith("data:image/jpeg") ? "jpeg" : "png"; // You can check for other file types
 
     // // Create a JSON object with the base64 string
@@ -61,7 +62,7 @@ function uploadProfilePicture(base64String) {
 fetch("/api/getfullinfo", {
     method: "GET",
     headers: {
-        "TOKEN": getCookie("token")
+        "TOKEN": token
     }
 }).then(response => response.json()).then((json) => {
 
@@ -70,6 +71,42 @@ fetch("/api/getfullinfo", {
         // document.getElementById("userpic").src = "/userpictures/"+json["username"]+".jpg"
         document.getElementById("currentuserprofilepic").src = "/userpictures/"+json["username"]+".jpg";
         document.getElementById("displayname").value = json["fullname"];
-        document.getElementById("desc").value = json["desc"]
+        document.getElementById("desc").value = json["desc"];
     }
 })
+
+function updateDetails() {
+    const name = document.getElementById("displayname").value;
+    const desc = document.getElementById("desc").value;
+
+    fetch("/api/updatedetails", {
+        method: "GET",
+        headers: {
+            "TOKEN": token,
+            "NAME": name,
+            "DESC": desc
+        }
+    }).then(response => response.json()).then((json) => {
+        if (json["success"]) {
+            const detailsnoticeobj = document.getElementById("detailsnotice");
+            detailsnoticeobj.style.display = "block";
+            detailsnoticeobj.style.color = "var(--primary)";
+            detailsnoticeobj.textContent = "Cập nhật dữ liệu thành công";
+        }
+        else {
+            const detailsnoticeobj = document.getElementById("detailsnotice");
+            detailsnoticeobj.style.display = "block";
+            detailsnoticeobj.style.color = "var(--dangerous)";
+            detailsnoticeobj.textContent = "Lỗi: " + json["message"];
+        }
+    })
+}
+
+// Make sure that anytime the users is typing the details to update them, the old
+// notification label will be hidden
+addEventListener("keydown", (event) => {
+    if (document.activeElement.id == "displayname" || document.activeElement.id == "desc") {
+        const detailsnoticeobj = document.getElementById("detailsnotice");
+        detailsnoticeobj.style.display = "none";
+    }
+});
