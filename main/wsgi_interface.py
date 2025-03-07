@@ -248,8 +248,8 @@ def api_interface(path, headers, ip_addr, body):
 
             userdata[username]["picture"] = True
 
-            with open(dirPath + USERDATA_JSON, "w", encoding='utf-8') as userdataFile:
-                json.dump(userdata, userdataFile)
+            with open(dirPath + USERDATA_JSON, "w", encoding='utf-8') as userdataWrite:
+                json.dump(userdata, userdataWrite)
 
             # # Read image from body (raw bytes)
             # imgdata = io.BytesIO(body)
@@ -297,14 +297,51 @@ def api_interface(path, headers, ip_addr, body):
             users[username]["desc"] = headers["DESC"]
 
             # Save modified user's information into users file
-            with open(dirPath + USERDATA_JSON, "w", encoding='utf-8') as userdataFile:
-                json.dump(users, userdataFile)
+            with open(dirPath + USERDATA_JSON, "w", encoding='utf-8') as userdataWrite:
+                json.dump(users, userdataWrite)
 
         except Exception as e:
             # Throw an exception
             success = False
             message = str(e)
             print(str(e))
+
+        json_response = {
+            "success": success,
+            "message": message
+        }
+    
+    elif path == "/api/setpasswd" and "TOKEN" in headers and "OLDPASS" in headers and "NEWPASS" in headers:
+        try:
+            success = True
+            message = "Thành công thay đổi mật khẩu"
+
+            # Get username from token
+            with open(dirPath + SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+                sessions = json.load(sessionsFile)
+
+            username = sessions[headers["TOKEN"]]["username"]
+
+            with open(dirPath + USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
+                users = json.load(userdataFile)
+
+            typedPasswordHashed = sha256(headers["OLDPASS"].encode('ascii')).hexdigest()
+            if typedPasswordHashed != users[username]["password"]:
+                # If passwords are not the same
+                success = False
+                message = "Mật khẩu cũ không đúng"
+            else:
+                # If passwords are, in fact, the same. We proceed to change the password of user
+                users[username]["password"] = sha256(headers["NEWPASS"].encode('ascii')).hexdigest()
+
+                # Save it all
+                with open(dirPath + USERDATA_JSON, "w", encoding='utf-8') as userdataWrite:
+                    json.dump(users, userdataWrite)
+
+        except Exception as e:
+            success = False
+            print(str(e))
+            message = "Lỗi: " + str(e)
 
         json_response = {
             "success": success,

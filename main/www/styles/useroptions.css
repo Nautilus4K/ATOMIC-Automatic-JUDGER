@@ -139,7 +139,7 @@ h1 {
     color: var(--primary-color)
 }
 
-.option_details .notice {
+.notice {
     display: none;
     font-style: oblique;
     color: var(--dangerous);

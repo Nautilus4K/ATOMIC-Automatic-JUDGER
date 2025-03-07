@@ -40,15 +40,16 @@
             <h1>Đổi mật khẩu</h1>
 
             <p>Mật khẩu hiện tại</p>
-            <input type="password">
+            <input type="password" id="oldpass">
 
             <p>Mật khẩu mới</p>
-            <input type="password">
+            <input type="password" id="newpass">
 
             <p>Nhập lại mật khẩu mới</p>
-            <input type="password">
-
-            <button>Đổi mật khẩu</button>
+            <input type="password" id="newpassre">
+            
+            <p class="notice" id="passwdnotice">Lỗi</p>
+            <button onclick="updatePassword()">Đổi mật khẩu</button>
         </div>
 
         <div class="option_signout">

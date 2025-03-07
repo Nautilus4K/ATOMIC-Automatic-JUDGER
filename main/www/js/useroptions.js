@@ -108,5 +108,45 @@ addEventListener("keydown", (event) => {
     if (document.activeElement.id == "displayname" || document.activeElement.id == "desc") {
         const detailsnoticeobj = document.getElementById("detailsnotice");
         detailsnoticeobj.style.display = "none";
+    } else if (document.activeElement.id == "oldpass" || document.activeElement.id == "newpass" || document.activeElement.id == "newpassre") {
+        const passwdnoticeobj = document.getElementById("passwdnotice");
+        passwdnoticeobj.style.display = "none";
     }
 });
+
+function updatePassword() {
+    const oldpasswd = document.getElementById("oldpass").value;
+    const newpasswd = document.getElementById("newpass").value;
+    const newpasswdre = document.getElementById("newpassre").value;
+
+    const notifyObj = document.getElementById("passwdnotice");
+
+    if (newpasswd != newpasswdre) {
+        notifyObj.style.display = "block";
+        notifyObj.style.color = "var(--dangerous)";
+        notifyObj.textContent = "Mật khẩu không trùng khớp!";
+    } else {
+        // If all client-side checks are done, we move on to the more network-dependent checks
+        // Now its all APIs
+        fetch("/api/setpasswd", {
+            method: "GET",
+            headers: {
+                "TOKEN": token,
+                "OLDPASS": oldpasswd,
+                "NEWPASS": newpasswd
+            }
+        }).then(response => response.json()).then((json) => {
+            console.log(json);
+            if (json["success"]) {
+                notifyObj.style.display = "block";
+                notifyObj.style.color = "var(--primary)";
+                notifyObj.textContent = "Cập nhật mật khẩu thành công";
+            } else {
+                // If an error happened
+                notifyObj.style.display = "block";
+                notifyObj.style.color = "var(--dangerous)";
+                notifyObj.textContent = json["message"];
+            }
+        })
+    }
+}

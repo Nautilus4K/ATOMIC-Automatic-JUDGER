@@ -45,6 +45,7 @@ html, body {
     display: flex;
     flex-direction: column;
     margin: 10px;
+    margin-bottom: 20px;
     /* align-items: center; */
     padding: 20px 40px;
     border-radius: 10px;
@@ -58,4 +59,5 @@ html, body {
     padding: 30px 50px;
     border: 2px solid var(--primary);
     box-shadow: var(--shadow) 0px 0px 10px;
+    margin-bottom: 0;
 }
