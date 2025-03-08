@@ -13,6 +13,8 @@ fetch("/api/getbroadinfo", {
         } else {
             document.getElementById("info_priv").textContent = "Riêng tư: Có";
         }
+
+        document.getElementById("info_amount").textContent = "Số bài đã làm: " + json["contestAmount"];
     }
 })
 
@@ -39,7 +41,7 @@ fetch("/api/getcontests", {
             //     <p class="status">contest_locked</p>
             // </div></a>
 
-            if (contest_locked) contest_locked = "KHÓA";
+            if (contest_locked) contest_locked = "ĐÃ KHÓA";
             else contest_locked = "";
 
             innerHTML += "<a href=\"/contest/"+ contest_name + "\">" +

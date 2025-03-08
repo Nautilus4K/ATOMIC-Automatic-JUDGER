@@ -1,0 +1,72 @@
+.infoframe {
+    width: 80%;
+    padding: 15px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid var(--background-active);
+    margin-top: 140px;
+    border-radius: 10px;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+}
+
+.interframe {
+    width: 80%;
+    padding: 15px;
+    margin-left: auto;
+    margin-right: auto;
+    border: 1px solid var(--background-active);
+    margin-top: 30px;
+    border-radius: 10px;
+    text-align: center;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 60px;
+}
+
+.languages {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.languages button {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Source Code Pro', 'Ubuntu Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', 'Menlo', 'Monaco', 'Roboto Mono', 'Lucida Console', 'JetBrains Mono', 'SF Mono', 'PT Mono', 'Andale Mono', monospace;
+    color: var(--text-color);
+    background-color: var(--background-active);
+    margin: 0 10px;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px;
+    transition: .2s;
+}
+
+.languages button:hover {
+    background-color: var(--background);
+    cursor: pointer;
+}
+
+.languages button.active {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Source Code Pro', 'Ubuntu Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', 'Menlo', 'Monaco', 'Roboto Mono', 'Lucida Console', 'JetBrains Mono', 'SF Mono', 'PT Mono', 'Andale Mono', monospace;
+    color: var(--primary-color);
+    background-color: var(--primary);
+    margin: 0 10px;
+    border: 0;
+    border-radius: 10px;
+    padding: 10px;
+    transition: .2s;
+}
+
+.languages button.active:hover {
+    background-color: var(--secondary);
+}
+
+.editor {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Source Code Pro', 'Ubuntu Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', 'Menlo', 'Monaco', 'Roboto Mono', 'Lucida Console', 'JetBrains Mono', 'SF Mono', 'PT Mono', 'Andale Mono', monospace;
+    margin-top: 35px;
+    /* margin-bottom: 30px; */
+    width: 100%;
+    height: 400px;
+}

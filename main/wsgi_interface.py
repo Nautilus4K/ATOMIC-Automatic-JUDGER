@@ -167,6 +167,7 @@ def api_interface(path, headers, ip_addr, body):
         picture = ""
         _class = ""
         priv = ""
+        contestsAnmount = 0
         with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
             with open(dirPath+SETTINGS_JSON, "r", encoding='utf-8') as settingsFile:
                 with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
@@ -180,6 +181,12 @@ def api_interface(path, headers, ip_addr, body):
                         if time.time() - sessions[headers["TOKEN"]]["lastactive"] <= settings["max_not_logged_in_session_seconds"]:
                             username = sessions[headers["TOKEN"]]["username"]
                             fullname = users[sessions[headers["TOKEN"]]["username"]]["fullname"]
+
+                            if os.path.exists(dirPath + RESULT_DIR + username + ".json"):
+                                with open(dirPath + RESULT_DIR + username + ".json", "r", encoding='utf-8') as resultFile:
+                                    contestsAnmount = len(json.load(resultFile))
+                            else: contestsAnmount = 0
+
                             picture = users[sessions[headers["TOKEN"]]["username"]]["picture"]
                             _class = users[sessions[headers["TOKEN"]]["username"]]["class"]
                             priv = users[sessions[headers["TOKEN"]]["username"]]["priv"]
@@ -190,6 +197,7 @@ def api_interface(path, headers, ip_addr, body):
             "picture": picture,
             "class": _class,
             "priv": priv,
+            "contestAmount": contestsAnmount
         }
 
     elif path == "/api/getfullinfo" and "TOKEN" in headers:
@@ -199,6 +207,7 @@ def api_interface(path, headers, ip_addr, body):
         _class = ""
         priv = ""
         desc = ""
+        contestsAnmount = 0
         with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
             with open(dirPath+SETTINGS_JSON, "r", encoding='utf-8') as settingsFile:
                 with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
@@ -211,6 +220,12 @@ def api_interface(path, headers, ip_addr, body):
                         # If last active time does not exceed the maximum time before deactivation of session
                         if time.time() - sessions[headers["TOKEN"]]["lastactive"] <= settings["max_not_logged_in_session_seconds"]:
                             username = sessions[headers["TOKEN"]]["username"]
+
+                            if os.path.exists(dirPath + RESULT_DIR + username + ".json"):
+                                with open(dirPath + RESULT_DIR + username + ".json", "r", encoding='utf-8') as resultFile:
+                                    contestsAnmount = len(json.load(resultFile))
+                            else: contestsAnmount = 0
+
                             fullname = users[sessions[headers["TOKEN"]]["username"]]["fullname"]
                             picture = users[sessions[headers["TOKEN"]]["username"]]["picture"]
                             _class = users[sessions[headers["TOKEN"]]["username"]]["class"]
@@ -223,7 +238,8 @@ def api_interface(path, headers, ip_addr, body):
             "picture": picture,
             "class": _class,
             "priv": priv,
-            "desc": desc
+            "desc": desc,
+            "contestAmount": contestsAnmount
         }
 
     elif path == "/api/delsession" and "TOKEN" in headers:

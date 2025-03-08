@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta lang="vi-VN" http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="icon" href="/assets/favicon.png">
+        <link rel="stylesheet" href="/styles/general.css">
+        <link rel="stylesheet" href="/styles/contest.css">
+        <title>%%contest_name%% - %%website_name%%</title>
+
+        <script src="/js/general.js"></script>
+        <script src="/js/ext/ace.js"></script><!-- Load external library: ACE -->
+        <script src="/js/generalDeferred.js" defer></script>
+        <script src="/js/contest.js" defer></script>
+    </head>
+    <body>
+        %%statsbar%%
+
+        <div class="infoframe">
+            <h1>%%contest_name%%</h1>
+            <p>%%contest_desc%%</p>
+        </div>
+
+        <div class="interframe">
+            <h3>Nộp bài</h3>
+            <div class="languages">
+                <button onclick="switchMode('cpp')" class="active">C++</button>
+                <button onclick="switchMode('pas')">PASCAL</button>
+                <button onclick="switchMode('py')">Python</button>
+            </div>
+
+            <!-- The editor element -->
+            <div id="editor" class="editor"></div>
+        </div>
+
+        <footer>
+            <p>%%footer%%</p>
+        </footer>
+    </body>
+</html>

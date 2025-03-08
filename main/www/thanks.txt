@@ -1,0 +1,15 @@
+------------------------CREDITS-----------------------
+
+Ace Editor Project
+- Github: https://github.com/ajaxorg/ace
+
+waitress Project
+- PyPi: https://pypi.org/project/waitress/
+
+Docker Project
+- Website: https://www.docker.com/
+
+------------------------------------------------------
+This small project would not have been possible without 
+the listed project helping to make a reliable and usable 
+application
