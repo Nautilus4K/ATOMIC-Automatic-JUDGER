@@ -504,7 +504,7 @@ def judge(fullfilename: str, show_test: bool):
     pok("[!] Extracted into LIST: " + str(filedata))
 
     # We test if the file's name is one of the things we need to judge, else just remove the file for storage's sake and return its name into result?
-    if filename in normalized_contests:
+    if filename in normalized_contests and normalized_contests[filename]["Locked"] == False:
         pinfo(f"Judging {filename}...")
 
         # Prepare to write logs
@@ -765,6 +765,7 @@ while running:
                     statusfile.write(json.dumps(statusdata))
 
                 judge(file, settings["show_test"])
+
                 try: 
                     # os.remove(filePath+"/workspace/queue/"+file)
                     # Extract the file informations.

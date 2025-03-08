@@ -20,6 +20,8 @@ STATSBAR_HTML = "/www/reserved/statsbar.html"
 SETTINGS_JSON = "/source/settings.json"
 DEFAULTUSER_IMAGE = "/assets/defaultuser.png"
 USERPROFILEPICTURE_PATH = "/www/userpictures/"
+CONTESTS_JSON = "/source/contests.json"
+RESULT_DIR = "/workspace/result/"
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved", "/api"]
@@ -346,6 +348,63 @@ def api_interface(path, headers, ip_addr, body):
         json_response = {
             "success": success,
             "message": message
+        }
+
+    elif path == "/api/getcontests" and "TOKEN" in headers:
+        try:
+            success = True
+            message = ""
+            scontests = []
+            with open(dirPath + SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+                sessions = json.load(sessionsFile)
+            username = sessions[headers["TOKEN"]]["username"]
+
+            with open(dirPath + USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
+                userdata = json.load(userdataFile)
+                userclass = userdata[username]["class"]
+
+            with open(dirPath + CONTESTS_JSON, "r", encoding='utf-8') as contestsFile:
+                contests = json.load(contestsFile)
+
+            # For each contest. We got the key names
+            for contest in contests:
+                # Now we check through for each class present in the contest
+                # print("-", contest)
+                added_amount = 0
+                for cls in contests[contest]["Classes"]:
+                    # If the class is present in the user's class
+                    # print("  -", cls)
+                    if cls in userclass and added_amount <= 0:
+                        # We add the contest to the list
+                        # print("    -", contest)
+
+                        # Also, get user's score
+                        # print(dirPath + RESULT_DIR + username + ".json")
+                        if (os.path.exists(dirPath + RESULT_DIR + username + ".json")):
+                            with open(dirPath + RESULT_DIR + username + ".json", "r", encoding='utf-8') as file:
+                                resultJson = json.load(file)
+                            
+                            # print(resultJson)
+                            if contest in resultJson:
+                                score = resultJson[contest]
+                            else:
+                                score = 0.0
+                        else:
+                            score = 0.0
+                        scontests.append([contest, contests[contest]["Locked"], score])
+                        added_amount += 1
+
+        except Exception as e:
+            success = False
+            message = str(e)
+            scontests = []
+            print(str(e))
+
+
+        json_response = {
+            "success": success,
+            "message": message,
+            "contests": scontests
         }
 
     return json_response

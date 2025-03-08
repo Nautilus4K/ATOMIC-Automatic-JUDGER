@@ -2,6 +2,7 @@
     "Test1": {
         "Desc": "Prints out `Test` on execution",
         "Classes": ["D0", "A0"],
+        "Locked": false,
         "InputType": "raw",
         "InputFile": "Test1.INP",
         "OutputType": "raw",
@@ -11,6 +12,20 @@
         "Tests": [
             ["", "Test"],
             ["", "Test2"]
+        ]
+    },
+    "Test2": {
+        "Desc": "What is 1 + 1?",
+        "Classes": ["D0", "A0"],
+        "Locked": true,
+        "InputType": "file",
+        "InputFile": "Test2.INP",
+        "OutputType": "file",
+        "OutputFile": "Test2.OUT",
+        "TimeLimit": 1,
+        "Tests": [
+            ["", "2"],
+            ["", "2"]
         ]
     }
 }

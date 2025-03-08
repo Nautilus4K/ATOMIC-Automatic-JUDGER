@@ -2,6 +2,7 @@
     --background: rgb(255, 255, 255);
     --background-active: rgb(241, 241, 241);
     --text-color: black;
+    --text-deactive: rgba(0, 0, 0, 0.432);
     --primary: rgb(0, 110, 255);
     --primary-color: white;
     --secondary: #0057b9;
@@ -18,6 +19,7 @@
     --background: rgb(10, 10, 10);
     --background-active: rgb(27, 27, 27);
     --text-color: white;
+    --text-deactive: rgba(255, 255, 255, 0.432);
     --primary: rgb(0, 110, 255);
     --primary-color: white;
     --secondary: #3b96ff;
