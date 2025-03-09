@@ -78,7 +78,7 @@ define("ace/theme/dynamic", ["require", "exports", "module", "ace/lib/dom"], fun
     background: rgb(255, 255, 0); \
     }\
     .ace-dynamic .ace_active-line {\
-    background: var(--active-line, rgba(232, 242, 254, 0.3)); \
+    background: var(--background-active, rgba(232, 242, 254, 0.3)); \
     }\
     .ace-dynamic .ace_gutter-active-line {\
     background-color: var(--background-active); \

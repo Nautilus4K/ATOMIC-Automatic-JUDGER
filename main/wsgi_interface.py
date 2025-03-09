@@ -22,6 +22,7 @@ DEFAULTUSER_IMAGE = "/assets/defaultuser.png"
 USERPROFILEPICTURE_PATH = "/www/userpictures/"
 CONTESTS_JSON = "/source/contests.json"
 RESULT_DIR = "/workspace/result/"
+SUBMIT_DIR = "/workspace/queue/"
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved", "/api"]
@@ -174,6 +175,9 @@ def api_interface(path, headers, ip_addr, body):
                     sessions = json.load(sessionsFile)
                     settings = json.load(settingsFile)
                     users = json.load(userdataFile)
+                    sessions[headers["TOKEN"]]["lastactive"] = int(time.time())
+                    with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
+                        json.dump(sessions, sessionsFile)
 
                     # If TOKEN actually exists in the list of sessions
                     if headers["TOKEN"] in sessions:
@@ -214,6 +218,9 @@ def api_interface(path, headers, ip_addr, body):
                     sessions = json.load(sessionsFile)
                     settings = json.load(settingsFile)
                     users = json.load(userdataFile)
+                    sessions[headers["TOKEN"]]["lastactive"] = int(time.time())
+                    with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
+                        json.dump(sessions, sessionsFile)
 
                     # If TOKEN actually exists in the list of sessions
                     if headers["TOKEN"] in sessions:
@@ -261,6 +268,10 @@ def api_interface(path, headers, ip_addr, body):
                 # Get user's username from the session token
                 username = sessions[headers["TOKEN"]]["username"]
 
+            sessions[headers["TOKEN"]]["lastactive"] = int(time.time())
+            with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
+                json.dump(sessions, sessionsFile)
+
             with open(dirPath + USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
                 userdata = json.load(userdataFile)
 
@@ -306,6 +317,10 @@ def api_interface(path, headers, ip_addr, body):
             # Extract username from dictionary (JSON-like/map-like) object
             username = sessions[headers["TOKEN"]]["username"]
 
+            sessions[headers["TOKEN"]]["lastactive"] = int(time.time())
+            with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
+                json.dump(sessions, sessionsFile)
+
             # Get users information
             with open(dirPath + USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
                 users = json.load(userdataFile)
@@ -339,6 +354,9 @@ def api_interface(path, headers, ip_addr, body):
                 sessions = json.load(sessionsFile)
 
             username = sessions[headers["TOKEN"]]["username"]
+            sessions[headers["TOKEN"]]["lastactive"] = int(time.time())
+            with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
+                json.dump(sessions, sessionsFile)
 
             with open(dirPath + USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
                 users = json.load(userdataFile)
@@ -374,6 +392,9 @@ def api_interface(path, headers, ip_addr, body):
             with open(dirPath + SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
                 sessions = json.load(sessionsFile)
             username = sessions[headers["TOKEN"]]["username"]
+            sessions[headers["TOKEN"]]["lastactive"] = int(time.time())
+            with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
+                json.dump(sessions, sessionsFile)
 
             with open(dirPath + USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
                 userdata = json.load(userdataFile)
@@ -421,6 +442,34 @@ def api_interface(path, headers, ip_addr, body):
             "success": success,
             "message": message,
             "contests": scontests
+        }
+
+    elif path == "/api/submitcode" and "TOKEN" in headers and "LANG" in headers and "CONT" in headers and body:
+        try:
+            success = True
+            message = ""
+
+            with open(dirPath + SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+                sessions = json.load(sessionsFile)
+            username = sessions[headers["TOKEN"]]["username"]
+            sessions[headers["TOKEN"]]["lastactive"] = int(time.time())
+
+            # print("Hey")
+
+            with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
+                json.dump(sessions, sessionsFile)
+
+            with open(dirPath + SUBMIT_DIR + f"[{username}][{headers["CONT"]}].{headers["LANG"]}", "w", encoding='utf-8') as submitFile:
+                submitFile.write(body.decode('utf-8'))
+
+        except Exception as e:
+            success = False
+            message = str(e)
+            print(str(e))
+        
+        json_response = {
+            "success": success,
+            "message": message
         }
 
     return json_response
