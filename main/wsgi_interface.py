@@ -720,7 +720,7 @@ def application(environ, start_response):
                 with open(dirPath + CONTESTS_JSON, "r", encoding='utf-8') as contestFile:
                     contests = json.load(contestFile)
 
-                if targetContestName in contests:
+                if targetContestName in contests and not contests[targetContestName]["Locked"]:
                     # If the contest exists, we return the data of the contest in the form of a webpage
                     contestData = contests[targetContestName]
 
@@ -732,16 +732,16 @@ def application(environ, start_response):
                 else:
                     if headers["USER_AGENT"].startswith("curl"):
                         start_response('404 Not Found', response_headers)
-                        return ['Không tìm thấy địa chỉ.'.encode('utf-8')]
+                        return ['Không tìm thấy bài thi.'.encode('utf-8')]
                     else:
                         response_headers = [('Content-Type', 'text/html; charset=utf-8')]
                         start_response('404 Not Found', response_headers)
                         if os.path.exists(dirPath+ERROR_WEBFILE):
                             response_body, response_headers, response_code = serve_website(dirPath+ERROR_WEBFILE, response_headers)
-                            response_body = response_body.replace("%%error_code%%", "404").replace("%%error_description%%", "Không tìm thấy địa chỉ")
+                            response_body = response_body.replace("%%error_code%%", "404").replace("%%error_description%%", "Không tìm thấy bài thi")
                             return [response_body.encode('utf-8')]
                         else:
-                            return ['Không tìm thấy địa chỉ.'.encode('utf-8')]
+                            return ['Không tìm thấy bài thi.'.encode('utf-8')]
             else:
                 if headers["USER_AGENT"].startswith("curl"):
                     start_response('404 Not Found', response_headers)
