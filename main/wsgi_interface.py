@@ -23,6 +23,7 @@ USERPROFILEPICTURE_PATH = "/www/userpictures/"
 CONTESTS_JSON = "/source/contests.json"
 RESULT_DIR = "/workspace/result/"
 SUBMIT_DIR = "/workspace/queue/"
+CONTEST_WEBFILE = "/www/reserved/contest.html"
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved", "/api"]
@@ -714,7 +715,33 @@ def application(environ, start_response):
                     start_response(response_code, response_headers)
                     response_body = response_body.replace("%%error_code%%", "500").replace("%%error_description%%", "Đã có lỗi xảy ra trong quá trình tìm kiếm người dùng.")
                     return [response_body.encode('utf-8')]
-                    
+            elif path.startswith("/contest/"):
+                targetContestName = path[9:]
+                with open(dirPath + CONTESTS_JSON, "r", encoding='utf-8') as contestFile:
+                    contests = json.load(contestFile)
+
+                if targetContestName in contests:
+                    # If the contest exists, we return the data of the contest in the form of a webpage
+                    contestData = contests[targetContestName]
+
+                    response_headers = [('Content-Type', 'text/html; charset=utf-8')]
+                    start_response("200 OK", response_headers)
+                    response_body, response_headers, response_code = serve_website(dirPath+CONTEST_WEBFILE, response_headers)
+                    response_body = response_body.replace("%%contest_name%%", targetContestName).replace("%%contest_desc%%", contestData["Desc"])
+                    return [response_body.encode('utf-8')]
+                else:
+                    if headers["USER_AGENT"].startswith("curl"):
+                        start_response('404 Not Found', response_headers)
+                        return ['Không tìm thấy địa chỉ.'.encode('utf-8')]
+                    else:
+                        response_headers = [('Content-Type', 'text/html; charset=utf-8')]
+                        start_response('404 Not Found', response_headers)
+                        if os.path.exists(dirPath+ERROR_WEBFILE):
+                            response_body, response_headers, response_code = serve_website(dirPath+ERROR_WEBFILE, response_headers)
+                            response_body = response_body.replace("%%error_code%%", "404").replace("%%error_description%%", "Không tìm thấy địa chỉ")
+                            return [response_body.encode('utf-8')]
+                        else:
+                            return ['Không tìm thấy địa chỉ.'.encode('utf-8')]
             else:
                 if headers["USER_AGENT"].startswith("curl"):
                     start_response('404 Not Found', response_headers)
