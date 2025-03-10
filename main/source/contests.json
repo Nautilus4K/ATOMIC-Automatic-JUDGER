@@ -23,9 +23,25 @@
         "OutputType": "file",
         "OutputFile": "Test2.OUT",
         "TimeLimit": 1,
+        "TestAmount": 2,
         "Tests": [
             ["", "2"],
             ["", "2"]
+        ]
+    },
+    "SumOfAB": {
+        "Desc": "Nhập a, b. Xuất a + b",
+        "Classes": ["D0"],
+        "Locked": false,
+        "InputType": "raw",
+        "InputFile": "SumOfAB.INP",
+        "OutputType": "raw",
+        "OutputFile": "SumOfAB.OUT",
+        "TimeLimit": 1,
+        "TestAmount": 2,
+        "Tests": [
+            ["1 1", "2"],
+            ["3 3", "6"]
         ]
     }
 }

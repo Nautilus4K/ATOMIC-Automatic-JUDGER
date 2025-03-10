@@ -15,6 +15,7 @@ import threading
 import queue
 from typing import Tuple, Optional, Any
 import shutil
+import traceback
 
 # For logging, like pwarn(), pinfo(), pok(), perr
 from csmcoloredloggerprint import *
@@ -124,7 +125,7 @@ if not check_image_exists("atomic-compile"):
         compileimage, build_logs = client.images.build(path=filePath+"/templates", dockerfile="Dockerfile.compile", tag="atomic-compile")
         for log in build_logs:
             pinfo(log.get('stream', '').strip())
-            pok(f"Image built with ID: {compileimage.id}")
+        pok(f"Image built with ID: {compileimage.id}")
     except Exception as e:
         perr("Error in building Compile Environment Docker image: " + str(e))
         runcontainer.remove()
@@ -289,47 +290,48 @@ def exec_with_timeout(container, cmd: list, timeout: float) -> Tuple[Optional[An
 
 def runAndGet(logfile, filedIn: bool, filedOut: bool, inputstr: str, filedInName: str = "", filedOutName: str = "", timeout: float = 1):
     """
-    Runs a program in container and returns (return_code, output, execution_time)
+    Runs a program in container and returns (return_code, output, execution_time, error, timed_out, excmsg)
     """
     try:
-        # Create working directory and move there
+        # Create and use a working directory within the container
         work_dir = "/mnt/work"
         runcontainer.exec_run(f"mkdir -p {work_dir}")
         
-        # Untar the executable file into working directory
+        # Untar the executable file into the working directory
         runcontainer.exec_run(f"tar -xvf /mnt/a.out -C {work_dir}")
         
-        # Construct command with time
-        if not filedIn:  # Straight input into the executing process
-            # Ensure inputstr is properly formatted and remove leading/trailing spaces
+        # Construct command with input creation entirely in the container
+        if not filedIn:
+            # Inline input via heredoc
             cmd = f"""cd {work_dir} && cat << 'EOF' | ./a.out 2>&1
 {inputstr.strip()}
 EOF"""
-        else:  # Input from additional files
-            with open(filePath + "/tempWorking/" + filedInName, "w") as file:
-                file.write(inputstr)
-            # Copy input file to container work directory
-            runcontainer.exec_run(f"cp /mnt/tempWorking/{filedInName} {work_dir}/")
+        else:
+            # Create the input file inside the container using heredoc
+            # This writes inputstr to a file named filedInName in work_dir
+            runcontainer.exec_run(f"""sh -c "cd {work_dir} && cat << 'EOF' > {filedInName}
+{inputstr.strip()}
+EOF" """)
+            # Then run the program (which is assumed to know how to read the file)
             cmd = f"cd {work_dir} && ./a.out 2>&1"
 
-        # Run the program with timeout
+        # Run the command with timeout
         exec_result, execution_time, timed_out = exec_with_timeout(
             runcontainer, 
             ['sh', '-c', cmd],
             timeout
         )
         
-        # Parse output
+        # Get raw output and split into lines
         output = exec_result.output.decode()
-        # print(output)
         lines = output.splitlines()
         error = None
         
         if not filedOut:
-            # Everything else is program output
+            # Use the output from the container command
             program_output = '\n'.join(lines[:-1])
         else:
-            # Verify output file exists
+            # Check for the expected output file in the container
             file_check = runcontainer.exec_run(
                 ['sh', '-c', f"test -f {work_dir}/{filedOutName} && echo 'exists'"]
             )
@@ -342,31 +344,28 @@ EOF"""
                 logfile.write("[LỖI] Không tìm thấy file kết quả.\n")
                 return exec_result.exit_code, None, execution_time, FileNotFoundError, False, "Không tìm thấy file kết quả."
             
-            # Read the output file
+            # Read the output file from the container
             exec_result_2 = runcontainer.exec_run(
                 ['sh', '-c', f"cat {work_dir}/{filedOutName}"]
             )
             try:
                 program_output = exec_result_2.output.decode()
-                # Clean up output file
+                # Remove the output file from the container
                 runcontainer.exec_run(["sh", "-c", f"rm -rf {work_dir}/{filedOutName}"])
                 if exec_result_2.exit_code != 0:
-                    perr("Error reading output file of submit. Error: " + program_output)
+                    perr("Error reading output file. Error: " + program_output)
                     execution_folder = runcontainer.exec_run(
                         ['sh', '-c', f"cd {work_dir} && pwd && ls -la"]
                     ).output.decode()
                     perr("Execution folder: " + execution_folder)
                     program_output = None
             except UnicodeDecodeError:
-                # This shouldn't happen at all
-                # Happened once on a faulty little C++ file
-                # Fuck it, it justs is BAD
                 perr("File returned non-utf8 bytes. Marking as wrong...")
                 logfile.write("Lỗi giải mã: Tìm thấy ký tự vượt quá phạm trù bảng mã UTF-8\n")
                 program_output = None
                 error = UnicodeDecodeError
             except Exception as e:
-                perr("Error reading output file of submit. Error: " + str(e))
+                perr("Error reading output file. Error: " + str(e))
                 execution_folder = runcontainer.exec_run(
                     ['sh', '-c', f"cd {work_dir} && pwd && ls -la"]
                 ).output.decode()
@@ -374,58 +373,53 @@ EOF"""
                 program_output = None
                 error = e
         
-        # Clean up input file if it exists
-        if filedIn:
-            os.remove(filePath + "/tempWorking/" + filedInName)
-        
-        # Clean up working directory
+        # Clean up the container working directory
         runcontainer.exec_run(["sh", "-c", f"rm -rf {work_dir}"])
         excmsg = None
-        return exec_result.exit_code, str(output).strip(), execution_time, error, timed_out, excmsg
+        final_output = program_output if filedOut else str(output).strip()
+        return exec_result.exit_code, final_output, execution_time, error, timed_out, excmsg
         
     except Exception as e:
         perr(f"Unexpected error in runAndGet: {str(e)}")
         return -1, None, 0, e
-    
+
 def runPython(logfile, filedIn: bool, filedOut: bool, inputstr: str, filedInName: str = "", filedOutName: str = "", timeout: float = 1):
     try:
-        # Create working directory and move there
+        # Create and use a working directory within the container
         work_dir = "/mnt/work"
         runcontainer.exec_run(f"mkdir -p {work_dir}")
         
-        # Move the python file into the working directory
+        # Copy the python file into the working directory
         runcontainer.exec_run(f"cp /mnt/a.py {work_dir}/a.py")
         
-        # Construct command with time
-        if not filedIn:  # Straight input into the executing process
+        # Construct command with input creation entirely in the container
+        if not filedIn:
             cmd = f"""cd {work_dir} && cat << 'EOF' | python ./a.py 2>&1
 {inputstr.strip()}
 EOF"""
-        else:  # Input from additional files
-            with open(filePath + "/tempWorking/" + filedInName, "w") as file:
-                file.write(inputstr)
-            # Copy input file to container work directory
-            runcontainer.exec_run(f"cp /mnt/tempWorking/{filedInName} {work_dir}/")
+        else:
+            # Create input file inside the container
+            runcontainer.exec_run(f"""sh -c "cd {work_dir} && cat << 'EOF' > {filedInName}
+{inputstr.strip()}
+EOF" """)
             cmd = f"cd {work_dir} && python ./a.py 2>&1"
 
-        # Run the program with timeout
+        # Run the command with timeout
         exec_result, execution_time, timed_out = exec_with_timeout(
             runcontainer, 
             ['sh', '-c', cmd],
             timeout
         )
         
-        # Parse output
+        # Get raw output and split into lines
         output = exec_result.output.decode()
-        # print(output)
         lines = output.splitlines()
         error = None
         
         if not filedOut:
-            # Everything else is program output
             program_output = '\n'.join(lines[:-1])
         else:
-            # Verify output file exists
+            # Check for the expected output file in the container
             file_check = runcontainer.exec_run(
                 ['sh', '-c', f"test -f {work_dir}/{filedOutName} && echo 'exists'"]
             )
@@ -438,31 +432,27 @@ EOF"""
                 logfile.write("[LỖI] Không tìm thấy file kết quả.\n")
                 return exec_result.exit_code, None, execution_time, FileNotFoundError, False, "Không tìm thấy file kết quả."
             
-            # Read the output file
+            # Read the output file from the container
             exec_result_2 = runcontainer.exec_run(
                 ['sh', '-c', f"cat {work_dir}/{filedOutName}"]
             )
             try:
                 program_output = exec_result_2.output.decode()
-                # Clean up output file
                 runcontainer.exec_run(["sh", "-c", f"rm -rf {work_dir}/{filedOutName}"])
                 if exec_result_2.exit_code != 0:
-                    perr("Error reading output file of submit. Error: " + program_output)
+                    perr("Error reading output file. Error: " + program_output)
                     execution_folder = runcontainer.exec_run(
                         ['sh', '-c', f"cd {work_dir} && pwd && ls -la"]
                     ).output.decode()
                     perr("Execution folder: " + execution_folder)
                     program_output = None
             except UnicodeDecodeError:
-                # This shouldn't happen at all
-                # Happened once on a faulty little C++ file
-                # Fuck it, it justs is BAD
                 perr("File returned non-utf8 bytes. Marking as wrong...")
                 logfile.write("Lỗi giải mã: Tìm thấy ký tự vượt quá phạm trù bảng mã UTF-8\n")
                 program_output = None
                 error = UnicodeDecodeError
             except Exception as e:
-                perr("Error reading output file of submit. Error: " + str(e))
+                perr("Error reading output file. Error: " + str(e))
                 execution_folder = runcontainer.exec_run(
                     ['sh', '-c', f"cd {work_dir} && pwd && ls -la"]
                 ).output.decode()
@@ -470,19 +460,17 @@ EOF"""
                 program_output = None
                 error = e
         
-        # Clean up input file if it exists
-        if filedIn:
-            os.remove(filePath + "/tempWorking/" + filedInName)
-        
-        # Clean up working directory
+        # Clean up the container working directory
         runcontainer.exec_run(["sh", "-c", f"rm -rf {work_dir}"])
         
         excmsg = None
-        return exec_result.exit_code,str(output).strip(), execution_time, error, timed_out, excmsg
+        final_output = program_output if filedOut else str(output).strip()
+        return exec_result.exit_code, final_output, execution_time, error, timed_out, excmsg
         
     except Exception as e:
-        perr(f"Unexpected error in runAndGet: {str(e)}")
+        perr(f"Unexpected error in runPython: {str(e)}")
         return -1, None, 0, e
+
 
 # Judging function. Used for checking if a submit had done okay.
 def judge(fullfilename: str, show_test: bool):
@@ -630,6 +618,9 @@ def judge(fullfilename: str, show_test: bool):
                     try: 
                         inputFromFile = bool(normalized_contests[filename]["InputType"] == "file")
                         outputFromFile = bool(normalized_contests[filename]["OutputType"] == "file")
+                        pinfo("I/O Status: ")
+                        pinfo("- isInputFile: " + str(inputFromFile))
+                        pinfo("- isOutputFile: " + str(outputFromFile))
                         inputstr = normalized_contests[filename]['Tests'][i][0].strip()
 
                         # Get data
@@ -764,7 +755,12 @@ while running:
                 with open(filePath+STATUS_PATH, "w") as statusfile:
                     statusfile.write(json.dumps(statusdata))
 
-                judge(file, settings["show_test"])
+                try:
+                    judge(file, settings["show_test"])
+                except Exception as e:
+                    traceback.print_exc()
+                    running = False
+                    break
 
                 try: 
                     # os.remove(filePath+"/workspace/queue/"+file)

@@ -35,7 +35,7 @@ define("ace/theme/dynamic", ["require", "exports", "module", "ace/lib/dom"], fun
     color: var(--token-function, #22863a); \
     }\
     .ace-dynamic .ace_string {\
-    color: var(--token-string, #032f62); \
+    color: var(--token-string,rgb(0, 97, 207)); \
     }\
     .ace-dynamic .ace_comment {\
     color: var(--token-comment, #6a737d); \
