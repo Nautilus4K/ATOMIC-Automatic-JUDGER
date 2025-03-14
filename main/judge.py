@@ -492,7 +492,7 @@ def judge(fullfilename: str, show_test: bool):
     pok("[!] Extracted into LIST: " + str(filedata))
 
     # We test if the file's name is one of the things we need to judge, else just remove the file for storage's sake and return its name into result?
-    if filename in normalized_contests and normalized_contests[filename]["Locked"] == False:
+    if filename in normalized_contests:
         pinfo(f"Judging {filename}...")
 
         # Prepare to write logs

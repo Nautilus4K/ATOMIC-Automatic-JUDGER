@@ -13,7 +13,7 @@ WEBSITERULE_FILENAME = "websites.json"
 ERROR_WEBFILE = "/www/reserved/error.html"
 USERPROFILE_WEBFILE = "/www/reserved/userprofile.html"
 VERSION_JSON = "/source/version.json"
-USERDATA_JSON = "/source/users.json"
+# USERDATA_JSON = "/source/users.json"
 LASTACCESS_JSON = "/central/lastaccess.json"
 SESSION_JSON = "/central/sessions.json"
 STATSBAR_HTML = "/www/reserved/statsbar.html"
@@ -24,6 +24,7 @@ CONTESTS_JSON = "/source/contests.json"
 RESULT_DIR = "/workspace/result/"
 SUBMIT_DIR = "/workspace/queue/"
 CONTEST_WEBFILE = "/www/reserved/contest.html"
+from usermanage import USERFILE_PATH as USERDATA_JSON, CLASSFILE_PATH
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved", "/api"]
@@ -87,8 +88,13 @@ def del_session(token: str):
     with open(dirPath+SESSION_JSON, "w", encoding='utf-8') as sessionFile:
         json.dump(currentSessions, sessionFile)
 
-def api_interface(path, headers, ip_addr, body):
+def api_interface(path: str, headers, ip_addr, body) -> dict:
     # print("API called from ANONYMOUS DEVICE")
+
+    """
+    Function that monitors API calls (Requests to /api/)\n
+    Returns dictionary object as JSON.
+    """
 
     json_response = {}
     message = ""
@@ -429,7 +435,7 @@ def api_interface(path, headers, ip_addr, body):
                                 score = 0.0
                         else:
                             score = 0.0
-                        scontests.append([contest, contests[contest]["Locked"], score])
+                        scontests.append([contest, score])
                         added_amount += 1
 
         except Exception as e:
@@ -471,6 +477,74 @@ def api_interface(path, headers, ip_addr, body):
         json_response = {
             "success": success,
             "message": message
+        }
+
+    elif path == "/api/getscore" and "TOKEN" in headers:
+        try:
+            success = True
+            message = ""
+            resultclasses = {}
+
+            with open(dirPath + SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+                sessions = json.load(sessionsFile)
+            username = sessions[headers["TOKEN"]]["username"]
+            sessions[headers["TOKEN"]]["lastactive"] = int(time.time())
+
+            with open(dirPath + CLASSFILE_PATH, "r", encoding='utf-8') as classFile:
+                classes = json.load(classFile)
+
+            # Get user's data
+            with open(dirPath + USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
+                userdata = json.load(userdataFile)
+
+            userclass = userdata[username]["class"]  # Get list object
+
+            with open(dirPath + CONTESTS_JSON, "r", encoding='utf-8') as contestsFile:
+                contests = json.load(contestsFile)  # Dictionary object
+            
+            # with open(dirPath + RESULT_DIR)
+
+            # For each class the user belongs in, we add a key to resultClasses.
+            # In each class, we fetch all users and get which users belong to which classes and
+            # then add their results in along with the contest results.
+
+            for _class in userclass:
+                # Initialize class dict if not exists
+                if _class not in resultclasses:
+                    resultclasses[_class] = {}
+
+                # Get contests for this class
+                coincideContests = [contest for contest in contests 
+                                  if _class in contests[contest]["Classes"]]
+
+                # Get users in this class
+                class_users = [user for user in userdata 
+                             if _class in userdata[user]["class"]]
+
+                # Process results for users in this class
+                for user in class_users:
+                    result_file = dirPath + RESULT_DIR + user + ".json"
+                    if os.path.exists(result_file):
+                        with open(result_file, "r", encoding='utf-8') as resultFile:
+                            result = json.load(resultFile)
+                            # Initialize user dict if not exists
+                            if user not in resultclasses[_class]:
+                                resultclasses[_class][user] = {}
+                            # Add results for contests in this class
+                            for contest in coincideContests:
+                                if contest in result:
+                                    resultclasses[_class][user][contest] = result[contest]
+
+        except Exception as e:
+            success = False
+            message = str(e)
+            print(str(e))
+            resultclasses = {}
+
+        json_response = {
+            "success": success,
+            "message": message,
+            "result": resultclasses
         }
 
     return json_response
@@ -661,9 +735,8 @@ def application(environ, start_response):
                 # print(username)
 
                 # Now we got the username, we gather the informations specifically about THIS user
-                from usermanage import USERFILE_PATH, CLASSFILE_PATH
                 try:
-                    with open(dirPath+USERFILE_PATH, "r", encoding='utf-8') as userFile:
+                    with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userFile:
                         user = json.load(userFile)[username]
 
                     if os.path.exists(dirPath+USERPROFILE_WEBFILE):
@@ -720,7 +793,7 @@ def application(environ, start_response):
                 with open(dirPath + CONTESTS_JSON, "r", encoding='utf-8') as contestFile:
                     contests = json.load(contestFile)
 
-                if targetContestName in contests and not contests[targetContestName]["Locked"]:
+                if targetContestName in contests:
                     # If the contest exists, we return the data of the contest in the form of a webpage
                     contestData = contests[targetContestName]
 

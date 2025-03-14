@@ -109,14 +109,20 @@
 }
 
 .contestform .name {
-    margin-right: 5px
+    margin-right: 5px;
+    color: var(--text-color);
+    text-decoration: none;
 }
 
-.contestform .namedeactive {
+.contestform .name a {
+    color: var(--text-color);
+}
+
+/* .contestform .namedeactive {
     margin-right: 5px;
     color: var(--text-deactive)
-}
+} */
 
-.contestform .status {
+/* .contestform .status {
     color: var(--dangerous);
-}
+} */
