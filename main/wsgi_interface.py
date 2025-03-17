@@ -176,35 +176,55 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
         _class = ""
         priv = ""
         contestsAnmount = 0
-        with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+
+        try:
+            with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+                sessions = json.load(sessionsFile)
+
             with open(dirPath+SETTINGS_JSON, "r", encoding='utf-8') as settingsFile:
-                with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
-                    sessions = json.load(sessionsFile)
-                    settings = json.load(settingsFile)
-                    users = json.load(userdataFile)
-                    sessions[headers["TOKEN"]]["lastactive"] = int(time.time())
-                    with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
-                        json.dump(sessions, sessionsFile)
+                settings = json.load(settingsFile)
 
-                    # If TOKEN actually exists in the list of sessions
-                    if headers["TOKEN"] in sessions:
-                        # If last active time does not exceed the maximum time before deactivation of session
-                        if time.time() - sessions[headers["TOKEN"]]["lastactive"] <= settings["max_not_logged_in_session_seconds"]:
-                            username = sessions[headers["TOKEN"]]["username"]
-                            fullname = users[sessions[headers["TOKEN"]]["username"]]["fullname"]
+            with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
+                users = json.load(userdataFile)
 
-                            if os.path.exists(dirPath + RESULT_DIR + username + ".json"):
+            # Check if token exists before accessing
+            if headers["TOKEN"] in sessions:
+                # Update last active time
+                sessions[headers["TOKEN"]]["lastactive"] = int(time.time())
+
+                # Save updated sessions
+                with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
+                    json.dump(sessions, sessionsFile)
+
+                # Check session expiry
+                if time.time() - sessions[headers["TOKEN"]]["lastactive"] <= settings["max_not_logged_in_session_seconds"]:
+                    username = sessions[headers["TOKEN"]]["username"]
+                    
+                    # Check if user still exists
+                    if username in users:
+                        fullname = users[username]["fullname"]
+                        picture = users[username]["picture"]
+                        _class = users[username]["class"]
+                        priv = users[username]["priv"]
+
+                        # Get contest count
+                        if os.path.exists(dirPath + RESULT_DIR + username + ".json"):
+                            try:
                                 with open(dirPath + RESULT_DIR + username + ".json", "r", encoding='utf-8') as resultFile:
                                     contestsAnmount = len(json.load(resultFile))
-                            else: contestsAnmount = 0
+                            except:
+                                contestsAnmount = 0
+                        else:
+                            contestsAnmount = 0
 
-                            picture = users[sessions[headers["TOKEN"]]["username"]]["picture"]
-                            _class = users[sessions[headers["TOKEN"]]["username"]]["class"]
-                            priv = users[sessions[headers["TOKEN"]]["username"]]["priv"]
+        except Exception as e:
+            print(f"Error in getbroadinfo: {str(e)}")
+            username = "ErrorHandling2␀"
+            # Keep default empty values on error
 
         json_response = {
             "username": username,
-            "fullname": fullname,
+            "fullname": fullname, 
             "picture": picture,
             "class": _class,
             "priv": priv,
@@ -212,49 +232,62 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
         }
 
     elif path == "/api/getfullinfo" and "TOKEN" in headers:
-        username = ""
-        fullname = ""
-        picture = ""
-        _class = ""
-        priv = ""
-        desc = ""
-        contestsAnmount = 0
-        with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
-            with open(dirPath+SETTINGS_JSON, "r", encoding='utf-8') as settingsFile:
-                with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as userdataFile:
-                    sessions = json.load(sessionsFile)
-                    settings = json.load(settingsFile)
-                    users = json.load(userdataFile)
-                    sessions[headers["TOKEN"]]["lastactive"] = int(time.time())
-                    with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
-                        json.dump(sessions, sessionsFile)
-
-                    # If TOKEN actually exists in the list of sessions
-                    if headers["TOKEN"] in sessions:
-                        # If last active time does not exceed the maximum time before deactivation of session
-                        if time.time() - sessions[headers["TOKEN"]]["lastactive"] <= settings["max_not_logged_in_session_seconds"]:
-                            username = sessions[headers["TOKEN"]]["username"]
-
-                            if os.path.exists(dirPath + RESULT_DIR + username + ".json"):
-                                with open(dirPath + RESULT_DIR + username + ".json", "r", encoding='utf-8') as resultFile:
-                                    contestsAnmount = len(json.load(resultFile))
-                            else: contestsAnmount = 0
-
-                            fullname = users[sessions[headers["TOKEN"]]["username"]]["fullname"]
-                            picture = users[sessions[headers["TOKEN"]]["username"]]["picture"]
-                            _class = users[sessions[headers["TOKEN"]]["username"]]["class"]
-                            priv = users[sessions[headers["TOKEN"]]["username"]]["priv"]
-                            desc = users[sessions[headers["TOKEN"]]["username"]]["desc"]
-
-        json_response = {
-            "username": username,
-            "fullname": fullname,
-            "picture": picture,
-            "class": _class,
-            "priv": priv,
-            "desc": desc,
-            "contestAmount": contestsAnmount
+        # Initialize default values
+        user_data = {
+            "username": "",
+            "fullname": "",
+            "picture": "",
+            "class": "",
+            "priv": "",
+            "desc": "",
+            "contestAmount": 0
         }
+
+        try:
+            # Load required data files
+            with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as f:
+                sessions = json.load(f)
+            with open(dirPath+SETTINGS_JSON, "r", encoding='utf-8') as f:
+                settings = json.load(f)
+            with open(dirPath+USERDATA_JSON, "r", encoding='utf-8') as f:
+                users = json.load(f)
+
+            token = headers["TOKEN"]
+            if token in sessions:
+                # Update last active time
+                current_time = int(time.time())
+                sessions[token]["lastactive"] = current_time
+
+                # Save updated sessions
+                with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as f:
+                    json.dump(sessions, f)
+
+                # Check if session is still valid
+                if current_time - sessions[token]["lastactive"] <= settings["max_not_logged_in_session_seconds"]:
+                    username = sessions[token]["username"]
+                    user = users[username]
+
+                    # Get contest count
+                    contest_file = dirPath + RESULT_DIR + username + ".json"
+                    if os.path.exists(contest_file):
+                        with open(contest_file, "r", encoding='utf-8') as f:
+                            user_data["contestAmount"] = len(json.load(f))
+
+                    # Update user data
+                    user_data.update({
+                        "username": username,
+                        "fullname": user["fullname"],
+                        "picture": user["picture"], 
+                        "class": user["class"],
+                        "priv": user["priv"],
+                        "desc": user["desc"]
+                    })
+
+        except Exception as e:
+            print(f"Error in getfullinfo: {str(e)}")
+            username = "ErrorHandling2␀"
+
+        json_response = user_data
 
     elif path == "/api/delsession" and "TOKEN" in headers:
         with open(dirPath+SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
@@ -304,7 +337,7 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
         except Exception as e:
             success = False
             message = str(e)
-            print(str(e))
+            print("/api/uploadprofilepic" + str(e))
 
         json_response = {
             "success": success,
@@ -344,7 +377,7 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
             # Throw an exception
             success = False
             message = str(e)
-            print(str(e))
+            print("/api/updatedetails" + str(e))
 
         json_response = {
             "success": success,
@@ -383,7 +416,7 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
 
         except Exception as e:
             success = False
-            print(str(e))
+            print("/api/setpasswd" + str(e))
             message = "Lỗi: " + str(e)
 
         json_response = {
@@ -442,13 +475,13 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
             success = False
             message = str(e)
             scontests = []
-            print(str(e))
+            print("/api/getcontests" + str(e))
 
 
         json_response = {
             "success": success,
             "message": message,
-            "contests": scontests
+            "contests": scontests,
         }
 
     elif path == "/api/submitcode" and "TOKEN" in headers and "LANG" in headers and "CONT" in headers and body:
@@ -472,7 +505,7 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
         except Exception as e:
             success = False
             message = str(e)
-            print(str(e))
+            print("/api/submitcode" + str(e))
         
         json_response = {
             "success": success,
@@ -484,6 +517,7 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
             success = True
             message = ""
             resultclasses = {}
+            contestList = {}
 
             with open(dirPath + SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
                 sessions = json.load(sessionsFile)
@@ -509,42 +543,47 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
             # then add their results in along with the contest results.
 
             for _class in userclass:
-                # Initialize class dict if not exists
-                if _class not in resultclasses:
-                    resultclasses[_class] = {}
+                if classes[_class]["scoreboard"]: # DO NOT EVER DARES TO DREAM OF ANYTHING IF YOU'RE NOT ALLOWED TO
+                    # Initialize class dict if not exists
+                    if _class not in resultclasses:
+                        resultclasses[_class] = {}
 
-                # Get contests for this class
-                coincideContests = [contest for contest in contests 
-                                  if _class in contests[contest]["Classes"]]
+                    # Get contests for this class
+                    coincideContests = [contest for contest in contests 
+                                    if _class in contests[contest]["Classes"]]
 
-                # Get users in this class
-                class_users = [user for user in userdata 
-                             if _class in userdata[user]["class"]]
+                    contestList[_class] = coincideContests
 
-                # Process results for users in this class
-                for user in class_users:
-                    result_file = dirPath + RESULT_DIR + user + ".json"
-                    if os.path.exists(result_file):
-                        with open(result_file, "r", encoding='utf-8') as resultFile:
-                            result = json.load(resultFile)
-                            # Initialize user dict if not exists
-                            if user not in resultclasses[_class]:
-                                resultclasses[_class][user] = {}
-                            # Add results for contests in this class
-                            for contest in coincideContests:
-                                if contest in result:
-                                    resultclasses[_class][user][contest] = result[contest]
+                    # Get users in this class
+                    class_users = [user for user in userdata 
+                                if _class in userdata[user]["class"]]
+
+                    # Process results for users in this class
+                    for user in class_users:
+                        result_file = dirPath + RESULT_DIR + user + ".json"
+                        if os.path.exists(result_file):
+                            with open(result_file, "r", encoding='utf-8') as resultFile:
+                                result = json.load(resultFile)
+                                # Initialize user dict if not exists
+                                if user not in resultclasses[_class]:
+                                    resultclasses[_class][user] = {}
+                                # Add results for contests in this class
+                                for contest in coincideContests:
+                                    if contest in result:
+                                        resultclasses[_class][user][contest] = result[contest]
 
         except Exception as e:
             success = False
             message = str(e)
-            print(str(e))
+            print("/api/getscore" + str(e))
             resultclasses = {}
+            contestList = {}
 
         json_response = {
             "success": success,
             "message": message,
-            "result": resultclasses
+            "result": resultclasses,
+            "contestslist": contestList,
         }
 
     return json_response
@@ -830,7 +869,7 @@ def application(environ, start_response):
                         return ['Không tìm thấy địa chỉ.'.encode('utf-8')]
     except Exception as e:
         print(e)
-        print(str(e))
+        print("Unidentified Error: " + str(e))
         if headers["USER_AGENT"].startswith("curl"):
             start_response('500 Internal Server Error', response_headers)
             return ['Đã có lỗi xảy ra trong hệ thống máy chủ, vui lòng báo lại với quản trị viên của trang Web.'.encode('utf-8')]

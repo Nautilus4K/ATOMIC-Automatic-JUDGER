@@ -72,6 +72,12 @@ fetch("/api/getfullinfo", {
         document.getElementById("currentuserprofilepic").src = "/userpictures/"+json["username"]+".jpg";
         document.getElementById("displayname").value = json["fullname"];
         document.getElementById("desc").value = json["desc"];
+
+        if (json["username"] == "ErrorHandling2␀") {
+            window.location.href = window.location.href;
+        }
+    } else {
+        window.location.href = "/";
     }
 })
 

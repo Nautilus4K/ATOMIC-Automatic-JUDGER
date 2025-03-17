@@ -12,6 +12,8 @@
     background-position: 60% 16%;
     box-shadow: var(--shadow) 0px 4px 10px;
     color: white; /* Hardcoded cuz the banner is an image and does not change dynamically */
+    margin-top: 70px;
+    margin-bottom: 10px;
 }
 
 .content {

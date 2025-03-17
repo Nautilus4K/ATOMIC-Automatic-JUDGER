@@ -1,0 +1,56 @@
+.mainheader {
+    text-align: center;
+    margin-top: 70px;
+    margin-bottom: 20px;
+}
+
+.class {
+    margin: 40px;
+    display: flex;
+    flex-direction: column;
+    /* width: 100%; */
+}
+
+.class .table {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+}
+
+.class .table .headers {
+    display: flex;
+    flex-direction: column;
+    /* flex-wrap: nowrap; */
+}
+
+.class .table .headers p {
+    margin: 2.5px;
+    /* margin-bottom: 0; */
+    background-color: var(--background-active);
+    padding: 10px;
+    border-radius: 5px;
+    height: 20px;
+    text-align: center;
+}
+
+.class .table .content {
+    display: flex;
+    flex-direction: column;
+    /* flex-wrap: nowrap; */
+}
+
+.class .table .content p {
+    margin: 2.5px;
+    /* margin-bottom: 0; */
+    background-color: var(--background-active);
+    padding: 10px;
+    border-radius: 5px;
+    height: 20px;
+    text-align: center;
+    color: var(--primary)
+}
+
+.class .table .content .header {
+    color: var(--text-color);
+    font-weight: bold;
+}

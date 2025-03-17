@@ -62,7 +62,9 @@ else {
             "TOKEN": session_token
         }
     }).then(response => response.json()).then((json) => {
-        if (json["username"] != "") {
+        if (json["username"] == "ErrorHandling2␀") {
+            window.location.href = window.location.href
+        } else if (json["username"] != "") {
             document.getElementById("usersettings").textContent = json["fullname"]
             document.getElementById("profilepage").href = "/user/"+json["username"]
 
