@@ -13,6 +13,9 @@
     --mode-change-duration: 0.1s;
     --dangerous: rgb(209, 0, 0);
     --dangerous-color: white;
+    --score-first: #a57100;
+    --score-second: #3b3b3b;
+    --score-third: #870e00;
 }
 
 .dark {
@@ -30,6 +33,9 @@
     --mode-change-duration: 0.1s;
     --dangerous: rgb(255, 40, 40);
     --dangerous-color: white;
+    --score-first: #ffc340;
+    --score-second: #d4d4d4;
+    --score-third: #ff5846;
 }
 
 /* Initialize custom font: Montserrat */

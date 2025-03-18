@@ -52,31 +52,24 @@
 </div>
 */
 
-// First, let's create a function that will sort students within each section
-function sortStudentsByTotal(data) {
-    // Process each section (D0, A0, etc.)
-    for (const section in data) {
-        const students = data[section];
-        
-        // Convert the students object to array of [studentName, studentData] pairs
-        const studentEntries = Object.entries(students);
-        
-        // Sort the array based on sum of scores
-        studentEntries.sort((a, b) => {
-            // Calculate total score for student a
-            const totalA = Object.values(a[1]).reduce((sum, score) => sum + score, 0);
-            // Calculate total score for student b
-            const totalB = Object.values(b[1]).reduce((sum, score) => sum + score, 0);
-            
-            // Sort in descending order
-            return totalB - totalA;
-        });
-        
-        // Convert back to object with new order
-        data[section] = Object.fromEntries(studentEntries);
-    }
+// Convert object to array of entries, sort it, and convert back to object
+function sortByTotalScores(studentData) {
+    // 1. Convert to array of [key, value] pairs
+    const entries = Object.entries(studentData);
     
-    return data;
+    // 2. Sort based on sum of scores
+    entries.sort((a, b) => {
+        // Calculate total for student a
+        const sumA = Object.values(a[1]).reduce((sum, score) => sum + score, 0);
+        // Calculate total for student b
+        const sumB = Object.values(b[1]).reduce((sum, score) => sum + score, 0);
+        
+        // Sort in descending order
+        return sumB - sumA;
+    });
+    
+    // 3. Convert back to object
+    return Object.fromEntries(entries);
 }
 
 function refreshScoreboard() {
@@ -90,41 +83,6 @@ function refreshScoreboard() {
         // console.log(json);
         if (json["success"]) {
             // If we successfully got the score data. We put it into the format described at the start
-            // Example response json:
-
-            // Example json
-            json = {
-                "api_version": "0.3.1", 
-                "success": true, 
-                "message": "", 
-                "result": {
-                    "D0": {
-                        "Student1": {
-                            "Test1": 5.0, 
-                            "SumOfAB": 10.0
-                        },
-                        "Student2": {
-                            "Test1": 10.0,
-                            "Test2": 2.0,
-                        }
-                    }, 
-                    "A0": {
-                        "Student1": {
-                            "Test1": 5.0
-                        },
-                        "Student3": {
-                            "Test1": 2.0,
-                            "Test2": 10.0
-                        }
-                    }
-                }, 
-                "contestslist": {
-                    "D0": ["Test1", "Test2", "SumOfAB"], 
-                    "A0": ["Test1", "Test2"]
-                }
-            } 
-
-            json = sortStudentsByTotal(json); // So yeah, let's just sort out the json object first
             classes = Object.keys(json["contestslist"]);
             // console.log(classes)
 
@@ -139,7 +97,7 @@ function refreshScoreboard() {
             // Now with classes on our hands, we should go one by one with forEach
             classes.forEach(_class => {
                 // _class is the string of the class
-
+                json["result"][_class] = sortByTotalScores(json["result"][_class]);
                 // First, we create a new div representing the class's area
                 const containerElement = document.createElement("div");
                 containerElement.className = "class";
@@ -183,11 +141,26 @@ function refreshScoreboard() {
                 tableElement.appendChild(headersElement);
 
                 // Casually*, adds the users into the headers.
+                let userPosition = 0;
                 users.forEach(user => {
-                    const userBox = document.createElement("p");
+                    userPosition++;
+                    const userBox = document.createElement("a");
                     userBox.id = "scoreboardElement";
                     userBox.textContent = user;
+                    userBox.href = "/user/" + user;
                     headersElement.appendChild(userBox);
+
+                    switch(userPosition) {
+                        case 1:
+                            userBox.style.color = "var(--score-first)";
+                            break;
+                        case 2:
+                            userBox.style.color = "var(--score-second)";
+                            break;
+                        case 3:
+                            userBox.style.color = "var(--score-third)";
+                            break;
+                    }
                 })
 
                 // Onto the next one, we should make it for each contest in the class being given

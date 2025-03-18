@@ -33,6 +33,25 @@
     text-align: center;
 }
 
+.class .table .headers a {
+    margin: 2.5px;
+    /* margin-bottom: 0; */
+    background-color: var(--background-active);
+    padding: 10px;
+    border-radius: 5px;
+    height: 20px;
+    text-align: center;
+    font-weight: bold;
+    text-decoration: none;
+    color: var(--text-color);
+    transition: .2s;
+}
+
+.class .table .headers a:hover {
+    background-color: var(--primary);
+    color: var(--primary-color)
+}
+
 .class .table .content {
     display: flex;
     flex-direction: column;
