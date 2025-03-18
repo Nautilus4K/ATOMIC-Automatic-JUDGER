@@ -9,20 +9,19 @@ If you don't understand Vietnamese and want to add English. Feel free to contrib
 
 ## Features
 
-- Support XLSX format (EXCEL files) for accounts (even though yes, XML is wayyy better for development. Most people are just gonna be blind to XML format)
-- Support isolated environment for reliability and safety (With Docker containers. Fully WSL support. Isolated environments)
-- Dynamic webserver, with modern look and feel
-- Great management system, including a hardened admin panel
-- Cross-platform support (Windows, Linux, macOS)
-- Security over performance (I'm not a security expert, just a hobbyist, so do not take that seriously)
-- Arch Linux, btw (I use Arch btw)
-- Login/logout. (Manual registering)
+- Support XLSX format (EXCEL files) for accounts.
+- Support isolated environment for reliability and safety (With Docker containers. Fully WSL support. Isolated environments).
+- Dynamic webserver, with modern look and feel.
+- Great management system, including a hardened admin panel.
+- Security over performance (I'm not a security expert, just a hobbyist, so do not take that seriously).
+- Arch Linux, btw (I use Arch btw).
+- Login/logout. (Manual registering).
 
 ## Dependencies
 
-- Python 3 (Probably 3.11)
+- Python 3 (Probably 3.11).
 - WSGI caller. Like gunicorn, for example.
-- Docker (Both desktop and Python package)
+- Docker (Both desktop and Python package).
 
 If you don't want to waste your time trying to find these dependencies, do this command:
 
@@ -64,10 +63,10 @@ If you wants to run webserver as an apache, you can! By running `apache.py`.
 python apache.py
 ```
 
-### Software still in progress
+### Main features
 
-| Feature name      | Status                              |
-|:-----------------:| ----------------------------------- |
-| Automatic judging | ✅ Ready                             |
-| Webserver         | In progress: Scoreboard (last step) |
-| GUI               | ❌ Going to be made                  |
+| Feature name      | Status      |
+|:-----------------:| ----------- |
+| Automatic judging | ✅ Ready     |
+| Webserver         | ✅ Ready     |
+| GUI               | In progress |
