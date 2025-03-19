@@ -29,7 +29,7 @@ If you don't want to waste your time trying to find these dependencies, do this 
 python -m pip install -r requirements.txt
 ```
 
-## Using the software
+## Using the software (in `/main`)
 
 This thing requires Python, at least 3.10, I highly recommend **3.11.2** as it is tested, others I'm not sure.
 
@@ -39,7 +39,7 @@ Clone this repo, that's the file. Or wait until a release.
 
 ### Dependencies
 
-Dependencies are listed in `requirements.txt` in the form of python files.
+Dependencies are listed in `requirements.txt` in the form of python packages.
 
 In case you feels like you can run all the things manually, use the following command to install dependencies.
 
@@ -61,6 +61,14 @@ If you wants to run webserver as an apache, you can! By running `apache.py`.
 
 ```bash
 python apache.py
+```
+
+### Running an ALL-IN-ONE management Panel
+
+There is a panel created to make it easier to run stuffs and browse through settings all done graphically with the Qt GUI Framework. To run it up, open it with Python:
+
+```bash
+python panel.py
 ```
 
 ### Main features
