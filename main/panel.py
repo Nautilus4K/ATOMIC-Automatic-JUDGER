@@ -2,11 +2,25 @@
 # Gathering required libraries #
 ################################
 
-# For arguments
+# For arguments and exec
 import sys
 
-# For GUI:                  Main app      Window       Subpages    Tabs     Layout       Menu bar  Menu
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QTabWidget, QVBoxLayout, QMenuBar, QMenu
+# For system-related operations
+import os
+
+# For parsing data
+import json
+
+# For GUI:                  Main app      Window       Subpages    Tabs     Layout       Menu bar  Menu   Labels
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QTabWidget, QVBoxLayout, QMenuBar, QMenu, QLabel
+
+#############
+# JSON Data #
+#############
+VERSION_JSON = "/source/version.json"
+
+# Directory position
+dirPath = os.path.dirname(os.path.abspath(__file__))
 
 ########################
 # Qt Style Sheet (QSS) #
@@ -45,16 +59,12 @@ class MainPanel(QMainWindow):
 
         self.judgingTab = QWidget()
         self.webserverTab = QWidget()
-        self.contestTab = QWidget()
-        self.classTab = QWidget()
-        self.studentTab = QWidget()
+        self.manageTab = QWidget()
 
         # Adding tabs into self.tabs
         self.tabs.addTab(self.judgingTab, "Chấm bài")
         self.tabs.addTab(self.webserverTab, "Trực tuyến")
-        self.tabs.addTab(self.contestTab, "Bài thi")
-        self.tabs.addTab(self.classTab, "Lớp học")
-        self.tabs.addTab(self.studentTab, "Học sinh")
+        self.tabs.addTab(self.manageTab, "Quản lý")
 
         # Adding self.tab into Layout
         self.layout.addWidget(self.tabs)
@@ -71,35 +81,70 @@ class MainPanel(QMainWindow):
         # | Menu bar entries |
         # +------------------+
 
-        self.menuBar_fileMenu = QMenu("&Tệp", self)
+        self.menuBar.fileMenu = QMenu("&Tệp", self)
 
         # Backup button. Used for backing up stuffs
-        menuBar_fileMenu_backupButton = self.menuBar_fileMenu.addAction("Sao lưu...")
-        menuBar_fileMenu_backupButton.triggered.connect(self.backup)
+        self.menuBar.fileMenu.backupButton = self.menuBar.fileMenu.addAction("Sao lưu...")
+        self.menuBar.fileMenu.backupButton.triggered.connect(self.backup)
 
         # Load backups, loading backups made with backup button
-        menuBar_fileMenu_loadbackupButton = self.menuBar_fileMenu.addAction("Mở sao lưu...")
-        menuBar_fileMenu_loadbackupButton.triggered.connect(self.loadBackup)
+        self.menuBar.fileMenu.loadbackupButton = self.menuBar.fileMenu.addAction("Mở sao lưu...")
+        self.menuBar.fileMenu.loadbackupButton.triggered.connect(self.loadBackup)
 
         # Exit button
-        menuBar_fileMenu_exitButton = self.menuBar_fileMenu.addAction("Thoát")
-        menuBar_fileMenu_exitButton.triggered.connect(self.exit)
+        self.menuBar.fileMenu.exitButton = self.menuBar.fileMenu.addAction("Thoát")
+        self.menuBar.fileMenu.exitButton.triggered.connect(self.exit)
 
         # Add menu in
-        self.menuBar.addMenu(self.menuBar_fileMenu)
+        self.menuBar.addMenu(self.menuBar.fileMenu)
 
-        self.menuBar_helpMenu = QMenu("&Trợ giúp", self)
-        self.menuBar.addMenu(self.menuBar_helpMenu)
+        self.menuBar.helpMenu = QMenu("&Trợ giúp", self)
+
+        # About button. Spits information about the application
+        self.menuBar.helpMenu.aboutButton = self.menuBar.helpMenu.addAction("Về ATOMIC...")
+        self.menuBar.helpMenu.aboutButton.triggered.connect(self.about)
+
+        # Adding menu in
+        self.menuBar.addMenu(self.menuBar.helpMenu)
 
         # +------------------+
         # | Judging settings |
         # +------------------+
 
+
+    def about(self):
+        print("Help/About called")
+
+        # Misc (self to make sure window is not destroyed after execution)
+        self.aboutFrame = QWidget()
+        self.aboutFrame.setFixedSize(300, 100)
+        self.aboutFrame.show()
+        self.aboutFrame.setWindowTitle("Về ATOMIC")
+
+        with open(dirPath + VERSION_JSON, "r", encoding='utf-8') as versionFile:
+            version = json.load(versionFile)
+
+        version_str = f'Codename {version["version"]}\nAPI Version: {version["api"]}\nBranch: {version["branch"]}\nSig: {version["signature"]}\nStable: {"Yes" if version["stable"] else "No"}'
+        # print(version_str)
+
+        self.aboutFrame.layoutObj = QVBoxLayout()
+
+        versionLabel = QLabel(self)
+        versionLabel.setText(version_str)
+        self.aboutFrame.layoutObj.addWidget(versionLabel)
+
+        # sys.exit()
+        # Applying layout
+        self.aboutFrame.setLayout(self.aboutFrame.layoutObj)
+
+
     def backup(self):
         print("File/Backup called")
 
+
     def loadBackup(self):
         print("File/LoadBackup called")
+
 
     def exit(self):
         exit()
