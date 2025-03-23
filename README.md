@@ -1,7 +1,7 @@
 # ATOMIC-Automatic-JUDGER
 
 A Vietnamese automatic testing software built on Python. Supports online submission and offline tests.
-This software uses Docker for its isolated environment, WSGI callable object for the server interface, and SQLite, JSON for its database.
+This software uses Docker for its isolated environment, WSGI callable object for the server interface, and JSON for its database.
 This software is designed by Vietnamese people, for Vietnamese people. So the UI is all Vietnamese.
 If you don't understand Vietnamese and want to add English. Feel free to contribute, give a pull request, I will add in (No backdoor pls).
 
@@ -29,13 +29,23 @@ If you don't want to waste your time trying to find these dependencies, do this 
 python -m pip install -r requirements.txt
 ```
 
+## Requirements
+
+**OS:** Windows 10 or later, All Linux (With Python), macOS unknown.
+
+**RAM:** 1GB (DDR2) | *Recommended:* 2GB (DDR4)
+
+**GPU:** None
+
+Note: If using Windows, it's best to use the installer (if made).
+
 ## Using the software (in `/main`)
 
 This thing requires Python, at least 3.10, I highly recommend **3.11.2** as it is tested, others I'm not sure.
 
 ### Download
 
-Clone this repo, that's the file. Or wait until a release.
+Clone this repo, that's the file. Or wait until a release (for Windows).
 
 ### Dependencies
 
@@ -77,4 +87,4 @@ python panel.py
 |:-----------------:| ----------- |
 | Automatic judging | ✅ Ready     |
 | Webserver         | ✅ Ready     |
-| GUI               | In progress |
+| Management Panel  | In progress |

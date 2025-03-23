@@ -12,8 +12,8 @@ import os
 # For parsing data
 import json
 
-# For GUI:                  Main app      Window       Subpages    Tabs     Layout       Menu bar  Menu   Labels  Text input  Sidebar    Checkbox
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QTabWidget, QVBoxLayout, QMenuBar, QMenu, QLabel, QLineEdit,  QSplitter, QCheckBox
+# For GUI:                  Main app      Window       Subpages    Tabs     Layout       Menu bar  Menu   Labels  Text input  Sidebar    Checkbox   Scrolling    Frames   Buttons
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QTabWidget, QVBoxLayout, QMenuBar, QMenu, QLabel, QLineEdit,  QSplitter, QCheckBox, QScrollArea, QFrame,  QPushButton
 #                       Float input       Icon   Image
 from PyQt6.QtGui import QDoubleValidator, QIcon, QPixmap
 
@@ -39,6 +39,14 @@ STYLE_BIGLABEL = """
 """
 STYLE_OPTION = """
     margin-bottom: 20px;
+"""
+STYLE_SIDEBAR_BUTTONS = """
+    margin-top: 10px;
+    margin-bottom: 20px;
+    padding: 10px;
+"""
+STYLE_SIDEBAR_LABELS = """
+    font-weight: bold;
 """
 
 #########################################
@@ -73,6 +81,7 @@ class MainPanel(QMainWindow):
         # Splitter for a sidebar and the main layout of tabs
         self.splitter = QSplitter(self)
         self.splitter.setOrientation(Qt.Orientation.Horizontal)
+        # self.splitter.setOpaqueResize(True)
 
         # Create Tabs Object
         self.tabs = QTabWidget()
@@ -91,7 +100,13 @@ class MainPanel(QMainWindow):
 
         # Adding tabs into self.tabs
         self.tabs.addTab(self.manageTab, "Quản lý")
-        self.tabs.addTab(self.judgingTab, "Chấm bài")
+
+        self.judgingScrollable = QScrollArea(self)
+        self.judgingScrollable.setWidgetResizable(True)
+        self.judgingScrollable.setWidget(self.judgingTab)
+        self.judgingScrollable.setFrameShape(QFrame.Shape.NoFrame)
+        self.tabs.addTab(self.judgingScrollable, "Chấm bài")
+
         self.tabs.addTab(self.webserverTab, "Trực tuyến")
 
         # Doing a bunch of actions when tabs are changed
@@ -99,7 +114,27 @@ class MainPanel(QMainWindow):
 
         # Adding sidebar frame
         self.sidebar = QWidget(self)
+        self.sidebar.setFixedWidth(150)
         self.sidebar.layout = QVBoxLayout(self.sidebar)
+
+
+        # +-----------------+
+        # | Sidebar entries |
+        # +-----------------+
+        # ENABLE JUDGING
+        self.sidebar.judgingLabel = QLabel(self)
+        self.sidebar.judgingLabel.setText("Hệ thống chấm bài")
+        self.sidebar.judgingLabel.setStyleSheet(STYLE_SIDEBAR_LABELS)
+        self.sidebar.layout.addWidget(self.sidebar.judgingLabel)
+
+        self.sidebar.judgingButton = QPushButton(self)
+        self.sidebar.judgingButton.setText("Bắt đầu chấm bài")
+        self.sidebar.judgingButton.setStyleSheet(STYLE_SIDEBAR_BUTTONS)
+        self.sidebar.layout.addWidget(self.sidebar.judgingButton)
+
+        # ALIGNMENT
+        self.sidebar.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+
 
         # Adding self.sidebar into Layout (Splitter)
         self.splitter.addWidget(self.sidebar)
@@ -232,9 +267,11 @@ class MainPanel(QMainWindow):
         self.aboutFrame.setFixedSize(300, 100)
         self.aboutFrame.show()
         self.aboutFrame.setWindowTitle("Về ATOMIC")
+        self.aboutFrame.setWindowIcon(QIcon(dirPath + ICON_PATH))
 
         self.aboutFrame.splitter = QSplitter(self)
         self.aboutFrame.splitter.setOrientation(Qt.Orientation.Horizontal)
+        self.aboutFrame.splitter.setChildrenCollapsible(False)
 
         with open(dirPath + VERSION_JSON, "r", encoding='utf-8') as versionFile:
             version = json.load(versionFile)
