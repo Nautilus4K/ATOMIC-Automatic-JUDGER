@@ -16,6 +16,8 @@ import queue
 from typing import Tuple, Optional, Any
 import shutil
 import traceback
+import signal
+import sys
 
 # For logging, like pwarn(), pinfo(), pok(), perr
 from csmcoloredloggerprint import *
@@ -28,6 +30,7 @@ CONTEST_PATH = "/source/contests.json"
 SETTINGS_PATH = "/source/settings.json"
 VERSION_PATH = "/source/version.json"
 STATUS_PATH = "/central/status.json"
+USERFILE_PATH = "/source/users.json"
 
 # Variables
 filePath = os.path.dirname(os.path.abspath(__file__))
@@ -49,30 +52,52 @@ print(versionDisplay)
 print("------------------------")
 
 if not stable:
-    pwarn("This build/version of ATOMIC is not stable. Use with caution")
+    pwarn("Phiên bản ATOMIC này không ổn định. Sử dụng một cách thận trọng.")
 
-pinfo("Current running directory: " + filePath)
+pinfo("Vị trí chạy chương trình: " + filePath)
 
 # Connect to docker environment
 try:
     client = docker.from_env()
 except Exception as e:
-    perr(f"Failed to connect to Docker environment: {str(e)}")
-    perr("Your Docker environment might be faulty, or you might not have Docker Engine installed and turned on.")
-    exit()
+    perr(f"Thất bại trong quá trình kết nối đến môi trường Docker: {str(e)}")
+    perr("Môi trường Docker của bạn có thể bị lỗi hoặc chưa được tải về và bật lên.")
+    exit(-127)
 
 # Check if the connection is okay
 try:
     client.ping()
-    pinfo("Connected to Docker environment.")
+    pinfo("Đã kết nối đến môi trường Docker.")
 except Exception as e:
-    perr("Docker environment inactive. Try running ATOMIC again or verify your Docker installation.")
-    exit()
+    perr("Môi trường Docker không hoạt động. Hãy thử chạy lại hệ thống chấm bài hoặc khởi động lại Docker.")
+    exit(-126)
 
+# Get all containers, both running and not running
+containers = client.containers.list(all=True)
+# pinfo("Currently running containers: ")
+# for container in containers:
+#     print(" - " + container.name)
+
+pinfo("Đang làm sạch môi trường Docker.")
+
+index = 0
+for container in containers:
+    index+=1
+    pinfo(f"Container ({index}/{len(containers)}): " + container.name)
+    if container.status == "running":
+        pinfo("Container đang chạy, đang dừng lại...")
+        container.stop()
+    else:
+        pwarn("Container không phải đang chạy.")
+    if container.name != "compiler":
+        pinfo("Đang xóa container...")
+        container.remove()
+    else:
+        pwarn("Container biên soạn đã được phát hiện, giữ lại container.")
 
 
 # Prepare judging environment
-pinfo("Now preparing judging environment (Docker images/containers). Make sure you have Internet access.")
+pinfo("Đang chuẩn bị môi trường chấm bài (Docker). Chắc chắn rằng bạn đã kết nối Internet.")
 def check_image_exists(image_name):
     client = docker.from_env()  # Connect to the Docker daemon
     try:
@@ -106,102 +131,102 @@ def run_container(image_name, mounted_dir: str, name: str):
     
     container.start()
     container.reload()
-    pinfo(f"Container {container.id} is running with host's current directory mounted. Current status: {container.status}")
+    pinfo(f"Container {container.id} đang chạy với /tempWorking được mount, tình hình hiện tại: {container.status}")
     return container
 
 if not check_image_exists("atomic-python"):
-    pwarn("No Environment image found, building...")
+    pwarn("Không tìm thấy ảnh môi trường, đang xây dựng...")
     pyimage, build_logs = client.images.build(path=filePath+"/templates", dockerfile="Dockerfile.python", tag="atomic-python", rm=True)
     for log in build_logs:
         pinfo(log.get('stream', '').strip())
-    pok(f"Image built with ID: {pyimage.id}")
-pinfo("Generating new container for Environment")
+    pok(f"Ảnh đã được xây dựng với ID: {pyimage.id}")
+pinfo("Đang tạo container mới cho môi trường")
 runcontainer = run_container("atomic-python", "/tempWorking", "execution")
 
 if not check_image_exists("atomic-compile"):
-    pwarn("No compiler image found, building one...")
-    pinfo("Building Compile Environment Docker image...")
+    pwarn("Không tìm thấy ảnh biên soạn, đang xây dựng...")
+    pinfo("Đang xây dựng môi trường biên soạn...")
     try:
         compileimage, build_logs = client.images.build(path=filePath+"/templates", dockerfile="Dockerfile.compile", tag="atomic-compile")
         for log in build_logs:
             pinfo(log.get('stream', '').strip())
-        pok(f"Image built with ID: {compileimage.id}")
+        pok(f"Ảnh đã được xây dựng với IDID: {compileimage.id}")
     except Exception as e:
-        perr("Error in building Compile Environment Docker image: " + str(e))
+        perr("Lỗi trong quá trình xây dựng ảnh môi trường biên soạn: " + str(e))
         runcontainer.remove()
-        exit()
+        exit(-125)
 
 if not check_container_exists("compiler"):
-    pwarn("No compiler container found, creating one...")
+    pwarn("Không tìm thấy container biên soạn, đang làm...")
     container = client.containers.create("atomic-compile", name="compiler")
-    pok(f"Compiler {container.name} build with ID {container.id}")
+    pok(f"Container {container.name} đã được tạo dựng với ID {container.id}")
 
 
 
-pinfo("Starting compile container")
+pinfo("Đang bắt đầu container biên soạn")
 try:
     compilecontainer = client.containers.get("compiler")
     compilecontainer.reload()
     if compilecontainer.status != "running":
-        pwarn("Container isn't running.")
+        pwarn("Container không đang chạy.")
         compilecontainer.start()
         compilecontainer.reload()
-        pok(f"Successfully started compile container. Current status: {compilecontainer.status}")
-    else: pinfo("Did not start container because it is already started.")
+        pok(f"Thành công bật container biên soạn, tình hình hiện tại: {compilecontainer.status}")
+    else: pinfo("Không bật container vì nó đã được bật.")
     # compilecontainer.exec_run("")
 except Exception as e:
-    perr(f"Failed to start compile container: {e}")
+    perr(f"Bật container biên soạn không thành công, lỗi: {e}")
     runcontainer.remove()
-    exit()
+    exit(-124)
 
-pinfo("Preparing to enable judging...")
+pinfo("Chuẩn bị bắt đầu chấm bài...")
 
 
 def compile_code(filecontents: str, lang: str):
     try:
-        pinfo("[Compile] Creating temporary folder in host.")
+        pinfo("[Biên soạn] Đang tạo thư mục tạm thời ở máy chủ.")
         host_temp_working_dir = filePath + "/tempWorking"
         os.makedirs(host_temp_working_dir, exist_ok=True)
 
         # Get the compile container
         compilecontainer = client.containers.get("compiler")
         compilecontainer.start()
-        pinfo("[Compile] Creating temporary folder in Docker container.")
+        pinfo("[Biên soạn] Đang liên kết thư mục tạm thời trong container.")
 
         # Step 1: Write the source code to a file inside the container
         container_temp_working_dir = "/tmp/tempWorking"
         compilecontainer.exec_run(f"mkdir -p {container_temp_working_dir}")
 
-        pinfo("[Compile] Checking if language is supported based on extension.")
+        pinfo("[Biên soạn] Đang kiểm tra xem ngôn ngữ có được hỗ trợ dựa trên phần mở rộng.")
         source_filename = "source_code"
-        if lang == "cpp":
+        if lang == "cpp" or lang == "c++":
             source_filename += ".cpp"
-        elif lang == "pascal":
+        elif lang == "pascal" or lang == "pas":
             source_filename += ".pas"
         else:
-            perr(f"[Compile] Unsupported language. Supported languages: C++, Pascal, Python (Direct Execution). Target language: {lang}")
+            perr(f"[Biên soạn] Ngôn ngữ không được hỗ trợ. Các ngôn ngữ được hỗ trợ: C++, Pascal, Python (Không biên soạn). Ngôn ngữ được đưa vào: {lang}")
             return [-1, "Unsupported language"]
 
         # Create the file using heredoc - fixed indentation issues
-        pinfo("[Compile] Writing file content...")
+        pinfo("[Biên soạn] Đang viết dữ liệu...")
         cat_command = f"""cat << 'EOF' > {container_temp_working_dir}/{source_filename}
 {filecontents.strip()}
 EOF"""
 
         exec_result = compilecontainer.exec_run(['sh', '-c', cat_command])
-        # pinfo("[Compile] Executing command: " + cat_command)
+        # pinfo("[Biên soạn] Executing command: " + cat_command)
         if exec_result.exit_code != 0:
             error_msg = exec_result.output.decode()
-            perr(f"[Compile] Failed to create source file:\n{error_msg}")
+            perr(f"[Biên soạn] Thất bại trong quá trình viết file mã nguồn:\n{error_msg}")
             return [-5, f"Failed to create source compilation file: {error_msg}"]
         
         # Verify file was created and has content
         verify_result = compilecontainer.exec_run(f"test -s {container_temp_working_dir}/{source_filename}")
         if verify_result.exit_code != 0:
-            perr("[Compile] File was not created or is empty")
+            perr("[Biên soạn] File không được tạo ra HOẶC trống")
             return [-5, "File creation failed - file is empty or missing"]
             
-        pok("[Compile] Created source file inside container")
+        pok("[Biên soạn] Đã tạo file mã nguồn trong container")
 
         # Rest of compilation logic remains the same...
         if lang == "cpp" or lang == "c++" or lang == "cplusplus":
@@ -211,7 +236,7 @@ EOF"""
 
         exec_result = compilecontainer.exec_run(compile_command)
         if exec_result.exit_code != 0:
-            perr(f"[Compile] Compilation failed:\n{exec_result.output.decode()}")
+            perr(f"[Biên soạn] Biên soạn thất bại:\n{exec_result.output.decode()}")
             return [-3, exec_result.output.decode()]
 
         # Copy binary back to host
@@ -222,11 +247,11 @@ EOF"""
             for chunk in binary_stream:
                 f.write(chunk)
 
-        pok(f"[Compile] Compilation successful. Binary saved to host at '{host_binary_path}'.")
+        pok(f"[Biên soạn] Biên soạn thành công, file có thể chạy đã được lưu vào máy chủ tại '{host_binary_path}'.")
         return [0, ""]
 
     except Exception as e:
-        perr(f"Error during compilation: {str(e)}")
+        perr(f"Lỗi khi đang biên soạn: {str(e)}")
         return [-4, str(e)]
     
 def exec_with_timeout(container, cmd: list, timeout: float) -> Tuple[Optional[Any], float, bool]:
@@ -475,25 +500,44 @@ EOF" """)
 # Judging function. Used for checking if a submit had done okay.
 def judge(fullfilename: str, show_test: bool):
     try:
-        pinfo("Reloading contests information...")
+        pinfo("Đang tải lại thông tin bài thi...")
         with open(filePath+CONTEST_PATH, "r", encoding="utf-8") as file:
             contests = json.loads(file.read())
             normalized_contests = {key.lower(): value for key, value in contests.items()}
     except:
-        perr("No `contests.json` found in source. Please generate one or reinstall the software.")
+        perr("Không tìm thấy `contests.json`, xin hãy thiết lập.")
         return [-4, None]
 
     # Get file data in this format [username][submission_name].extension
     # into a list: [username, submission_name, extension] ---> filedata
     # The worst way to do this
-    pinfo("> Extracting contents...")
+    pinfo("> Đang phân tách dữ liệu...")
     filedata = fullfilename.replace("][", ".").replace("[", "").replace("]", "").split(".")
     filename = filedata[1].lower() # FUCK, I forgot this once and errors comes. FUCK
-    pok("[!] Extracted into LIST: " + str(filedata))
+    pok("[!] Đã phân tách thành DANH SÁCH (LIST): " + str(filedata))
+
+    username = filedata[0]
+    with open(filePath + USERFILE_PATH, "r", encoding='utf-8') as usersFile:
+        users = json.load(usersFile)
+
+    # Make sure we only shows the valid contests
+    userclass = users[username]["class"]
+    badContests = []
+    for contest in normalized_contests:
+        validClass = False
+        for cls in userclass:
+            if cls in normalized_contests[contest]["Classes"]:
+                validClass = True
+                break
+        if not validClass:
+            badContests.append(contest)
+
+    for contest in badContests:
+        del normalized_contests[contest]
 
     # We test if the file's name is one of the things we need to judge, else just remove the file for storage's sake and return its name into result?
     if filename in normalized_contests:
-        pinfo(f"Judging {filename}...")
+        pinfo(f"Đang chấm {filename}...")
 
         # Prepare to write logs
         logfile = open(filePath+LOG_PATH+fullfilename+".log", "w", encoding="utf-8")
@@ -501,7 +545,7 @@ def judge(fullfilename: str, show_test: bool):
         # Get extensions of file
         ext = filedata[2]
         if ext == "py" or ext == "pyw" or ext == "python":
-            pinfo("> Python file detected. Entering testing step")
+            pinfo("> Phát hiện file Python. Đang kiểm tra...")
             shutil.copy(filePath+"/workspace/queue/"+fullfilename, filePath+"/tempWorking/a.py")
             logfile.write("Đang kiểm tra...\n")
             score = 0.0
@@ -522,10 +566,10 @@ def judge(fullfilename: str, show_test: bool):
                         normalized_contests[filename]["InputFile"],
                         normalized_contests[filename]["OutputFile"]
                     )
-                    pok(f"Executed file with exit code {code} in {exectime} seconds")
+                    pok(f"Đã chạy file với exit code {code} trong {exectime} giây")
                     if exc or excmsg:
                         # If an exception happened
-                        perr(f"> Exception happened during execution. Error: {exc.args[0]}")
+                        perr(f"> Lỗi trong khi chạy. Lỗi: {exc.args[0]}")
                         if show_test: logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chính xác:\n{strippedDestine}\n\nChương trình chạy sinh lỗi: ")
                         else:
                             logfile.write("Chương trình chạy sinh lỗi: ")
@@ -537,7 +581,7 @@ def judge(fullfilename: str, show_test: bool):
                                 # This shouldn't happen
                                 # Yet it does
                                 # Fuck
-                                perr("> File returned non-utf8 bytes.")
+                                perr("> File trả về bytes không vừa bảng mã UTF-8.")
                             logfile.write(f"[{str(exec)}]\nĐể biết thêm thông tin chi tiết, vui lòng tìm kiếm lỗi này trong ngôn ngữ lập trình Python.\n\n")
                     else:
                         # if no exception has happened. We check the results if it matches and is correct
@@ -549,36 +593,37 @@ def judge(fullfilename: str, show_test: bool):
 
                         # God bless this check. This is probably the worst way I could do this
                         if not timedOut:
-                            logfile.write(f"Exit code {code} :: {exectime} seconds\n")
+                            logfile.write(f"Exit code {code} :: {exectime} giây\n")
                         else:
-                            logfile.write(f"Exit code {code} :: {exectime}+ seconds\n")
+                            logfile.write(f"Exit code {code} :: {exectime}+ giây\n")
 
                         # In case there is no time pass-through
                         if exectime <= float(normalized_contests[filename]["TimeLimit"]) and not timedOut:
                             # If the result/output matches with the supposed answer
                             if strippedOutput == strippedDestine:
-                                pinfo(f"> Test {i} passed!")
+                                pinfo(f"> Test {i} đúng!")
                                 logfile.write("Đầu ra chương trình giống đầu ra dự kiến\n")
                                 score += 10
                             else:
-                                pinfo(f"> Test {i} did not pass!")
+                                pinfo(f"> Test {i} thất bại!")
                                 logfile.write("Đầu ra chương trình KHÁC đầu ra dự kiến\n")
                         else:
-                            pinfo(f"> Test {i} timed out!")
+                            pinfo(f"> Test {i} quá thời gian!")
                             logfile.write("Chương trình chạy quá thời gian\n")
                         
                 except Exception as e:
-                    perr(f"An error occurred during execution: {str(e)}")
+                    perr(f"Đã có lỗi xảy ra trong khi chạy: {str(e)}")
                     # logfile.write(f"Lỗi HỆ THỐNG: {str(e)}\n")
                     logfile.write("Đã có lỗi xảy ra trong quá trình chạy chương trình.\n")
                     continue
             score /= normalized_contests[filename]["TestAmount"]
-            pinfo("> Result score: " + str(score))
+            pinfo("> Điểm kết quả: " + str(score))
                     
             try:
                 os.remove(filePath+"/tempWorking/a.py")
             except:
-                perr("Cannot remove a.py in temporary working folder, probably deleted beforehand.")
+                # perr("Cannot remove a.py in temporary working folder, probably deleted beforehand.")
+                perr("Không thể xóa a.py trong thư mục làm việc tạm thời, khả năng cao đã bị xóa từ trước.")
 
             # If an existing userdata json file exists
             if os.path.exists(filePath+"/workspace/result/"+filedata[0]+".json"):
@@ -595,8 +640,8 @@ def judge(fullfilename: str, show_test: bool):
 
             return [0, score]
         else:
-            pinfo("> Not a Python file. Entering compilation step")
-            pinfo("> Fetching filedata")
+            pinfo("> Không phải file python, đang biên soạn...")
+            pinfo("> Đang lấy dữ liệu file")
             try:
                 with open(filePath+"/workspace/queue/"+fullfilename) as file:
                     filecontents = file.read()
@@ -604,12 +649,12 @@ def judge(fullfilename: str, show_test: bool):
             except:
                 logfile.write("Không đọc được bài nộp\n")
                 logfile.close()
-                perr(f"> Failed to read file. Please check the file's integrity. Error: {str(e)}")
+                perr(f"> Không đọc được file. Vui lòng kiểm tra tính toàn vẹn của file. Lỗi: {str(e)}")
                 return [-2, None]
             
             comres, exception = compile_code(filecontents, ext.lower()) # Compile results, too
             if comres == 0: # If compilation successes
-                pok("> Compilation successful. Entering testing step")
+                pok("> Thành công biên soạn. Đang sang bước kiểm tra...")
                 logfile.write("Biên soạn thành công\nĐang kiểm tra...\n")
                 score = 0.0
                 for i in range(normalized_contests[filename]["TestAmount"]):
@@ -632,10 +677,10 @@ def judge(fullfilename: str, show_test: bool):
                             normalized_contests[filename]["InputFile"],
                             normalized_contests[filename]["OutputFile"]
                         )
-                        pok(f"Executed file with exit code {code} in {exectime} seconds")
+                        pok(f"Đã chạy file với exit code {code} trong {exectime} giây")
                         if exc or excmsg:
                             # If an exception happened
-                            perr(f"> Exception happened during execution. Error: {exc.args[0]}")
+                            perr(f"> Lỗi trong khi chạy. Lỗi: {exc.args[0]}")
                             if show_test: logfile.write(f"Đầu vào:\n{inputstr}\n\nĐầu ra chính xác:\n{strippedDestine}\n\nChương trình chạy sinh lỗi: ")
                             else: logfile.write("Chương trình chạy sinh lỗi: ")
                             if excmsg:
@@ -646,7 +691,7 @@ def judge(fullfilename: str, show_test: bool):
                                     # This shouldn't happen
                                     # Yet it does
                                     # Fuck
-                                    perr("> File returned non-utf8 bytes.")
+                                    perr("> File trả về bytes không vừa bảng mã UTF-8.")
                                 logfile.write(f"[{str(exec)}]\nĐể biết thêm thông tin chi tiết, vui lòng tìm kiếm lỗi này trong ngôn ngữ lập trình Python.\n\n")
                         else:
                             # if no exception has happened. We check the results if it matches and is correct
@@ -658,32 +703,32 @@ def judge(fullfilename: str, show_test: bool):
 
                             # God bless this check. This is probably the worst way I could do this
                             if not timedOut:
-                                logfile.write(f"Exit code {code} :: {exectime} seconds\n")
+                                logfile.write(f"Exit code {code} :: {exectime} giây\n")
                             else:
-                                logfile.write(f"Exit code {code} :: {exectime}+ seconds\n")
+                                logfile.write(f"Exit code {code} :: {exectime}+ giây\n")
 
                             # In case there is no time pass-through
                             if exectime <= float(normalized_contests[filename]["TimeLimit"]) and not timedOut:
                                 # If the result/output matches with the supposed answer
                                 if strippedOutput == strippedDestine:
-                                    pinfo(f"> Test {i} passed!")
+                                    pinfo(f"> Test {i} vượt qua!")
                                     logfile.write("Đầu ra chương trình giống đầu ra dự kiến\n")
                                     score += 10
                                 else:
-                                    pinfo(f"> Test {i} did not pass!")
+                                    pinfo(f"> Test {i} thất bại!")
                                     logfile.write("Đầu ra chương trình KHÁC đầu ra dự kiến\n")
                             else:
-                                pinfo(f"> Test {i} timed out!")
+                                pinfo(f"> Test {i} quá thời gian!")
                                 logfile.write("Chương trình chạy quá thời gian\n")
                             
                     except Exception as e:
-                        perr(f"An error occurred during execution: {str(e)}")
+                        perr(f"Đã có lỗi xảy ra khi đang chạy chương trình: {str(e)}")
                         # logfile.write(f"Lỗi HỆ THỐNG: {str(e)}\n")
                         logfile.write("Đã có lỗi xảy ra trong quá trình chạy chương trình.\n")
                         continue
                 
                 score /= normalized_contests[filename]["TestAmount"]
-                pinfo("> Result score: " + str(score))
+                pinfo("> Điểm kết quả: " + str(score))
 
                 # If an existing userdata json file exists
                 if os.path.exists(filePath+"/workspace/result/"+filedata[0]+".json"):
@@ -701,13 +746,13 @@ def judge(fullfilename: str, show_test: bool):
                 os.remove(filePath+"/tempWorking/a.out")
                 return [0, score]
             else:
-                perr(f"> Compilation failed with code {comres}. Please check the code's integrity.")
-                perr(f"> Exception:\n {exception}")
+                perr(f"> Biên soạn thất bại với code {comres}. Hãy kiểm tra tính toàn vẹn của code.")
+                perr(f"> Lỗi:\n {exception}")
                 logfile.write("Lỗi trong quá trình biên soạn:\n"+str(exception))
                 return [-3, exception]
 
     else:
-        pinfo(f"Found submit not in line with any current contests, removing {fullfilename}.")
+        pinfo(f"Tìm thấy bài nộp không vừa với bài thi hiện có nào, đang xóa {fullfilename}.")
         os.remove(filePath+"/workspace/queue/"+fullfilename)
         return [-1, None]
 
@@ -716,19 +761,31 @@ def reload_containers():
 
     # Remove the current container if it exists
     if runcontainer:
-        pinfo("Removed execution container with argument: force=True.")
+        pinfo("Đã xóa container thực hiện chương trình với: force=True.")
         runcontainer.remove(force=True)
     else:
-        pwarn("Execution container did not exists beforehand, did something happen?")
+        pwarn("Container thực hiện chương trình không tồn tại.")
 
     # Start a new container and reassign to runcontainer
     runcontainer = run_container("atomic-python", "/tempWorking", "execution")
 
     # Log the action
-    pinfo("Reloaded execution container. This action was called to make sure containers are fresh, temporary, and arbitrary code execution cannot last long.")
+    pinfo("Đã tải lại container thực hiện chương trình.")
 
-pinfo("Now testing/judging current queued submissions.")
+pinfo("Hiện đang kiểm tra các bài nộp.")
+
 running = True
+def signal_handler(sig, frame):
+    global running
+    pwarn(f"Quá trình dừng lại bằng {sig}. Đang dừng lại...")
+    running = False
+
+# Register signal handlers for both Windows and Unix-like systems
+signal.signal(signal.SIGINT, signal_handler)  # Handles Ctrl+C, os.kill(pid, SIGINT)
+signal.signal(signal.SIGTERM, signal_handler)  # Handles graceful termination on Unix
+if os.name == 'nt':  # Windows-specific
+    signal.signal(signal.SIGBREAK, signal_handler)  # Handles GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT)
+
 lastReload = time.time()
 while running:
     try:
@@ -736,7 +793,7 @@ while running:
             settings = json.loads(file.read())
             wait_time = settings["wait_time"]
     except Exception as e:
-        perr(f"Failed to read settings.json: {str(e)}")
+        perr(f"Đọc settings.json không thành công: {str(e)}")
     try:
         dirs = os.listdir(filePath + "/workspace/queue/")
         if len(dirs) > 0:
@@ -768,11 +825,11 @@ while running:
                     # Now it has this list: [username, submission, extension]
                     filedata = file.replace("][", ".").replace("[", "").replace("]", "").split(".")
                     if not os.path.exists(filePath+"/userdata/"+filedata[0]+"/"):
-                        pwarn("User did not have a pre-existing directory, creating one...")
+                        pwarn("Người dùng không có một thu mục có sẵn, đang tạo một thư mục mới...")
                         os.mkdir(filePath+"/userdata/"+filedata[0]+"/")
                     shutil.move(filePath+"/workspace/queue/"+file, filePath+"/userdata/"+filedata[0]+"/"+filedata[1]+"."+filedata[2])
                 except:
-                    perr(f"Cannot move {file} to USERDATA, did something happen?")
+                    perr(f"Không thể di chuyển {file} đến USERDATA, có gì đó đã xảy ra?")
         else:
             # With nothing to judge/held onto, we returns as if we're idling
             statusdata = {}
@@ -787,7 +844,7 @@ while running:
         # Reduce drive I/O stress
         if keyboard.is_pressed("a") and keyboard.is_pressed("x") and keyboard.is_pressed("z"):
             # Keybind: A + X + Z
-            input("Pausing...")
+            input("Đang tạm dừng...")
         
         # Reloading functionality.
         # This functionality is used to make sure abitrary code execution wouldn't last long.
@@ -800,7 +857,7 @@ while running:
         # This is just to make sure the stress on system components wouldn't hit quite as hard
         time.sleep(wait_time)
     except KeyboardInterrupt:
-        pwarn("Process terminated with Keyboard. Shutting down ATOM/C...")
+        pwarn("Quá trình dừng lại bằng SIGINT, đang thoát ATOMIC...")
         running = False
         break
     # except Exception as e:
@@ -817,19 +874,21 @@ containers = client.containers.list(all=True)
 # for container in containers:
 #     print(" - " + container.name)
 
-pinfo("Now cleaning up containers...")
+pinfo("Đang làm sạch containers...")
 
 index = 0
 for container in containers:
     index+=1
     pinfo(f"Container ({index}/{len(containers)}): " + container.name)
     if container.status == "running":
-        pinfo("Container is running, stopping...")
+        pinfo("Container đang chạy, đang dừng lại...")
         container.stop()
     else:
-        pwarn("Container is not already running.")
+        pwarn("Container không đang chạy.")
+
+
     if container.name != "compiler":
-        pinfo("Removing container...")
+        pinfo("Đang xóa container...")
         container.remove()
     else:
-        pwarn("Compiler container detected, reservation enabled.")
+        pwarn("Phát hiện container biên soạn, bỏ qua...")

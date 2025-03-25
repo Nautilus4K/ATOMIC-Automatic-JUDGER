@@ -1,3 +1,11 @@
+#######################
+# Judging Error codes #
+#######################
+# -127: Docker environment error
+# -126: Docker pinging error
+# -125: Compile image failed to be built
+# -124: Compile container failed to start
+
 ################################
 # Gathering required libraries #
 ################################
@@ -8,17 +16,20 @@ from sys import platform
 
 # For system-related operations
 import os
+import signal
+import ctypes
+import webbrowser as wb
 
 # For parsing data
 import json
 
-# For GUI:                  Main app      Window       Subpages    Tabs     Layout       Menu bar  Menu   Labels  Text input  Sidebar    Checkbox   Scrolling    Frames   Buttons
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QTabWidget, QVBoxLayout, QMenuBar, QMenu, QLabel, QLineEdit,  QSplitter, QCheckBox, QScrollArea, QFrame,  QPushButton
-#                       Float input       Icon   Image
-from PyQt6.QtGui import QDoubleValidator, QIcon, QPixmap
+# For GUI:                  Main app      Window       Subpages    Tabs     Layout       Menu bar  Menu   Labels  Text input  Sidebar    Checkbox   Scrolling    Frames   Buttons      Multiple lines   Msgbox
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QTabWidget, QVBoxLayout, QMenuBar, QMenu, QLabel, QLineEdit,  QSplitter, QCheckBox, QScrollArea, QFrame,  QPushButton, QTextEdit,       QMessageBox
+#                       Float input       Icon   Image    Fonts  Text Cursor  Colors
+from PyQt6.QtGui import QDoubleValidator, QIcon, QPixmap, QFont, QTextCursor, QColor
 
-# More Qt stuffs
-from PyQt6.QtCore import Qt
+# More Qt stuffs         Some states variable     Running processes
+from PyQt6.QtCore import Qt,                      QProcess
 
 #############
 # JSON Data #
@@ -26,6 +37,17 @@ from PyQt6.QtCore import Qt
 VERSION_JSON = "/source/version.json"
 SETTINGS_JSON = "/source/settings.json"
 ICON_PATH = "/icon.ico"
+
+#################
+# Scripts Paths #
+#################
+JUDGING_PATH = "/judge.py"
+WSGI_PATH = "/wsgi_interface.py"
+
+####################
+# EXECUTABLE PATHS #
+####################
+PYDIR = "/.venv/Scripts/python.exe" # Currently using virual python environment
 
 # Directory position
 dirPath = os.path.dirname(os.path.abspath(__file__))
@@ -48,6 +70,51 @@ STYLE_SIDEBAR_BUTTONS = """
 STYLE_SIDEBAR_LABELS = """
     font-weight: bold;
 """
+STYLE_CONSOLE = """
+QTextEdit {
+    background: black;
+    color: white;
+    border-radius: 5px;
+}
+QScrollBar:vertical {
+    border: none;
+    background: #0F0F0F;
+    width: 4px;
+    margin: 0px 0px 0px 0px;
+}
+
+QScrollBar::handle:vertical {
+    background:rgb(83, 83, 83);
+    min-height: 20px;
+    width: 4px;
+    border-radius: 2px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #888888;
+}
+
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: none;
+}
+"""
+
+#############
+# Colorings #
+#############
+COLOR_CONSOLE_ERROR = QColor(255, 82, 82)
+COLOR_CONSOLE_WARNING = QColor(255, 209, 82)
+COLOR_CONSOLE_OK = QColor(82, 255, 88)
+COLOR_CONSOLE_DEFAULT = QColor(255, 255, 255)
+
+###########
+# Console #
+###########
+from csmcoloredloggerprint import INFO_COL, ERROR_COL, WARN_COL, OK_COL, RESET_COL
 
 #########################################
 # Main panel window class using QWidget #
@@ -58,21 +125,68 @@ class MainPanel(QMainWindow):
     This is the place of declaration. \n
     """
     def __init__(self):
+        # Notifying if the user is entering for the first time
+        with open(dirPath + SETTINGS_JSON, "r", encoding='utf-8') as settingsFile:
+            settings = json.load(settingsFile)
+
+        if settings["panelfirst"]:
+            settings["panelfirst"] = False
+            with open(dirPath + SETTINGS_JSON, "w", encoding='utf-8') as settingsFile:
+                json.dump(settings, settingsFile)
+
+            # If this is the first time the users enter the Panel
+            dlg = QMessageBox()
+            dlg.setWindowTitle("Thông báo lần đầu")
+            dlg.setText("Nếu đây là lần đầu bạn sử dụng ATOMIC, hãy vào mục Trợ giúp (Ở thanh công cụ phía trên ứng dụng), và chọn Hướng Dẫn. Ở đó bạn sẽ được hướng dẫn cách sử dụng ATOMIC, và các tính năng của nó.")
+            dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
+            dlg.setIcon(QMessageBox.Icon.Information)
+            dlg.setWindowIcon(QIcon(dirPath + ICON_PATH))
+            dlg.exec()
+
+
+        print("Initializing GUI...", end="", flush=True)
         super().__init__()
+        print("done")
+
+        # Preparation steps
+        print("Setting up variables...", end="", flush=True)
+
+        # Judging
+        self.judgingEnabled = False
+        self.judgingProcess = QProcess(self)
+
+        # Connecting functions
+        self.judgingProcess.readyReadStandardOutput.connect(self.readJudgingOutput)
+        self.judgingProcess.readyReadStandardError.connect(self.readJudgingOutput)
+        self.judgingProcess.finished.connect(self.stoppedJudging)
+        print("done")
+
+        # Fonts
+        self.monospaceFont = QFont(["Cascadia Code", "Consolas", "Ubuntu Mono", "Source Code Pro", "monospace"], 8)
 
         # Setting looks and feel
+        print("Loading Panel Window...", end="", flush=True)
         self.setWindowTitle("Bảng điều khiển ATOMIC")
         self.resize(950, 550)
         self.setMinimumSize(600, 400) # Make sure things does not go too small
         self.setWindowIcon(QIcon(dirPath + ICON_PATH))
+        print("done")
 
-        if platform == "win32": # If using Windows, uses a workaround to make taskbar uses correct icon
+        if platform.startswith("win"): # If using Windows, uses a workaround to make taskbar uses correct icon
             print("User is using WINDOWS")
+
+            # Setting up program
+            self.judgingProcess.setProgram(f"{dirPath}{PYDIR}")
+            self.judgingProcess.setArguments([f"{dirPath}{JUDGING_PATH}"])
+
+            # Fixing taskbar icon
             import ctypes
             myappid = u'nautilus4k.atomic.panel.unidentified' # arbitrary string
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
         else:
             print("User is NOT using WINDOWS")
+            self.judgingProcess.setProgram(f"python")
+            self.judgingProcess.setArguments([f"{dirPath}{JUDGING_PATH}"])
         
         # Layout of window, preparing tabs
         self.container = QWidget()
@@ -114,7 +228,9 @@ class MainPanel(QMainWindow):
 
         # Adding sidebar frame
         self.sidebar = QWidget(self)
-        self.sidebar.setFixedWidth(150)
+        self.sidebar.setMinimumWidth(140)
+        self.sidebar.setMaximumWidth(250)
+        # self.sidebar.width
         self.sidebar.layout = QVBoxLayout(self.sidebar)
 
 
@@ -125,16 +241,28 @@ class MainPanel(QMainWindow):
         self.sidebar.judgingLabel = QLabel(self)
         self.sidebar.judgingLabel.setText("Hệ thống chấm bài")
         self.sidebar.judgingLabel.setStyleSheet(STYLE_SIDEBAR_LABELS)
+        self.sidebar.judgingLabel.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.sidebar.layout.addWidget(self.sidebar.judgingLabel)
 
         self.sidebar.judgingButton = QPushButton(self)
         self.sidebar.judgingButton.setText("Bắt đầu chấm bài")
+        self.sidebar.judgingButton.clicked.connect(self.toggleJudging)
         self.sidebar.judgingButton.setStyleSheet(STYLE_SIDEBAR_BUTTONS)
         self.sidebar.layout.addWidget(self.sidebar.judgingButton)
 
-        # ALIGNMENT
-        self.sidebar.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
+        # JUDGING CONSOLE
+        self.sidebar.judgingConsole = QTextEdit(self)
+        self.sidebar.judgingConsole.setFixedHeight(140)
+        self.sidebar.judgingConsole.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.sidebar.judgingConsole.setStyleSheet(STYLE_CONSOLE)
+        self.sidebar.judgingConsole.setFont(self.monospaceFont)
+        self.sidebar.judgingConsole.setReadOnly(True)
+        self.sidebar.layout.addWidget(self.sidebar.judgingConsole)
+
+        # ALIGNMENT
+        self.sidebar.layout.addStretch() # Pushing elements upwards
+        self.sidebar.layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         # Adding self.sidebar into Layout (Splitter)
         self.splitter.addWidget(self.sidebar)
@@ -173,6 +301,10 @@ class MainPanel(QMainWindow):
         self.menuBar.addMenu(self.menuBar.fileMenu)
 
         self.menuBar.helpMenu = QMenu("&Trợ giúp", self)
+
+        # Project page button. Prints project's GitHub page
+        self.menuBar.helpMenu.gitHubButton = self.menuBar.helpMenu.addAction("Trang dự án...")
+        self.menuBar.helpMenu.gitHubButton.triggered.connect(self.gitHub)
 
         # About button. Spits information about the application
         self.menuBar.helpMenu.aboutButton = self.menuBar.helpMenu.addAction("Về ATOMIC...")
@@ -300,6 +432,133 @@ class MainPanel(QMainWindow):
         # sys.exit()
         # Applying layout
         self.aboutFrame.setLayout(self.aboutFrame.layoutObj)
+
+
+    def gitHub(self):
+        print("Help/GitHub called")
+        wb.open(r"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER")
+
+
+    def toggleJudging(self):
+        """Toggling judging process"""
+        self.judgingEnabled = not self.judgingEnabled
+        print(f"Toggled Judging to {self.judgingEnabled}!")
+
+        if self.judgingEnabled:
+            # Print the program and arguments for debugging
+            program = self.judgingProcess.program()
+            args = self.judgingProcess.arguments()
+            print(f"Starting process: {program} {' '.join(args)}")
+            
+            # Check if the judging script file exists
+            script_path = f"{dirPath}{JUDGING_PATH}"
+            print(f"Checking if script exists at: {script_path}")
+            print(f"File exists: {os.path.exists(script_path)}")
+            
+            # Start the process
+            self.judgingProcess.start()
+            
+            # Check if process started
+            if self.judgingProcess.state() == QProcess.ProcessState.Running:
+                print(f"Process started successfully with PID: {self.judgingProcess.processId()}")
+                self.sidebar.judgingButton.setText("Dừng chấm bài")
+            else:
+                print(f"Process failed to start. Error: {self.judgingProcess.error()}")
+        else:
+            # self.judgingProcess.terminate()
+            # Stopping judging
+            if self.judgingProcess.state() == QProcess.ProcessState.Running:
+                self.sidebar.judgingButton.setEnabled(False) # Disabling toggle button when stopping
+                pid = self.judgingProcess.processId() # Get process ID
+
+                if (platform.startswith("win")):
+                    kernel32 = ctypes.windll.kernel32
+                    kernel32.FreeConsole()
+
+                    if (kernel32.AttachConsole(pid)):
+                        kernel32.GenerateConsoleCtrlEvent(0, 0)  # Send Ctrl+C (SIGINT) signal
+                        kernel32.FreeConsole()
+                else:
+                    os.kill(pid, signal.SIGINT)
+
+            # if platform.startswith("win")
+            
+
+    def stoppedJudging(self, exitCode, exitStatus):
+        # When judging script stopped running
+        self.sidebar.judgingButton.setEnabled(True)
+        self.judgingEnabled = False
+        self.sidebar.judgingButton.setText("Bắt đầu chấm bài")
+
+        title = "Lỗi chấm bài"
+        desc = "Đã có lỗi xảy ra. Nếu không hiểu rõ, hãy vào hướng dẫn (Mục Trợ giúp ở thanh menu trên đầu ứng dụng) và dò tìm mã: " + str(exitCode)
+        buttons = QMessageBox.StandardButton.Ok
+
+        if exitCode == -127:
+            desc = "Đã có lỗi xảy ra. Hãy chắc chắn rằng bạn đã bật Docker Desktop và chạy Docker Environment. Nếu bối rối, hãy xem lại hướng dẫn (Mục Trợ giúp ở thanh menu trên đầu ứng dụng) về việc bật hệ thống chấm bài."
+        elif exitCode == -126:
+            desc = "Môi trường Docker không hoạt động. Hãy thử chạy lại hệ thống chấm bài hoặc khởi động lại Docker (Desktop và Environment)."
+
+        if exitCode != 0:
+            dlg = QMessageBox(self)
+            dlg.setWindowTitle(title)
+            dlg.setText(desc)
+            dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
+            dlg.setIcon(QMessageBox.Icon.Critical)
+            dlg.exec()
+
+
+    def eraseCharacters(self, s: str, chars: str) -> str:
+        # Create a new string including only characters not in 'chars'
+        return ''.join(c for c in s if c not in chars)
+
+    
+    def readJudgingOutput(self):
+        # Reading output of judging process
+        output = self.judgingProcess.readAllStandardOutput().data().decode("utf-8")
+        error_output = self.judgingProcess.readAllStandardError().data().decode("utf-8")
+        
+        # Merge outputs and append to QTextEdit instead of replacing
+        if output:
+            # self.sidebar.judgingConsole.append(output)
+            # If output is fine, check the colors.
+            # There are ONLY 4 TYPES OF COLORS
+            outputList = output.split("\n")
+            # print(outputList)
+            for outputLine in outputList:
+                outputLine = self.eraseCharacters(outputLine, "\r")
+                # print(outputLine)
+                if outputLine:  # Check if outputLine is not empty
+                    # Get the ANSI color tag at the start if it exists
+                    tag = outputLine.split("m", 1)[0] if outputLine.startswith("\x1b") else ""
+                    # Remove ANSI color tags at the start
+                    outputLine = outputLine.split("m", 1)[-1] if outputLine.startswith("\x1b") else outputLine
+                    # Remove trailing \r and reset color ANSI tags
+                    outputLine = outputLine.rstrip("\r").rsplit("\x1b", 1)[0] if outputLine.endswith(RESET_COL) else outputLine
+
+                    # print(repr(tag))
+                    # Check if that same line we had belongs in any ANSI color tags
+                    tag += "m"
+                    if tag == INFO_COL:
+                        self.sidebar.judgingConsole.setTextColor(COLOR_CONSOLE_DEFAULT)
+                    elif tag == ERROR_COL:
+                        self.sidebar.judgingConsole.setTextColor(COLOR_CONSOLE_ERROR)
+                    elif tag == WARN_COL:
+                        self.sidebar.judgingConsole.setTextColor(COLOR_CONSOLE_WARNING)
+                    elif tag == OK_COL:
+                        self.sidebar.judgingConsole.setTextColor(COLOR_CONSOLE_OK)
+                    
+
+                    self.sidebar.judgingConsole.append(outputLine)
+                    self.sidebar.judgingConsole.setTextColor(COLOR_CONSOLE_DEFAULT)
+        
+        if error_output:
+            self.sidebar.judgingConsole.setTextColor(COLOR_CONSOLE_ERROR)
+            self.sidebar.judgingConsole.append(error_output)
+            self.sidebar.judgingConsole.setTextColor(COLOR_CONSOLE_DEFAULT)
+            
+        # Scroll to the bottom to show latest output
+        self.sidebar.judgingConsole.moveCursor(QTextCursor.MoveOperation.End)
 
 
     def setWaitTime(self, text):
