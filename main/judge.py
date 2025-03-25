@@ -18,6 +18,7 @@ import shutil
 import traceback
 import signal
 import sys
+import socket
 
 # For logging, like pwarn(), pinfo(), pok(), perr
 from csmcoloredloggerprint import *
@@ -62,7 +63,7 @@ try:
 except Exception as e:
     perr(f"Thất bại trong quá trình kết nối đến môi trường Docker: {str(e)}")
     perr("Môi trường Docker của bạn có thể bị lỗi hoặc chưa được tải về và bật lên.")
-    exit(-127)
+    sys.exit(-127)
 
 # Check if the connection is okay
 try:
@@ -70,7 +71,7 @@ try:
     pinfo("Đã kết nối đến môi trường Docker.")
 except Exception as e:
     perr("Môi trường Docker không hoạt động. Hãy thử chạy lại hệ thống chấm bài hoặc khởi động lại Docker.")
-    exit(-126)
+    sys.exit(-126)
 
 # Get all containers, both running and not running
 containers = client.containers.list(all=True)
@@ -154,7 +155,7 @@ if not check_image_exists("atomic-compile"):
     except Exception as e:
         perr("Lỗi trong quá trình xây dựng ảnh môi trường biên soạn: " + str(e))
         runcontainer.remove()
-        exit(-125)
+        sys.exit(-125)
 
 if not check_container_exists("compiler"):
     pwarn("Không tìm thấy container biên soạn, đang làm...")
@@ -177,7 +178,7 @@ try:
 except Exception as e:
     perr(f"Bật container biên soạn không thành công, lỗi: {e}")
     runcontainer.remove()
-    exit(-124)
+    sys.exit(-124)
 
 pinfo("Chuẩn bị bắt đầu chấm bài...")
 
@@ -775,16 +776,79 @@ def reload_containers():
 pinfo("Hiện đang kiểm tra các bài nộp.")
 
 running = True
-def signal_handler(sig, frame):
-    global running
+exit_code = 0
+def stop(sig, frame):
+    global running, exit_code
     pwarn(f"Quá trình dừng lại bằng {sig}. Đang dừng lại...")
     running = False
+    # Get all containers, both running and not running
+    containers = client.containers.list(all=True)
+    # pinfo("Currently running containers: ")
+    # for container in containers:
+    #     print(" - " + container.name)
+
+    pinfo("Đang làm sạch containers...")
+
+    index = 0
+    for container in containers:
+        index+=1
+        pinfo(f"Container ({index}/{len(containers)}): " + container.name)
+        if container.status == "running":
+            pinfo("Container đang chạy, đang dừng lại...")
+            container.stop()
+        else:
+            pwarn("Container không đang chạy.")
+
+
+        if container.name != "compiler":
+            pinfo("Đang xóa container...")
+            container.remove()
+        else:
+            pwarn("Phát hiện container biên soạn, bỏ qua...")
+    
+    sys.exit(exit_code)
+
+HOST = "127.0.0.1"
+PORT = 28472
+
+def socket_handler():
+    global running, exit_code
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server:
+        try:
+            server.bind((HOST, PORT))
+            pok(f"Đã mở socket trong địa chỉ {HOST}:{PORT}")
+        except Exception as e:
+            perr(f"Lỗi trong khi mở socket tại địa chỉ {HOST}:{PORT}: {e}")
+            traceback.print_exc()
+            exit_code = -123
+            running = False
+        server.listen(1)
+        pinfo("Hiện đang mở socket với mức độ chịu đựng là 1 kết nối đồng thời")
+
+        while running:
+            try:
+                # Accepting incoming 
+                conn, addr = server.accept()
+                with conn:
+                    data = conn.recv(1024).decode()
+                    if data.strip() == "exit":
+                        pwarn("Dừng lại do ứng dụng bên ngoài. Đang tắt ATOMIC...")
+                        running = False
+                        break  # Break the loop to stop the socket server
+            except Exception as e:
+                perr(f"Lỗi SOCKET: {e}")
+                running = False
+                break
+
 
 # Register signal handlers for both Windows and Unix-like systems
-signal.signal(signal.SIGINT, signal_handler)  # Handles Ctrl+C, os.kill(pid, SIGINT)
-signal.signal(signal.SIGTERM, signal_handler)  # Handles graceful termination on Unix
+signal.signal(signal.SIGINT, stop)  # Handles Ctrl+C, os.kill(pid, SIGINT)
+signal.signal(signal.SIGTERM, stop)  # Handles graceful termination on Unix
 if os.name == 'nt':  # Windows-specific
-    signal.signal(signal.SIGBREAK, signal_handler)  # Handles GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT)
+    signal.signal(signal.SIGBREAK, stop)  # Handles GenerateConsoleCtrlEvent(CTRL_BREAK_EVENT)
+
+# Enable socket handling
+threading.Thread(target=socket_handler, daemon=True).start()
 
 lastReload = time.time()
 while running:
@@ -892,3 +956,4 @@ for container in containers:
         container.remove()
     else:
         pwarn("Phát hiện container biên soạn, bỏ qua...")
+sys.exit(exit_code)

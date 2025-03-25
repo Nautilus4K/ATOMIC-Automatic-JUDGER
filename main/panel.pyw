@@ -5,6 +5,7 @@
 # -126: Docker pinging error
 # -125: Compile image failed to be built
 # -124: Compile container failed to start
+# -123: Failure in binding socket
 
 ################################
 # Gathering required libraries #
@@ -17,8 +18,12 @@ from sys import platform
 # For system-related operations
 import os
 import signal
-import ctypes
 import webbrowser as wb
+
+# For multiprocess communication
+import socket
+JUDGING_HOST = "127.0.0.1"
+JUDGING_PORT = 28472
 
 # For parsing data
 import json
@@ -468,18 +473,33 @@ class MainPanel(QMainWindow):
             # self.judgingProcess.terminate()
             # Stopping judging
             if self.judgingProcess.state() == QProcess.ProcessState.Running:
-                self.sidebar.judgingButton.setEnabled(False) # Disabling toggle button when stopping
-                pid = self.judgingProcess.processId() # Get process ID
+                self.sidebar.judgingButton.setEnabled(False)  # Disabling toggle button when stopping
+                pid = self.judgingProcess.processId()  # Get process ID
 
-                if (platform.startswith("win")):
-                    kernel32 = ctypes.windll.kernel32
-                    kernel32.FreeConsole()
+                # # Attempt to terminate the process using Qt methods first
+                # self.judgingProcess.terminate()  # Sends a terminate signal
 
-                    if (kernel32.AttachConsole(pid)):
-                        kernel32.GenerateConsoleCtrlEvent(0, 0)  # Send Ctrl+C (SIGINT) signal
-                        kernel32.FreeConsole()
-                else:
-                    os.kill(pid, signal.SIGINT)
+                # # If terminate doesn't work, use platform-specific kill
+                # if (platform.startswith("win")):
+                #     kernel32 = ctypes.windll.kernel32
+                #     handle = kernel32.OpenProcess(0x0001, False, pid)  # PROCESS_TERMINATE access right
+                #     if handle:
+                #         kernel32.TerminateProcess(handle, 0)
+                #         kernel32.CloseHandle(handle)
+                # else:
+                #     try:
+                #         os.kill(pid, signal.SIGTERM)
+                #     except ProcessLookupError:
+                #         # Process already ended
+                #         pass
+
+                # First, try graceful termination
+                try:
+                    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as panelSocket:
+                        panelSocket.connect((JUDGING_HOST, JUDGING_PORT))
+                        panelSocket.sendall(b'exit')
+                except Exception as e:
+                    print(f"Error terminating process: {e}")
 
             # if platform.startswith("win")
             
@@ -490,7 +510,7 @@ class MainPanel(QMainWindow):
         self.judgingEnabled = False
         self.sidebar.judgingButton.setText("Bắt đầu chấm bài")
 
-        title = "Lỗi chấm bài"
+        title = f"Lỗi chấm bài: {exitCode}"
         desc = "Đã có lỗi xảy ra. Nếu không hiểu rõ, hãy vào hướng dẫn (Mục Trợ giúp ở thanh menu trên đầu ứng dụng) và dò tìm mã: " + str(exitCode)
         buttons = QMessageBox.StandardButton.Ok
 
@@ -506,6 +526,8 @@ class MainPanel(QMainWindow):
             dlg.setStandardButtons(QMessageBox.StandardButton.Ok)
             dlg.setIcon(QMessageBox.Icon.Critical)
             dlg.exec()
+        self.sidebar.judgingConsole.setTextColor(COLOR_CONSOLE_DEFAULT)
+        self.sidebar.judgingConsole.append("------KẾT THÚC------")
 
 
     def eraseCharacters(self, s: str, chars: str) -> str:
