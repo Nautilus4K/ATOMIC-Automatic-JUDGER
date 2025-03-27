@@ -30,8 +30,8 @@ import json
 
 # For GUI:                  Main app      Window       Subpages    Tabs     Layout       Menu bar  Menu   Labels  Text input  Sidebar    Checkbox   Scrolling    Frames   Buttons      Multiple lines   Msgbox
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QTabWidget, QVBoxLayout, QMenuBar, QMenu, QLabel, QLineEdit,  QSplitter, QCheckBox, QScrollArea, QFrame,  QPushButton, QTextEdit,       QMessageBox
-#                       Float input       Icon   Image    Fonts  Text Cursor  Colors
-from PyQt6.QtGui import QDoubleValidator, QIcon, QPixmap, QFont, QTextCursor, QColor
+#                       Float input       Icon   Image    Fonts  Text Cursor  Colors  Native colors
+from PyQt6.QtGui import QDoubleValidator, QIcon, QPixmap, QFont, QTextCursor, QColor, QPalette
 
 # More Qt stuffs         Some states variable     Running processes
 from PyQt6.QtCore import Qt,                      QProcess
@@ -57,57 +57,6 @@ PYDIR = "/.venv/Scripts/python.exe" # Currently using virual python environment
 # Directory position
 dirPath = os.path.dirname(os.path.abspath(__file__))
 
-########################
-# Qt Style Sheet (QSS) #
-########################
-STYLE_BIGLABEL = """
-    font-size: 16px;
-    font-weight: bold;
-"""
-STYLE_OPTION = """
-    margin-bottom: 20px;
-"""
-STYLE_SIDEBAR_BUTTONS = """
-    margin-top: 10px;
-    margin-bottom: 20px;
-    padding: 10px;
-"""
-STYLE_SIDEBAR_LABELS = """
-    font-weight: bold;
-"""
-STYLE_CONSOLE = """
-QTextEdit {
-    background: black;
-    color: white;
-    border-radius: 5px;
-}
-QScrollBar:vertical {
-    border: none;
-    background: #0F0F0F;
-    width: 4px;
-    margin: 0px 0px 0px 0px;
-}
-
-QScrollBar::handle:vertical {
-    background:rgb(83, 83, 83);
-    min-height: 20px;
-    width: 4px;
-    border-radius: 2px;
-}
-
-QScrollBar::handle:vertical:hover {
-    background: #888888;
-}
-
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
-    height: 0px;
-}
-
-QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
-    background: none;
-}
-"""
-
 #############
 # Colorings #
 #############
@@ -130,6 +79,64 @@ class MainPanel(QMainWindow):
     This is the place of declaration. \n
     """
     def __init__(self):
+        super().__init__()
+        palette = self.palette()
+
+        ########################
+        # Qt Style Sheet (QSS) #
+        ########################
+        STYLE_BIGLABEL = """
+            font-size: 16px;
+            font-weight: bold;
+        """
+        STYLE_OPTION = """
+            margin-bottom: 20px;
+        """
+        STYLE_SIDEBAR_BUTTONS = """
+            margin-top: 10px;
+            margin-bottom: 10px;
+            padding: 10px;
+        """
+        STYLE_SIDEBAR_LABELS = """
+            font-weight: bold;
+        """
+        STYLE_CONSOLE = f"""
+        QTextEdit {{
+            background: black;
+            color: white;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            border-style: none;
+            border: 1px solid {palette.color(QPalette.ColorRole.Dark).name()};
+        }}
+        QScrollBar:vertical {{
+            border: none;
+            background: #0F0F0F;
+            width: 4px;
+            margin: 0px 0px 0px 0px;
+        }}
+
+        QScrollBar::handle:vertical {{
+            background:rgb(83, 83, 83);
+            min-height: 20px;
+            width: 4px;
+            border-radius: 2px;
+        }}
+
+        QScrollBar::handle:vertical:hover {{
+            background: #888888;
+        }}
+
+        QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+            height: 0px;
+        }}
+
+        QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
+            background: none;
+        }}
+        """
+
+
         # Notifying if the user is entering for the first time
         with open(dirPath + SETTINGS_JSON, "r", encoding='utf-8') as settingsFile:
             settings = json.load(settingsFile)
@@ -150,7 +157,6 @@ class MainPanel(QMainWindow):
 
 
         print("Initializing GUI...", end="", flush=True)
-        super().__init__()
         print("done")
 
         # Preparation steps
@@ -235,6 +241,7 @@ class MainPanel(QMainWindow):
         self.sidebar = QWidget(self)
         self.sidebar.setMinimumWidth(140)
         self.sidebar.setMaximumWidth(250)
+        # self.sidebar.setStyleSheet(STYLE_SIDEBAR)
         # self.sidebar.width
         self.sidebar.layout = QVBoxLayout(self.sidebar)
 
@@ -264,6 +271,19 @@ class MainPanel(QMainWindow):
         self.sidebar.judgingConsole.setFont(self.monospaceFont)
         self.sidebar.judgingConsole.setReadOnly(True)
         self.sidebar.layout.addWidget(self.sidebar.judgingConsole)
+
+        # ENABLE WEBSERVER
+        self.sidebar.webserverLabel = QLabel(self)
+        self.sidebar.webserverLabel.setText("Website chấm bài trực tuyến")
+        self.sidebar.webserverLabel.setStyleSheet(STYLE_SIDEBAR_LABELS)
+        self.sidebar.webserverLabel.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.sidebar.layout.addWidget(self.sidebar.webserverLabel)
+
+        self.sidebar.webserverButton = QPushButton(self)
+        self.sidebar.webserverButton.setText("Bật Website")
+        self.sidebar.webserverButton.clicked.connect(self.toggleWebserver)
+        self.sidebar.webserverButton.setStyleSheet(STYLE_SIDEBAR_BUTTONS)
+        self.sidebar.layout.addWidget(self.sidebar.webserverButton)
 
         # ALIGNMENT
         self.sidebar.layout.addStretch() # Pushing elements upwards
@@ -443,6 +463,11 @@ class MainPanel(QMainWindow):
         print("Help/GitHub called")
         wb.open(r"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER")
 
+    
+    def toggleWebserver(self):
+        """Toggling webserver process"""
+        print("Toggled webserver!")
+
 
     def toggleJudging(self):
         """Toggling judging process"""
@@ -527,7 +552,7 @@ class MainPanel(QMainWindow):
             dlg.setIcon(QMessageBox.Icon.Critical)
             dlg.exec()
         self.sidebar.judgingConsole.setTextColor(COLOR_CONSOLE_DEFAULT)
-        self.sidebar.judgingConsole.append("------KẾT THÚC------")
+        self.sidebar.judgingConsole.append("------KẾT THÚC------\n\n")
 
 
     def eraseCharacters(self, s: str, chars: str) -> str:

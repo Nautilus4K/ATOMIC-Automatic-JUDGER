@@ -3,3 +3,6 @@ main/.venv/
 
 __pycache__/
 .venv/
+.vscode/
+include/
+lib/
