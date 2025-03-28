@@ -1,0 +1,7 @@
+QScrollArea {
+    background: #ffffff;
+}
+
+QScrollArea QWidget {
+    background: #ffffff;
+}

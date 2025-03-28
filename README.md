@@ -10,11 +10,11 @@ If you don't understand Vietnamese and want to add English. Feel free to contrib
 ## Features
 
 - Support XLSX format (EXCEL files) for accounts.
-- Support isolated environment for reliability and safety (With Docker containers. Fully WSL support. Isolated environments).
+- Support isolated environment for reliability and safety (With Docker containers. Full WSL support. Isolated environments).
 - Dynamic webserver, with modern look and feel.
 - Great management system, including a hardened admin panel.
 - Security over performance (I'm not a security expert, just a hobbyist, so do not take that seriously).
-- Arch Linux, btw (I use Arch btw).
+- Arch Linux, btw (I use Arch btw) in Docker.
 - Login/logout. (Manual registering).
 
 ## Dependencies
@@ -31,13 +31,11 @@ python -m pip install -r requirements.txt
 
 ## Requirements
 
-**OS:** Windows 10 or later, All Linux (With Python), macOS unknown.
+**OS:** Windows 10 or later
 
 **RAM:** 1GB (DDR2) | *Recommended:* 2GB (DDR4)
 
 **GPU:** None
-
-Note: If using Windows, it's best to use the installer (if made).
 
 ## Using the software (in `/main`)
 
