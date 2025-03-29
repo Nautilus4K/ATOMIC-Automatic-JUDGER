@@ -6,3 +6,15 @@ __pycache__/
 .vscode/
 include/
 lib/
+
+# Ace related
+main/www/js/ext/
+ext/
+ace.js
+mode-c_cpp.js
+mode-pascal.js
+mode-python.js
+theme-dynamic.js
+c_cpp.js
+pascal.js
+python.js

@@ -7,7 +7,9 @@ This panel.cpp is for WINDOWS. So, yeah, sorry Linux folks.
 It's all cause most Vietnamese people uses Windows so yea
 Sorrie
 
-Also, credits to Qt for making such an awesome GUI framework. I'm in love with it.
+Also, credits to:
+- Qt for making such an awesome GUI framework. I'm in love with it.
+- nlomann for making a JSON manipulation API. https://github.com/nlohmann/json
 
 **********************************/
 
@@ -25,12 +27,18 @@ Also, credits to Qt for making such an awesome GUI framework. I'm in love with i
 #include <QtGui/QAction>           // Action for menus. Wonder what fucker thought to put it in QtGui
 #include <QtWidgets/QMessageBox>   // Message boxes
 #include <QtGui/QCloseEvent>       // Close event. The action of 'X' button
+#include <QtWidgets/QLabel>        // Labels
+#include <QtWidgets/QLineEdit>     // An edit area that is a line edit. No multiple lines.
+#include <QtGui/QDoubleValidator>  // Validator for edits.
 
 // Importing Qt values
 #include <QtCore/Qt>   // A bunch of constants
 
-// File I/O actions
+// File I/O actions and getting data
 #include <fstream>
+#include <nlohmann/json.hpp>
+// Turn nlohmann::json to json for short.
+using json = nlohmann::json;
 
 // System-related actions
 #include <filesystem>
@@ -42,6 +50,7 @@ Also, credits to Qt for making such an awesome GUI framework. I'm in love with i
 // Constants
 const std::string THEME_PATH = "/source/theme.qss";
 const std::string GITHUB_PAGE = "\"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER\"";
+const std::string STYLE_BIGLABEL = "font-size: 16px; font-weight: bold;";
 
 
 class PanelWindow: public QMainWindow { // This is based on QMainWindow
@@ -49,6 +58,10 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QWidget *manageTab = new QWidget();
     QWidget *judgingTab = new QWidget();
     QWidget *webserverTab = new QWidget();
+
+    QLineEdit *judgingWaitTimeInput = new QLineEdit();
+
+    // Paths
     std::string dirPath = std::filesystem::current_path().string();
     PanelWindow() {
         // This is the configuration part of panelWindow.
@@ -152,10 +165,13 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         mainLayout->addWidget(splitter);
 
 
-        // +---------------+
-        // | Settings tabs |
-        // +---------------+
+        // +--------------------+
+        // | Tabs configuration |
+        // +--------------------+
         QTabWidget *tabs = new QTabWidget();
+        
+        // On tab switches action
+        connect(tabs, QTabWidget::currentChanged, this, &PanelWindow::onTabSwitches);
         
         // Setting up tabs: (With scrolling support)
         // - Management tab
@@ -182,6 +198,30 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // Add tabs into splitter
         splitter->addWidget(tabs);
         
+
+        // +-------------+
+        // | Judging tab |
+        // +-------------+
+        QVBoxLayout *judgingTabLayout = new QVBoxLayout();
+
+        // WAIT TIME
+        QLabel *judgingWaitTimeLabel = new QLabel();
+        judgingWaitTimeLabel->setText("Thời gian đợi quét");
+        judgingWaitTimeLabel->setStyleSheet(QString::fromStdString(STYLE_BIGLABEL));
+        judgingTabLayout->addWidget(judgingWaitTimeLabel);
+
+        QLabel *judgingWaitTimeDesc = new QLabel();
+        judgingWaitTimeDesc->setText("Thời gian tạm dừng giữa các lần quét bài làm của học sinh. Hữu dụng khi cần chấm bài trục tuyến mà cần giảm lượng CPU sử dụng cho quá trình chấm bài, tuy nhiên sẽ làm giảm tốc độ chấm bài. (giây)");
+        judgingWaitTimeDesc->setWordWrap(true);
+        judgingTabLayout->addWidget(judgingWaitTimeDesc);
+
+        QDoubleValidator *judgingWaitTimeInputValidator = new QDoubleValidator(0.0, 100.0, 2); // 0 -> 100 with 2 decimal places
+        judgingWaitTimeInput->setValidator(judgingWaitTimeInputValidator);
+        judgingTabLayout->addWidget(judgingWaitTimeInput);
+
+        // Setting judging tab's layout
+        judgingTabLayout->setAlignment(Qt::AlignTop);
+        judgingTab->setLayout(judgingTabLayout);
 
 
         ///////////////////////
@@ -211,6 +251,15 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     void loadBackUp() {
 
     }
+
+    private: // PRIVATE FUNCTIONS. These cannot be connected to outside of whatever this object is.
+    void onTabSwitches(int index) {
+        // When user switches tabs. It's good to update all contents of ALL TABS.
+        // This is just for the sake of accuracy. Future optimizations might
+        // reduce the stress on refreshing.
+        std::cout << "onTabSwitches(): Called. currentSwitched.\n";
+    }
+
     protected: // Events in which are native Qt events
     void closeEvent(QCloseEvent *event) override {
         QMessageBox::StandardButton reply;
