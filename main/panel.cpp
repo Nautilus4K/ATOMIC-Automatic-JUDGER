@@ -1,7 +1,19 @@
 /**********************************
 
-Compilation commandline:
-g++ -I"C:\Qt\6.5.3\mingw_64\include" -L"C:\Qt\6.5.3\mingw_64\lib" panel.cpp -lQt6Widgets -lQt6Core -lQt6Gui -o panel.exe -mwindows
+Compilation arguments:
+"-fdiagnostics-color=always",
+"-I\"C:\\Qt\\6.5.3\\mingw_64\\include\"",
+"-I\"C:\\Qt\\Tools\\mingw1120_64\\include\"",
+"-L\"C:\\Qt\\6.5.3\\mingw_64\\lib\"",
+"-L\"C:\\Qt\\Tools\\mingw1120_64\\lib\"",
+"-g",
+"${file}",
+"${fileBasenameNoExtension}.o",
+"-lQt6Widgets",
+"-lQt6Core",
+"-lQt6Gui",
+"-o",
+"${fileDirname}\\${fileBasenameNoExtension}.exe",
 
 This panel.cpp is for WINDOWS. So, yeah, sorry Linux folks.
 It's all cause most Vietnamese people uses Windows so yea
@@ -24,12 +36,14 @@ Also, credits to:
 #include <QtWidgets/QTabWidget>    // Tabs
 #include <QtWidgets/QMenuBar>      // Menu bar (The toolbar on window)
 #include <QtWidgets/QMenu>         // Menu (Entries in QMenuBar)
-#include <QtGui/QAction>           // Action for menus. Wonder what fucker thought to put it in QtGui
 #include <QtWidgets/QMessageBox>   // Message boxes
-#include <QtGui/QCloseEvent>       // Close event. The action of 'X' button
 #include <QtWidgets/QLabel>        // Labels
 #include <QtWidgets/QLineEdit>     // An edit area that is a line edit. No multiple lines.
+#include <QtGui/QAction>           // Action for menus. Wonder what fucker thought to put it in QtGui
+#include <QtGui/QCloseEvent>       // Close event. The action of 'X' button
 #include <QtGui/QDoubleValidator>  // Validator for edits.
+#include <QtGui/QIcon>             // Icon readings
+#include <QtGui/QPixmap>           // Picture reading
 
 // Importing Qt values
 #include <QtCore/Qt>   // A bunch of constants
@@ -48,10 +62,46 @@ using json = nlohmann::json;
 #include <iostream>
 
 // Constants
+// -> Paths
 const std::string THEME_PATH = "/source/theme.qss";
-const std::string GITHUB_PAGE = "\"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER\"";
+const std::string SETTINGS_PATH = "/source/settings.json";
+const std::string VERSION_PATH = "/source/version.json";
+const std::string ICON_PATH = "/icon.ico";
+
+// -> Qt Style Sheet
 const std::string STYLE_BIGLABEL = "font-size: 16px; font-weight: bold;";
 
+// -> Others
+const std::string GITHUB_PAGE = "\"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER\"";
+
+// Custom functions as tools
+std::string intToString(int n) {
+    // Conversion from INTEGER to STRING
+    std::string value = "";
+    while (n > 0) {
+        value += char((n % 10) + '0'); // Literal magic
+        n /= 10;
+    }
+    std::reverse(value.begin(), value.end());
+    return value;
+}
+
+std::string doubleToString(double d) {
+    // Conversion from DOUBLE to STRING
+    std::ostringstream oss;
+    oss << d; // Yeah this is the true magic
+    return oss.str();
+}
+
+double stringToDouble(const std::string &str) {
+    try {
+        return std::stod(str); // Built-in function
+    } catch (const std::invalid_argument &e) {
+        return 0.0; // Handle invalid input (e.g., empty string or non-numeric data)
+    } catch (const std::out_of_range &e) {
+        return 0.0; // Handle out-of-range errors
+    }
+}
 
 class PanelWindow: public QMainWindow { // This is based on QMainWindow
     public: // PUBLIC. ACCESSIBLE FROM ANYWHERE
@@ -60,6 +110,11 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QWidget *webserverTab = new QWidget();
 
     QLineEdit *judgingWaitTimeInput = new QLineEdit();
+
+    // Data variables
+    json settings; // NULL at first
+    json version; // NULL at first
+    QPixmap iconPixmap;
 
     // Paths
     std::string dirPath = std::filesystem::current_path().string();
@@ -73,6 +128,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         setWindowTitle("Bảng điều khiển ATOMIC");
         resize(QSize(950, 550));
         setMinimumSize(QSize(600, 400));
+
+        iconPixmap = QPixmap(QString::fromStdString(dirPath + ICON_PATH), "ICO", Qt::AutoColor);
+        setWindowIcon(QIcon(iconPixmap));
 
         // Reading themes from outside files with fstream
         std::cout << "Executable directory: " << dirPath << "\n";
@@ -134,6 +192,13 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         helpMenu->addAction(openGitHub);
         // QAction connected function
         connect(openGitHub, &QAction::triggered, this, &PanelWindow::gitHub);
+
+        // Action of about GITHUB page
+        QAction *openAbout = new QAction();
+        openAbout->setText("Về ATOMIC...");
+        helpMenu->addAction(openAbout);
+        // QAction connected function
+        connect(openAbout, &QAction::triggered, this, &PanelWindow::about);
 
 
         ///////////////////////////////////
@@ -218,6 +283,10 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         QDoubleValidator *judgingWaitTimeInputValidator = new QDoubleValidator(0.0, 100.0, 2); // 0 -> 100 with 2 decimal places
         judgingWaitTimeInput->setValidator(judgingWaitTimeInputValidator);
         judgingTabLayout->addWidget(judgingWaitTimeInput);
+        // Connecting action of changing text to a function (Using Lambda)
+        connect(judgingWaitTimeInput, &QLineEdit::textChanged, this, [this](const QString text) {
+            onInputChanges("wait_time", text.toStdString());
+        });
 
         // Setting judging tab's layout
         judgingTabLayout->setAlignment(Qt::AlignTop);
@@ -236,7 +305,65 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     }
 
     void about() {
+        QWidget *aboutFrame = new QWidget();
+        aboutFrame->setFixedSize(300, 100);
+        aboutFrame->show();
+        aboutFrame->setWindowTitle("Về ATOMIC");
+        aboutFrame->setWindowIcon(QIcon(iconPixmap));
+        
+        // Reading version info
+        std::fstream versionFile(dirPath + VERSION_PATH, std::ios::in);
+        if (versionFile.is_open()) {
+            // If file is working as intended
+            try {
+                version = json::parse(versionFile);
 
+                std::string stableText = "";
+                if (version["stable"]) {
+                    stableText = "Yes";
+                } else {
+                    stableText = "No";
+                }
+                std::string versionText = "Codename " + std::string(version["version"]) + '\n' +
+                                        "API Version: " + std::string(version["api"]) + '\n' +
+                                        "Branch: " + std::string(version["branch"]) + '\n' +
+                                        "Sig: " + std::string(version["signature"]) + '\n' +
+                                        "Stable: " + stableText;
+
+                std::cout << versionText << '\n';
+
+                // The rest of the operation stays here
+                QLabel *versionLabel = new QLabel();
+                versionLabel->setText(versionText.c_str());
+
+                // Adding Image
+                QLabel *appImage = new QLabel();
+                QPixmap iconPixmapScaled = iconPixmap.scaled(QSize(75, 75), Qt::KeepAspectRatio);
+                appImage->setPixmap(iconPixmapScaled);
+                appImage->setAlignment(Qt::AlignRight);
+
+                // Adding in splitter to split between a huge-sized version of 
+                // iconPixmap and version info
+                QSplitter *splitter = new QSplitter();
+                splitter->setOrientation(Qt::Orientation::Horizontal);
+                splitter->setChildrenCollapsible(false);
+                splitter->addWidget(versionLabel);
+                splitter->addWidget(appImage);
+
+                QVBoxLayout *layout = new QVBoxLayout();
+                layout->addWidget(splitter);
+                aboutFrame->setLayout(layout);
+            } catch (const json::parse_error& e) { 
+                // If error got and it is JSON parsing error
+                errorDialog("Tệp phiên bản đã bị hỏng. Vui lòng cập nhật để tự động sửa lỗi hoặc cài đặt lại chương trình.");
+                close();
+                exit(0);
+            }
+        }
+        else {
+            errorDialog("Tệp thông tin phiên bản đã bị hỏng. Vui lòng cập nhật để tự động sửa lỗi hoặc cài đặt lại chương trình.");
+            aboutFrame->close();
+        }
     }
 
     void gitHub() {
@@ -258,6 +385,62 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // This is just for the sake of accuracy. Future optimizations might
         // reduce the stress on refreshing.
         std::cout << "onTabSwitches(): Called. currentSwitched.\n";
+
+        // Reading data into variables related to them
+        std::fstream settingsFile(dirPath + SETTINGS_PATH, std::ios::in);
+        if (settingsFile.is_open()) {
+            // If file is open-able (Works as intended)
+            try {
+                settings = json::parse(settingsFile);
+
+                // If file has successfully been parsed
+                // std::cout << "settings[\"wait_time\"] = " << settings["wait_time"] << '\n';
+                std::cout << settings << '\n';
+                judgingWaitTimeInput->setText(QString::fromStdString(doubleToString(settings["wait_time"])));
+
+            } catch (const json::parse_error& e) { 
+                // If error got and it is JSON parsing error
+                errorDialog("Tệp cài đặt đã bị hỏng. Hãy cài đặt lại ứng dụng để sửa lỗi.");
+                close();
+                exit(0);
+            }
+            settingsFile.close();
+        }
+        else {
+            errorDialog("Tệp cài đặt không tồn tại. Hãy cài đặt lại ứng dụng để sửa lỗi.");
+            close();
+            exit(0);
+        }
+    }
+
+    void errorDialog(std::string error) {
+        QMessageBox::information(this, "Lỗi", QString::fromStdString("Đã có lỗi xảy ra: " + error), QMessageBox::Ok);
+    }
+
+    void onInputChanges(std::string type, std::string value) {
+        std::cout << "onInputChanges(std::string type): " << type << ": -> " << value << '\n';
+
+        // Checking which type the input belongs to
+        if (type == "wait_time") {
+            std::fstream settingsFile(dirPath + SETTINGS_PATH, std::ios::out);
+
+            // Checking which value does the input correspond to
+            if (type == "wait_time") {
+                // Applying changes
+                settings["wait_time"] = stringToDouble(value);
+            }
+            if (settingsFile.is_open()) {
+                // Write the result
+                settingsFile << settings;
+
+                // Flush I/O
+                settingsFile.close();
+            } else {
+                errorDialog("Tệp cài đặt không tồn tại. Hãy cài đặt lại ứng dụng để sửa lỗi.");
+                close();
+                exit(0);
+            }
+        }
     }
 
     protected: // Events in which are native Qt events

@@ -1,1 +1,1 @@
-{"wait_time": 0.0, "reload_time": 60.0, "show_test": true, "max_not_logged_in_session_seconds": 31536000, "panelfirst": false}
+{"max_not_logged_in_session_seconds":31536000,"panelfirst":false,"reload_time":60.0,"show_test":true,"wait_time":1.0}
