@@ -39,6 +39,7 @@ Also, credits to:
 #include <QtWidgets/QMessageBox>   // Message boxes
 #include <QtWidgets/QLabel>        // Labels
 #include <QtWidgets/QLineEdit>     // An edit area that is a line edit. No multiple lines.
+#include <QtWidgets/QCheckBox>     // Checkboxes. Of course. What did you expect, sucker?
 #include <QtGui/QAction>           // Action for menus. Wonder what fucker thought to put it in QtGui
 #include <QtGui/QCloseEvent>       // Close event. The action of 'X' button
 #include <QtGui/QDoubleValidator>  // Validator for edits.
@@ -109,7 +110,10 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QWidget *judgingTab = new QWidget();
     QWidget *webserverTab = new QWidget();
 
+    // Option elements (In tabs)
     QLineEdit *judgingWaitTimeInput = new QLineEdit();
+    QLineEdit *judgingReloadTimeInput = new QLineEdit();
+    QCheckBox *judgingShowTestCheckbox = new QCheckBox();
 
     // Data variables
     json settings; // NULL at first
@@ -267,6 +271,16 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // +-------------+
         // | Judging tab |
         // +-------------+
+        /*
+         * Note: This part here is solely for the judging tab
+         * They will have these options
+         * 
+         * - Wait Time (INPUT) OK
+         * - Reload Time (INPUT) OK
+         * - Show Tests (CHECKBOX) OK
+         * 
+         * Update: Please save me from this hellhole
+         */
         QVBoxLayout *judgingTabLayout = new QVBoxLayout();
 
         // WAIT TIME
@@ -287,6 +301,45 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         connect(judgingWaitTimeInput, &QLineEdit::textChanged, this, [this](const QString text) {
             onInputChanges("wait_time", text.toStdString());
         });
+
+
+        // RELOAD TIME
+        QLabel *judgingReloadTimeLabel = new QLabel();
+        judgingReloadTimeLabel->setText("Thời gian làm mới");
+        judgingReloadTimeLabel->setStyleSheet(QString::fromStdString(STYLE_BIGLABEL));
+        judgingTabLayout->addWidget(judgingReloadTimeLabel);
+
+        QLabel *judgingReloadTimeDesc = new QLabel();
+        judgingReloadTimeDesc->setText("Thời gian làm mới máy ảo để kiểm tra bài làm học sinh. Máy ảo được tạo ra để đảm bảo sự an toàn cho những tác vụ chạy trên file bài làm của học sinh mà không cần mất đi tính năng nào như iofstream hay freopen. Thời gian làm mới là thời gian để máy ảo được làm mới nhằm đảm bảo sự an toàn của máy tính giáo viên và xóa những tác vụ đã xảy ra trước đó. (giây)");
+        judgingReloadTimeDesc->setWordWrap(true);
+        judgingTabLayout->addWidget(judgingReloadTimeDesc);
+
+        QDoubleValidator *judgingReloadTimeInputValidator = new QDoubleValidator(0.0, 100.0, 2); // Same as the one in wait time
+        judgingReloadTimeInput->setValidator(judgingReloadTimeInputValidator);
+        judgingTabLayout->addWidget(judgingReloadTimeInput);
+        // Connecting to a function with lambda
+        connect(judgingReloadTimeInput, &QLineEdit::textChanged, this, [this](const QString text) {
+            onInputChanges("reload_time", text.toStdString());
+        });
+
+
+        // SHOW TESTS
+        QLabel *judgingShowTestLabel = new QLabel();
+        judgingShowTestLabel->setText("Hiện đáp án (test)");
+        judgingShowTestLabel->setStyleSheet(QString::fromStdString(STYLE_BIGLABEL));
+        judgingTabLayout->addWidget(judgingShowTestLabel);
+
+        QLabel *judgingShowTestDesc = new QLabel();
+        judgingShowTestDesc->setText("Khi kiểm tra bài thi, kết quả kiểm tra sẽ được ghi ra một tệp kết quả cùng với thông tin chi tiết về quá trình kiểm tra. Cài đặt này sẽ hiện thông tin chi tiết như đầu vào, đầu ra chương trình và đầu ra đáp án.");
+        judgingShowTestDesc->setWordWrap(true);
+        judgingTabLayout->addWidget(judgingShowTestDesc);
+
+        judgingTabLayout->addWidget(judgingShowTestCheckbox);
+        // Connecting to a function w/ lambda (again)
+        connect(judgingShowTestCheckbox, &QCheckBox::stateChanged, this, [this](const int state) {
+            onInputChanges("show_test", intToString(state));
+        });
+
 
         // Setting judging tab's layout
         judgingTabLayout->setAlignment(Qt::AlignTop);
@@ -396,7 +449,11 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 // If file has successfully been parsed
                 // std::cout << "settings[\"wait_time\"] = " << settings["wait_time"] << '\n';
                 std::cout << settings << '\n';
+
+                // Applying current settings from fcking JSON into Qt Line Input elements
                 judgingWaitTimeInput->setText(QString::fromStdString(doubleToString(settings["wait_time"])));
+                judgingReloadTimeInput->setText(QString::fromStdString(doubleToString(settings["reload_time"])));
+                judgingShowTestCheckbox->setCheckState(settings["show_test"] ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
 
             } catch (const json::parse_error& e) { 
                 // If error got and it is JSON parsing error
@@ -418,17 +475,25 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     }
 
     void onInputChanges(std::string type, std::string value) {
-        std::cout << "onInputChanges(std::string type): " << type << ": -> " << value << '\n';
+        std::cout << "onInputChanges(std::string type, std::string value): " << type << ": -> " << value << '\n';
 
         // Checking which type the input belongs to
-        if (type == "wait_time") {
+        if (type == "wait_time" || type == "reload_time" || type == "show_test") {
             std::fstream settingsFile(dirPath + SETTINGS_PATH, std::ios::out);
 
             // Checking which value does the input correspond to
             if (type == "wait_time") {
                 // Applying changes
                 settings["wait_time"] = stringToDouble(value);
+            } else if (type == "reload_time") {
+                // This is reload time. So we will change the reload_time key
+                settings["reload_time"] = stringToDouble(value);
+            } else if (type == "show_test") {
+                // Alright. This is showing tests, so we save into show_test key
+                // std::cout << "!!!";
+                settings["show_test"] = value == "2" ? true : false;
             }
+
             if (settingsFile.is_open()) {
                 // Write the result
                 settingsFile << settings;

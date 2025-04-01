@@ -1,7 +1,21 @@
-QScrollArea {
+/* General options */
+QLabel {
+    /* Labels */
+    color: #000000;
+}
+
+QLineEdit {
+    /* Line inputs */
+    color: #000000;
+}
+
+/* Tab children */
+QScrollArea QWidget {
+    /* Tabs' main subwindow */
     background: #ffffff;
 }
 
-QScrollArea QWidget {
-    background: #ffffff;
+QScrollArea QWidget QLineEdit {
+    /* Tabs' main subwindows' line inputs */
+    margin-bottom: 20px;
 }
