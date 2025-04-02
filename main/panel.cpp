@@ -211,6 +211,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // Main element main window.
         // The so-called `container` will manage the main window's layout and widgets
         QWidget *container = new QWidget();
+        container->setObjectName("container"); // Setting name for QSS
 
         // Layout of container will be called mainLayout.
         // The reason why I had to type new QVBoxLayout() is because of the fact that

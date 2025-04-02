@@ -1,5 +1,7 @@
 # ATOMIC-Automatic-JUDGER
 
+![ATOM://C Automatic Marking Software](/assets/fullname.png)
+
 A Vietnamese automatic testing software built on Python. Supports online submission and offline tests.
 This software uses Docker for its isolated environment, WSGI callable object for the server interface, and JSON for its database.
 This software is designed by Vietnamese people, for Vietnamese people. So the UI is all Vietnamese.
