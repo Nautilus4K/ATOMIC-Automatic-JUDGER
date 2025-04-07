@@ -1,4 +1,13 @@
-/* General options */
+/*
+    Note: Colors:
+    - Normal text: #000000
+    - Background of QWidgets: #ffffff
+    - Background of elements: #f1f1f1, #f7f7f7
+    - Border of main container elements: #dfdfdf
+    - Color of outlines: #e0e0e0
+*/
+
+/* General elements styling */
 QLabel {
     /* Labels */
     color: #000000;
@@ -7,6 +16,46 @@ QLabel {
 QLineEdit {
     /* Line inputs */
     color: #000000;
+}
+
+QPushButton {
+    border: 1px solid #e0e0e0;
+    background-color: #f7f7f7;
+    padding: 8px 20px;
+}
+
+QPushButton:hover {
+    background-color: #ffffff;
+}
+
+QPushButton:pressed {
+    background-color: #dfdfdf;
+}
+
+QScrollBar {
+    /* Scroll bar */
+    border: none;
+    background: transparent;
+    width: 4px;
+    margin: 0;
+}
+
+QScrollBar::handle {
+    /* Handle of scroll bar */
+    background: #c7c7c7;
+    min-height: 20px;
+    width: 4px;
+    /* margin: 1px; */
+}
+
+QScrollBar::handle:hover {
+    /* Hover on handle of scroll bar */
+    background: #8d8d8d
+}
+
+/* QMessageBox styling */
+QMessageBox QLabel {
+    font-weight: bold;
 }
 
 /* Window styling */
@@ -28,6 +77,33 @@ QMenuBar {
      *****************************************************************/
 
     background-color: #f7f7f7;
+}
+
+/* Sidebar styling */
+#sidebar {
+    border: 1px solid #dfdfdf;
+    background: #ffffff;
+}
+
+#sidebar QLabel {
+    /* All labels in sidebar are pretty much marks for features */
+    font-weight: bold;
+}
+
+#sidebar QPushButton {
+    /* All buttons in sidebar are pretty much the same purpose of
+     * enabling a feature. Pretty basic */
+    
+    padding: 10px;
+}
+
+#console {
+    /* A kinda-like terminal frame */
+
+    background-color: #ffffff;
+    color: #000000;
+    border: 1px solid #e0e0e0;
+    /* border-radius: 5px; */
 }
 
 /* Tab styling */

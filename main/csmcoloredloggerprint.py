@@ -1,6 +1,11 @@
 import time
 import datetime
 
+# INFO_COL = "\x1b[0m"
+# ERROR_COL = "\x1b[31m"
+# WARN_COL = "\x1b[33m"
+# OK_COL = "\x1b[32m"
+# RESET_COL = "\x1b[0m"
 INFO_COL = "\x1b[0m"
 ERROR_COL = "\x1b[31m"
 WARN_COL = "\x1b[33m"

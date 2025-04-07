@@ -6,7 +6,6 @@ Compilation arguments:
 "-I\"C:\\Qt\\Tools\\mingw1120_64\\include\"",
 "-L\"C:\\Qt\\6.5.3\\mingw_64\\lib\"",
 "-L\"C:\\Qt\\Tools\\mingw1120_64\\lib\"",
-"-g",
 "${file}",
 "${fileBasenameNoExtension}.o",
 "-lQt6Widgets",
@@ -40,14 +39,19 @@ Also, credits to:
 #include <QtWidgets/QLabel>        // Labels
 #include <QtWidgets/QLineEdit>     // An edit area that is a line edit. No multiple lines.
 #include <QtWidgets/QCheckBox>     // Checkboxes. Of course. What did you expect, sucker?
+#include <QtWidgets/QPushButton>   // Buttons as we know it
+#include <QtWidgets/QTextEdit>     // A text frame
 #include <QtGui/QAction>           // Action for menus. Wonder what fucker thought to put it in QtGui
 #include <QtGui/QCloseEvent>       // Close event. The action of 'X' button
 #include <QtGui/QDoubleValidator>  // Validator for edits.
 #include <QtGui/QIcon>             // Icon readings
 #include <QtGui/QPixmap>           // Picture reading
+#include <QtGui/QFont>             // Fonts
+#include <QtGui/QColor>            // Colors
 
-// Importing Qt values
-#include <QtCore/Qt>   // A bunch of constants
+// Importing Qt related features
+#include <QtCore/Qt>       // A bunch of constants
+#include <QtCore/QProcess> // Process running
 
 // File I/O actions and getting data
 #include <fstream>
@@ -56,8 +60,21 @@ Also, credits to:
 using json = nlohmann::json;
 
 // System-related actions
+#ifndef WIN32_LEAN_AND_MEAN // Because of historical reasons, including Windows.h
+#define WIN32_LEAN_AND_MEAN // along with winsock2.h will need to have this
+#endif
+
 #include <filesystem>
 #include <Windows.h>
+#include <winsock2.h> // Socket programming
+#include <shellapi.h> // ShellExecute, etc...
+#include <ws2tcpip.h>
+
+#pragma comment(lib, "Ws2_32.lib") // Required library to link with
+
+// C++ Features
+#include <vector>
+#include <map>
 
 // Debug console
 #include <iostream>
@@ -65,15 +82,33 @@ using json = nlohmann::json;
 // Constants
 // -> Paths
 const std::string THEME_PATH = "/source/theme.qss";
+const std::string THEMECOLORS_PATH = "/source/theme_color.opt";
 const std::string SETTINGS_PATH = "/source/settings.json";
 const std::string VERSION_PATH = "/source/version.json";
 const std::string ICON_PATH = "/icon.ico";
+const std::string PYDIR = "/.venv/Scripts/python.exe";
+const std::string JUDGING_PATH = "/judge.py";
 
 // -> Qt Style Sheet
 const std::string STYLE_BIGLABEL = "font-size: 16px; font-weight: bold;";
 
 // -> Others
 const std::string GITHUB_PAGE = "\"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER\"";
+const int JUDGING_EXITPORT = 28472;
+const std::string JUDGING_EXITADDR = "127.0.0.1";
+
+// -> ANSI Color codes
+const std::string INFO_COL = "\x1b[0m";
+const std::string ERROR_COL = "\x1b[31m";
+const std::string WARN_COL = "\x1b[33m";
+const std::string OK_COL = "\x1b[32m";
+const std::string RESET_COL = "\x1b[0m";
+
+// -> QColor values
+QColor COLOR_CONSOLE_ERROR;
+QColor COLOR_CONSOLE_WARNING;
+QColor COLOR_CONSOLE_OK;
+QColor COLOR_CONSOLE_DEFAULT;
 
 // Custom functions as tools
 std::string intToString(int n) {
@@ -115,10 +150,19 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QLineEdit *judgingReloadTimeInput = new QLineEdit();
     QCheckBox *judgingShowTestCheckbox = new QCheckBox();
 
+    // Sidebar elements
+    QPushButton *judgingProcessButton = new QPushButton();
+    QTextEdit *judgingProcessConsole = new QTextEdit();
+
     // Data variables
     json settings; // NULL at first
     json version; // NULL at first
     QPixmap iconPixmap;
+    QFont monospaceFont; // NULL at first
+
+    // Processes
+    QProcess *judgingProcess = new QProcess();
+    bool judgingEnabled;
 
     // Paths
     std::string dirPath = std::filesystem::current_path().string();
@@ -152,6 +196,31 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             // If file is unable to open
             std::cout << "Cannot find theme file\n";
         }
+
+        // Setting fonts
+        monospaceFont.setFamilies({"Source Code Pro", "Cascadia Code", "Consolas", "Courier New", "Ubuntu Mono", "monospace"});
+
+        // Preparing processes
+        // Before starting the judgingProcess, set environment variables for proper Unicode support
+        QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+        env.insert("PYTHONIOENCODING", "utf-8");  // Force Python to use UTF-8 for stdin/stdout
+        env.insert("PYTHONUTF8", "1");            // Force UTF-8 mode in Python 3.7+
+
+        // For Windows specifically
+        #ifdef Q_OS_WIN
+        env.insert("PYTHONLEGACYWINDOWSSTDIO", "0");  // Disable legacy stdio for better Unicode handling
+        #endif
+
+        judgingProcess->setProcessEnvironment(env);
+
+        judgingEnabled = false;
+        judgingProcess->setProgram(QString::fromStdString(dirPath + PYDIR));
+        judgingProcess->setArguments(QStringList() << QString::fromStdString(dirPath + JUDGING_PATH)); // Wrap inside QStringList for arguments
+
+        // Connecting with functions
+        connect(judgingProcess, &QProcess::readyReadStandardOutput, this, &PanelWindow::judgingHandleStandardOutput);
+        connect(judgingProcess, &QProcess::readyReadStandardError, this, &PanelWindow::judgingHandleStandardError);
+        connect(judgingProcess, &QProcess::finished, this, &PanelWindow::stoppedJudging);
 
 
         //////////////
@@ -233,6 +302,47 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         // Adding splitter into mainLayout
         mainLayout->addWidget(splitter);
+
+
+        // +-----------------------+
+        // | Side                  |
+        // | bar configuration     |
+        // +-----------------------+
+        QWidget *sidebar = new QWidget();
+        sidebar->setObjectName("sidebar");
+        sidebar->setMinimumWidth(150);
+        sidebar->setMaximumWidth(230);
+
+        QVBoxLayout *sidebarLayout = new QVBoxLayout();
+
+        // JUDGING
+        QLabel *judgingProcessLabel = new QLabel();
+        judgingProcessLabel->setText("Hệ thống chấm bài");
+        sidebarLayout->addWidget(judgingProcessLabel);
+
+        judgingProcessButton->setText("Bật chấm bài");
+        sidebarLayout->addWidget(judgingProcessButton);
+        // Connect to desired function
+        connect(judgingProcessButton, QPushButton::clicked, this, [this] {
+            // Using lambda to inject special arguments onto desired function
+            // Pretty basic stuffs, eh?
+            onSidebarFeatureButtonPushed("judging");
+        });
+
+        // Console for judging process
+        judgingProcessConsole->setObjectName("console");
+        judgingProcessConsole->setReadOnly(true);
+        judgingProcessConsole->setAlignment(Qt::AlignTop);
+        judgingProcessConsole->setFont(monospaceFont);
+        sidebarLayout->addWidget(judgingProcessConsole);
+        
+
+        // Applying layout
+        sidebarLayout->setAlignment(Qt::AlignTop);
+        sidebar->setLayout(sidebarLayout);
+
+        // Adding sidebar to splitter
+        splitter->addWidget(sidebar);
 
 
         // +--------------------+
@@ -358,6 +468,10 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         setCentralWidget(container);
     }
 
+    void initialize() {
+        loadThemeColors();
+    }
+
     void about() {
         QWidget *aboutFrame = new QWidget();
         aboutFrame->setFixedSize(300, 100);
@@ -420,6 +534,75 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         }
     }
 
+    void loadThemeColors() {
+        std::fstream themeColorsFile(dirPath + THEMECOLORS_PATH, std::ios::in);
+
+        // Default values
+        COLOR_CONSOLE_ERROR = QColor(185, 0, 0);
+        COLOR_CONSOLE_WARNING = QColor(185, 153, 0);
+        COLOR_CONSOLE_OK = QColor(0, 185, 0);
+        COLOR_CONSOLE_DEFAULT = QColor(0, 0, 0);
+
+        if (themeColorsFile.is_open()) {
+            std::stringstream stream;
+            stream << themeColorsFile.rdbuf();
+            QString content = QString::fromStdString(stream.str());
+            std::cout << content.toStdString() << '\n';
+
+            // Now, we processes the whole thing first by removing spaces
+            content = content.remove(" ", Qt::CaseSensitive);
+            // Next split them into LINES
+            QStringList lines = content.split('\n');
+
+            // Finally, browse through each of them
+            for (QString &line : lines) {
+                if (line[0] == '#') continue;
+
+                QStringList parts = line.split('=');
+                QString name = parts[0];
+                QString value = parts[1];
+
+                if (name == "COLOR_CONSOLE_ERROR") {
+                    QStringList rgb = value.split(',');
+                    bool ok;
+                    int valR = rgb[0].toInt(&ok);
+                    int valG = rgb[1].toInt(&ok);
+                    int valB = rgb[2].toInt(&ok);
+
+                    if (ok) COLOR_CONSOLE_ERROR = QColor(valR, valG, valB);
+                    else continue;
+                } else if (name == "COLOR_CONSOLE_WARNING") {
+                    QStringList rgb = value.split(',');
+                    bool ok;
+                    int valR = rgb[0].toInt(&ok);
+                    int valG = rgb[1].toInt(&ok);
+                    int valB = rgb[2].toInt(&ok);
+
+                    if (ok) COLOR_CONSOLE_WARNING = QColor(valR, valG, valB);
+                    else continue;
+                } else if (name == "COLOR_CONSOLE_OK") {
+                    QStringList rgb = value.split(',');
+                    bool ok;
+                    int valR = rgb[0].toInt(&ok);
+                    int valG = rgb[1].toInt(&ok);
+                    int valB = rgb[2].toInt(&ok);
+
+                    if (ok) COLOR_CONSOLE_OK = QColor(valR, valG, valB);
+                    else continue;
+                } else if (name == "COLOR_CONSOLE_DEFAULT") {
+                    QStringList rgb = value.split(',');
+                    bool ok;
+                    int valR = rgb[0].toInt(&ok);
+                    int valG = rgb[1].toInt(&ok);
+                    int valB = rgb[2].toInt(&ok);
+
+                    if (ok) COLOR_CONSOLE_DEFAULT = QColor(valR, valG, valB);
+                    else continue;
+                }
+            }
+        }
+    }
+
     void gitHub() {
         // Executing the github repo into Windows
         ShellExecute(0, "open", GITHUB_PAGE.c_str(), 0, 0, SW_SHOWNORMAL);
@@ -434,6 +617,159 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     }
 
     private: // PRIVATE FUNCTIONS. These cannot be connected to outside of whatever this object is.
+
+    // -------------------------------------------------
+    // Purpose: [GROUPED] (onSidebarFeatureButtonPushed, 
+    //          readyJudgingOutput, stoppedJudging)
+    //          For process-related functionalities
+    // -------------------------------------------------
+    void onSidebarFeatureButtonPushed(std::string type) {
+        // When the sidebar's button is pushed on
+        // Which are all features toggler
+
+        if (type == "judging") {
+            // If the button pushed is a judging button
+            // => Enable the judging feature / system
+
+            // Changing status
+            if (!judgingEnabled) judgingEnabled = true;
+            std::cout << "Current JUDGING status: " << (judgingEnabled ? "Enabled" : "Disabled") << "\n";
+            
+            if (judgingEnabled) {
+                // If JUDGING is now enabled, performs the enable action
+
+                judgingProcess->start();
+                std::cout << "Started JUDGING process: " << judgingProcess->program().toStdString() << " " << judgingProcess->arguments().join(' ').toStdString() << '\n';
+
+                if (judgingProcess->state() == QProcess::Running) {
+                    // If judgingProcess ran without errors
+                    std::cout << "Successfully ran JUDGING process with PID " << judgingProcess->processId() << "\n";
+                    judgingProcessButton->setText("Dừng chấm bài");
+                } else {
+                    std::cout << "Process failed to start. Error: " << judgingProcess->error() << '\n'; 
+                    errorDialog("Thất bại trong quá trình mở hệ thống chấm bài. Hãy thử cài đặt lại chương trình hoặc cập nhật lên bản cập nhật mới nhất");
+                }
+            }
+            else {
+                // Turn off JUDGING process via created socket HOLE
+                SOCKET exitSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+                if (exitSocket == INVALID_SOCKET) {
+                    std::cout << "exitSocket: INVALID_SOCKET\n";
+                    errorDialog("Lỗi tạo dựng SOCKET. Chương trình sẽ thoát và hãy mở lại chương trình. Thiết bị của bạn có thể không tương thích với ATOMIC.");
+                    WSACleanup();
+                    close();
+                    // judgingProcess->terminate();
+                    exit(0);
+                }
+
+                // Marking addresses for impending connection
+                sockaddr_in targetAddr;
+                targetAddr.sin_family = AF_INET;
+                targetAddr.sin_port = htons(JUDGING_EXITPORT);
+                targetAddr.sin_addr.s_addr = inet_addr(JUDGING_EXITADDR.c_str());
+
+                // Connecting to target with Winsock's connect
+                if (::connect(exitSocket, (SOCKADDR*)&targetAddr, sizeof(targetAddr)) == SOCKET_ERROR) {
+                    // Connection failure:
+                    // Connect to target returned SOCKET_ERROR
+
+                    errorDialog("Kết nối đến hệ thống chấm bài không thành công. Vui lòng đợi một chút và thử lại sau");
+                    closesocket(exitSocket);
+                }
+                else {
+                    const char* exitMsg = "exit";
+                    send(exitSocket, exitMsg, strlen(exitMsg), 0);
+
+                    // No need for recieving
+
+                    // Now, we have to set the button disabled because the user might just spam it up so...
+                    judgingProcessButton->setEnabled(false);
+                }
+            }
+        }
+    }
+
+    // Add these two methods:
+    void judgingHandleStandardOutput() {
+        QString output = QString::fromUtf8(judgingProcess->readAllStandardOutput());
+        judgingProcessOutput(output);
+    }
+
+    void judgingHandleStandardError() {
+        QString output = QString::fromUtf8(judgingProcess->readAllStandardError());
+        judgingProcessOutput(output);
+    }
+
+    // Move your processing function to its own method:
+    void judgingProcessOutput(const QString& source) {
+        QStringList lines = source.split('\n');
+
+        for (const QString& originalLine : lines) {
+            // Remove trailing '\r' while preserving Unicode characters
+            QString line = originalLine;
+            line.remove('\r');
+
+            if (line.isEmpty())
+                continue;
+
+            // Check for starting ANSI escape code
+            if (!line.isEmpty() && line[0] == QChar('\x1b')) {
+                QString colorCode;
+                int pos = 0;
+
+                // Extract ANSI escape sequence
+                while (pos < line.length() && line[pos] != QChar('m')) {
+                    colorCode += line[pos];
+                    pos++;
+                }
+
+                if (pos < line.length() && line[pos] == QChar('m')) {
+                    colorCode += 'm';
+                    pos++;
+                }
+
+                line = line.mid(pos); // Remove ANSI code prefix
+
+                // Set text color based on ANSI code
+                if (colorCode == QString::fromStdString(INFO_COL))
+                    judgingProcessConsole->setTextColor(COLOR_CONSOLE_DEFAULT);
+                else if (colorCode == QString::fromStdString(ERROR_COL))
+                    judgingProcessConsole->setTextColor(COLOR_CONSOLE_ERROR);
+                else if (colorCode == QString::fromStdString(WARN_COL))
+                    judgingProcessConsole->setTextColor(COLOR_CONSOLE_WARNING);
+                else if (colorCode == QString::fromStdString(OK_COL))
+                    judgingProcessConsole->setTextColor(COLOR_CONSOLE_OK);
+            }
+
+            // Remove any ending ANSI color code
+            int ansiPos = line.indexOf(QChar('\x1b'));
+            if (ansiPos != -1) {
+                line = line.left(ansiPos);
+            }
+
+            // Append line and reset color
+            judgingProcessConsole->append(line);
+            judgingProcessConsole->setTextColor(COLOR_CONSOLE_DEFAULT);
+        }
+    }
+
+    void stoppedJudging(int exitCode, QProcess::ExitStatus exitStatus) {
+        judgingProcessButton->setEnabled(true);
+        judgingProcessButton->setText("Bật chấm bài");
+        judgingEnabled = false;
+
+        // RESET some stuffs
+        judgingProcessConsole->setTextColor(COLOR_CONSOLE_DEFAULT);
+        judgingProcessConsole->append("\n\n");
+
+        // TODO: Add exit code handler
+        std::cout << "Exitted with exit code: " << exitCode << '\n';
+    }
+
+    // ------------------------------------------------
+    // Purpose: Refresh current configurations on each
+    //          tab switch to update contents
+    // ------------------------------------------------
     void onTabSwitches(int index) {
         // When user switches tabs. It's good to update all contents of ALL TABS.
         // This is just for the sake of accuracy. Future optimizations might
@@ -475,6 +811,10 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         QMessageBox::information(this, "Lỗi", QString::fromStdString("Đã có lỗi xảy ra: " + error), QMessageBox::Ok);
     }
 
+    // -------------------------------------------
+    // Purpose: Change settings for inputs from a
+    //          predetermined 'type' value
+    // -------------------------------------------
     void onInputChanges(std::string type, std::string value) {
         std::cout << "onInputChanges(std::string type, std::string value): " << type << ": -> " << value << '\n';
 
@@ -532,9 +872,22 @@ int main(int argc, char *argv[])
     }
     if (hideConsole) FreeConsole();
 
+    // Initializing winsock
+    std::cout << "Initializing Winsock\n";
+    WSADATA wsaData;
+    int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (result != 0) {
+        std::cout << "WSAStartup failed\n";
+        QMessageBox::critical(nullptr, "Lỗi mở WINSOCK", 
+                                    "Đã gặp lỗi mở WINSOCK. Thiết bị của bạn có thể không tương thích với phần mềm này", 
+                                    QMessageBox::StandardButton::Ok);
+        return 1;
+    }
+
     // Main app
     QApplication a(argc, argv);
     PanelWindow panel;
+    panel.initialize();
     panel.show();
     return a.exec();
 }
