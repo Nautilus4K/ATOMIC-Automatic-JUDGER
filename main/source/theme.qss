@@ -53,11 +53,6 @@ QScrollBar::handle:hover {
     background: #8d8d8d
 }
 
-/* QMessageBox styling */
-QMessageBox QLabel {
-    font-weight: bold;
-}
-
 /* Window styling */
 #container {
     /********************************************************************

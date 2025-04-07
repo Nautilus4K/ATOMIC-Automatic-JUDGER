@@ -5,6 +5,17 @@
 # |   ├──Dockerfile.compile
 # ├──judge.py
 
+#######################
+# Judging Error codes #
+#######################
+# -127: Docker environment error
+# -126: Docker pinging error
+# -125: Compile image failed to be built
+# -124: Compile container failed to start
+# -123: Failure in binding socket
+# -122: Execution image failed to be built
+# -121: Execution container failed to starts
+
 import time
 import docker
 import os
@@ -56,6 +67,8 @@ if not stable:
     pwarn("Phiên bản ATOMIC này không ổn định. Sử dụng một cách thận trọng.")
 
 pinfo("Vị trí chạy chương trình: " + filePath)
+
+time.sleep(1)
 
 # Connect to docker environment
 try:
@@ -137,12 +150,20 @@ def run_container(image_name, mounted_dir: str, name: str):
 
 if not check_image_exists("atomic-python"):
     pwarn("Không tìm thấy ảnh môi trường, đang xây dựng...")
-    pyimage, build_logs = client.images.build(path=filePath+"/templates", dockerfile="Dockerfile.python", tag="atomic-python", rm=True)
-    for log in build_logs:
-        pinfo(log.get('stream', '').strip())
-    pok(f"Ảnh đã được xây dựng với ID: {pyimage.id}")
+    try:
+        pyimage, build_logs = client.images.build(path=filePath+"/templates", dockerfile="Dockerfile.python", tag="atomic-python", rm=True)
+        for log in build_logs:
+            pinfo(log.get('stream', '').strip())
+        pok(f"Ảnh đã được xây dựng với ID: {pyimage.id}")
+    except Exception as e:
+        perr("Tạo dựng ảnh xử lý không thành công, lỗi: ", {e})
+        sys.exit(-122);
 pinfo("Đang tạo container mới cho môi trường")
-runcontainer = run_container("atomic-python", "/tempWorking", "execution")
+try:
+    runcontainer = run_container("atomic-python", "/tempWorking", "execution")
+except Exception as e:
+    perr("Bật container chạy không thành công, lỗi: ", {e})
+    sys.exit(-121)
 
 if not check_image_exists("atomic-compile"):
     pwarn("Không tìm thấy ảnh biên soạn, đang xây dựng...")
@@ -806,6 +827,7 @@ def stop(sig, frame):
         else:
             pwarn("Phát hiện container biên soạn, bỏ qua...")
     
+    pinfo(f"Đã thoát thành công với mã: {exit_code}")
     sys.exit(exit_code)
 
 HOST = "127.0.0.1"
@@ -891,7 +913,19 @@ while running:
                     if not os.path.exists(filePath+"/userdata/"+filedata[0]+"/"):
                         pwarn("Người dùng không có một thu mục có sẵn, đang tạo một thư mục mới...")
                         os.mkdir(filePath+"/userdata/"+filedata[0]+"/")
+                    
+                    existingFileContent = ""
+                    if os.path.exists(filePath+"/userdata/"+filedata[0]+"/"+filedata[1]+"."+filedata[2]):
+                        with open(filePath+"/userdata/"+filedata[0]+"/"+filedata[1]+"."+filedata[2], "r", encoding='utf-8') as file:
+                            existingFileContent = file.read()
                     shutil.move(filePath+"/workspace/queue/"+file, filePath+"/userdata/"+filedata[0]+"/"+filedata[1]+"."+filedata[2])
+
+                    # If error happens at shutil.move(), the function below wont be called
+                    # This is what we need
+                    timestamp = str(int(time.time()))
+                    os.mkdir(filePath+"/userdata/"+filedata[0]+"/"+timestamp)
+                    with open(filePath+"/userdata/"+filedata[0]+"/"+timestamp+"/"+filedata[1]+"."+filedata[2], "w", encoding='utf-8') as file:
+                        file.write(existingFileContent)
                 except:
                     perr(f"Không thể di chuyển {file} đến USERDATA, có gì đó đã xảy ra?")
         else:
@@ -956,4 +990,6 @@ for container in containers:
         container.remove()
     else:
         pwarn("Phát hiện container biên soạn, bỏ qua...")
+
+pinfo(f"Đã thoát thành công với mã: {exit_code}")
 sys.exit(exit_code)

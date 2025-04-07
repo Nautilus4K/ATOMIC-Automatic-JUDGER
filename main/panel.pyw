@@ -1,12 +1,3 @@
-#######################
-# Judging Error codes #
-#######################
-# -127: Docker environment error
-# -126: Docker pinging error
-# -125: Compile image failed to be built
-# -124: Compile container failed to start
-# -123: Failure in binding socket
-
 ################################
 # Gathering required libraries #
 ################################

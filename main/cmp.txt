@@ -1,1 +1,8 @@
-g++ -fdiagnostics-color=always -I"C:\Qt\6.5.3\mingw_64\include" -I"C:\Qt\Tools\mingw1120_64\include" -L"C:\Qt\6.5.3\mingw_64\lib" -L"C:\Qt\Tools\mingw1120_64\lib" panel.cpp panel.o -lQt6Widgets -lQt6Core -lQt6Gui -lws2_32 -o panel.exe
+# Debuggable (with --console)
+g++ -fdiagnostics-color=always -I"C:\Qt\6.5.3\mingw_64\include" -I"C:\Qt\Tools\mingw1120_64\include" -L"C:\Qt\6.5.3\mingw_64\lib" -L"C:\Qt\Tools\mingw1120_64\lib" panel.cpp panel.o -lQt6Widgets -lQt6Core -lQt6Gui -lws2_32 -g -o panel.exe
+
+WARNING: The result will flash the console window on startup
+
+
+# Consumer usage
+g++ -fdiagnostics-color=always -I"C:\Qt\6.5.3\mingw_64\include" -I"C:\Qt\Tools\mingw1120_64\include" -L"C:\Qt\6.5.3\mingw_64\lib" -L"C:\Qt\Tools\mingw1120_64\lib" panel.cpp panel.o -lQt6Widgets -lQt6Core -lQt6Gui -lws2_32 -g -o panel.exe -mwindows

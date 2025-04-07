@@ -215,12 +215,15 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         judgingEnabled = false;
         judgingProcess->setProgram(QString::fromStdString(dirPath + PYDIR));
-        judgingProcess->setArguments(QStringList() << QString::fromStdString(dirPath + JUDGING_PATH)); // Wrap inside QStringList for arguments
+        judgingProcess->setArguments(QStringList() << "-u" << QString::fromStdString(dirPath + JUDGING_PATH)); // Wrap inside QStringList for arguments
 
         // Connecting with functions
         connect(judgingProcess, &QProcess::readyReadStandardOutput, this, &PanelWindow::judgingHandleStandardOutput);
         connect(judgingProcess, &QProcess::readyReadStandardError, this, &PanelWindow::judgingHandleStandardError);
         connect(judgingProcess, &QProcess::finished, this, &PanelWindow::stoppedJudging);
+
+        judgingProcess->setReadChannel(QProcess::StandardOutput);
+        judgingProcess->setProcessChannelMode(QProcess::MergedChannels); // Merges stdout and stderr
 
 
         //////////////
@@ -311,7 +314,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         QWidget *sidebar = new QWidget();
         sidebar->setObjectName("sidebar");
         sidebar->setMinimumWidth(150);
-        sidebar->setMaximumWidth(230);
+        sidebar->setMaximumWidth(250);
 
         QVBoxLayout *sidebarLayout = new QVBoxLayout();
 
@@ -632,7 +635,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             // => Enable the judging feature / system
 
             // Changing status
-            if (!judgingEnabled) judgingEnabled = true;
+            judgingEnabled = !judgingEnabled;
             std::cout << "Current JUDGING status: " << (judgingEnabled ? "Enabled" : "Disabled") << "\n";
             
             if (judgingEnabled) {
@@ -762,8 +765,72 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         judgingProcessConsole->setTextColor(COLOR_CONSOLE_DEFAULT);
         judgingProcessConsole->append("\n\n");
 
-        // TODO: Add exit code handler
         std::cout << "Exitted with exit code: " << exitCode << '\n';
+
+        // Exit code handling
+        if (exitCode != 0) {
+            // Preparing variables as default values
+            QString windowTitle = "Lỗi trong quá trình chấm bài.";
+            QString message = "Đã có lỗi xảy ra trong quá trình chấm bài. Hãy tra trong Trợ Giúp/Hướng dẫn để biết thêm thông tin chi tiết. Mã lỗi: ";
+            message += QString::fromStdString(intToString(exitCode));
+
+            // Use switch/case for better handling of these jobs and more optimized
+            // IF/ELSEs
+            switch(exitCode) {
+                // Error dictionary in `judge.py`'s first lines
+                case -127:
+                    // Docker environment error
+                    message = "Lỗi -127: Thất bại trong quá trình kết nối đến môi trường Docker. Hãy chắc chắn rằng bạn đã mở Docker Desktop và bật Docker Environment trên thiết bị. Tra Trợ Giúp/Hướng dẫn để biết thêm thông tin chi tiết.";
+                    break;
+                case -126:
+                    // Docker connection error
+                    message = "Lỗi -126: Môi trường Docker không phản hồi. Xin đợi và thử lại sau. Nếu không thành công, hãy thử khởi động lại Docker hoặc tra trong Trợ Giúp/Hướng dẫn để biết thêm thông tin chi tiết.";
+                    break;
+                case -125:
+                    // Docker compilation image building error
+                    message = "Lỗi -125: Ảnh biên soạn không được xây dựng thành công. Hãy thử khởi động lại hệ thống chấm bài. Tra Trợ Giúp/Hướng dẫn để biết thêm thông tin chi tiết.";
+                    break;
+                case -124:
+                    // Docker compile container failed to start
+                    message = "Lỗi -124: Container biên soạn không được bật thành công. Hãy thử khởi động lại hệ thống chấm bài. Tra Trợ Giúp/Hướng dẫn để biết thêm thông tin chi tiết.";
+                    break;
+                case -123:
+                    // Judging disabling socket failed to start
+                    message = "Lỗi -123: Socket không được bật thành công. Hãy kiểm tra xem có phần mềm nào đang sử dụng cổng ";
+                    message += QString::fromStdString(intToString(JUDGING_EXITPORT));
+                    message += " hay không. Nếu có thì hãy tắt phần mềm đó. Tra Trợ Giúp/Hướng dẫn để biết thêm thông tin chi tiết.";
+                    break;
+                case -122:
+                    // Execution image building error
+                    message = "Lỗi -122: Ảnh thực hiện không được xây dựng thành công. Hãy thử khởi động lại hệ thống chấm bài. Tra Trợ Giúp/Hướng dẫn để biết thêm thông tin chi tiết.";
+                    break;
+                case -121:
+                    // Docker compile container failed to start
+                    message = "Lỗi -121: Container thực hiện không được bật thành công. Hãy thử khởi động lại hệ thống chấm bài. Tra Trợ Giúp/Hướng dẫn để biết thêm thông tin chi tiết.";
+                    break;
+            }
+
+            // Showing the error
+            QMessageBox *msgBox = new QMessageBox();
+            msgBox->setText(message);
+            msgBox->setWindowTitle(windowTitle);
+            msgBox->setIcon(QMessageBox::Critical);
+            msgBox->setStandardButtons(QMessageBox::StandardButton::Ok);
+            msgBox->setWindowIcon(QIcon(iconPixmap));
+
+            msgBox->show();
+        } else {
+            // If the software exitted gracefully, we do a little bit of windowin'
+            // by simply showing a response to assure the user nothing is BAD
+            QMessageBox *msgBox = new QMessageBox();
+            msgBox->setText("Dừng hệ thống chấm bài thành công!");
+            msgBox->setWindowTitle("Thành công");
+            msgBox->setIcon(QMessageBox::Information);
+            msgBox->setStandardButtons(QMessageBox::StandardButton::Ok);
+            msgBox->setWindowIcon(QIcon(iconPixmap));
+
+            msgBox->show();
+        }
     }
 
     // ------------------------------------------------
