@@ -28,7 +28,8 @@ Also, credits to:
 #include <QtWidgets/QApplication>  // For application
 #include <QtWidgets/QMainWindow>   // For main window
 #include <QtWidgets/QWidget>       // For a window-like area
-#include <QtWidgets/QVBoxLayout>   // Layout of QWidgets
+#include <QtWidgets/QVBoxLayout>   // Verical Layout of QWidgets
+#include <QtWidgets/QHBoxLayout>   // Horizontal Layout of QWidgets
 #include <QtWidgets/QScrollArea>   // Scrollable area. Used with QWidgets
 #include <QtWidgets/QFrame>        // Frames. Like the one outline in QScrollArea
 #include <QtWidgets/QSplitter>     // Splitter
@@ -88,6 +89,7 @@ const std::string VERSION_PATH = "/source/version.json";
 const std::string ICON_PATH = "/icon.ico";
 const std::string PYDIR = "/.venv/Scripts/python.exe";
 const std::string JUDGING_PATH = "/judge.py";
+const std::string WEBSERVER_PATH = "/apache.py";
 
 // -> Qt Style Sheet
 const std::string STYLE_BIGLABEL = "font-size: 16px; font-weight: bold;";
@@ -96,6 +98,8 @@ const std::string STYLE_BIGLABEL = "font-size: 16px; font-weight: bold;";
 const std::string GITHUB_PAGE = "\"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER\"";
 const int JUDGING_EXITPORT = 28472;
 const std::string JUDGING_EXITADDR = "127.0.0.1";
+const int WEBSERVER_EXITPORT = 28473;
+const std::string WEBSERVER_EXITADDR = "127.0.0.1";
 
 // -> ANSI Color codes
 const std::string INFO_COL = "\x1b[0m";
@@ -153,6 +157,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     // Sidebar elements
     QPushButton *judgingProcessButton = new QPushButton();
     QTextEdit *judgingProcessConsole = new QTextEdit();
+    QPushButton *webserverProcessButton = new QPushButton();
 
     // Data variables
     json settings; // NULL at first
@@ -163,10 +168,12 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     // Processes
     QProcess *judgingProcess = new QProcess();
     bool judgingEnabled;
+    QProcess *webserverProcess = new QProcess();
+    bool webserverEnabled;
 
     // Paths
     std::string dirPath = std::filesystem::current_path().string();
-    PanelWindow() {
+    PanelWindow() { // Extremely powerful? Extremely complex.
         // This is the configuration part of panelWindow.
         // Initialization will be another one
 
@@ -217,10 +224,16 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         judgingProcess->setProgram(QString::fromStdString(dirPath + PYDIR));
         judgingProcess->setArguments(QStringList() << "-u" << QString::fromStdString(dirPath + JUDGING_PATH)); // Wrap inside QStringList for arguments
 
+        webserverEnabled = false;
+        webserverProcess->setProgram(QString::fromStdString(dirPath + PYDIR));
+        webserverProcess->setArguments(QStringList() << QString::fromStdString(dirPath + WEBSERVER_PATH));
+
+
         // Connecting with functions
         connect(judgingProcess, &QProcess::readyReadStandardOutput, this, &PanelWindow::judgingHandleStandardOutput);
         connect(judgingProcess, &QProcess::readyReadStandardError, this, &PanelWindow::judgingHandleStandardError);
         connect(judgingProcess, &QProcess::finished, this, &PanelWindow::stoppedJudging);
+        connect(webserverProcess, &QProcess::finished, this, &PanelWindow::stoppedWebserver);
 
         judgingProcess->setReadChannel(QProcess::StandardOutput);
         judgingProcess->setProcessChannelMode(QProcess::MergedChannels); // Merges stdout and stderr
@@ -321,6 +334,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // JUDGING
         QLabel *judgingProcessLabel = new QLabel();
         judgingProcessLabel->setText("Hệ thống chấm bài");
+        judgingProcessLabel->setWordWrap(true);
         sidebarLayout->addWidget(judgingProcessLabel);
 
         judgingProcessButton->setText("Bật chấm bài");
@@ -339,6 +353,33 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         judgingProcessConsole->setFont(monospaceFont);
         sidebarLayout->addWidget(judgingProcessConsole);
         
+
+        // WEBSERVER
+        QLabel *webserverProcessLabel = new QLabel();
+        webserverProcessLabel->setText("Trang chấm bài trực tuyến");
+        webserverProcessLabel->setWordWrap(true);
+        sidebarLayout->addWidget(webserverProcessLabel);
+
+        // We're gonna be putting the webserver toggle and the website fast shortcut on the
+        // same line babyyyyyy.
+        // First, create a sub-QWidget and then add QHBoxLayout and finally add buttons
+        QWidget *webserverProcessButtonsLine = new QWidget();
+        QHBoxLayout *webserverProcessButtonsLineLayout = new QHBoxLayout();
+
+        webserverProcessButton->setText("Bật Website");
+        connect(webserverProcessButton, &QPushButton::clicked, this, [this] {
+            onSidebarFeatureButtonPushed("webserver");
+        });
+        webserverProcessButtonsLineLayout->addWidget(webserverProcessButton);
+
+        QPushButton *webserverOpener = new QPushButton();
+        webserverOpener->setText("Mở");
+        connect(webserverOpener, &QPushButton::clicked, this, &PanelWindow::openHttpWebsite); // Connecting to function
+        webserverProcessButtonsLineLayout->addWidget(webserverOpener);
+
+        webserverProcessButtonsLine->setLayout(webserverProcessButtonsLineLayout);
+        sidebarLayout->addWidget(webserverProcessButtonsLine);
+
 
         // Applying layout
         sidebarLayout->setAlignment(Qt::AlignTop);
@@ -473,6 +514,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
     void initialize() {
         loadThemeColors();
+        judgingEnabled = false;
+        webserverEnabled = false;
     }
 
     void about() {
@@ -611,6 +654,11 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         ShellExecute(0, "open", GITHUB_PAGE.c_str(), 0, 0, SW_SHOWNORMAL);
     }
 
+    void openHttpWebsite() {
+        // Opening the opened HTTP website
+        ShellExecute(0, "open", "http://127.0.0.1/", 0, 0, SW_SHOWNORMAL);
+    }
+
     void backUp() {
 
     }
@@ -676,7 +724,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                     // Connection failure:
                     // Connect to target returned SOCKET_ERROR
 
-                    errorDialog("Kết nối đến hệ thống chấm bài không thành công. Vui lòng đợi một chút và thử lại sau");
+                    errorDialog("Kết nối đến hệ thống chấm bài không thành công. Vui lòng đợi một chút và thử lại sau. Nếu vẫn không thành công thì hãy thử khởi động lại hệ thống.");
                     closesocket(exitSocket);
                 }
                 else {
@@ -687,6 +735,60 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                     // Now, we have to set the button disabled because the user might just spam it up so...
                     judgingProcessButton->setEnabled(false);
+                }
+            }
+        } else if (type == "webserver") {
+            webserverEnabled = !webserverEnabled;
+            std::cout << "Toggled webserver to: " << (webserverEnabled ? "Enabled" : "Disabled") << '\n';
+            if (webserverEnabled) {
+                // If we just turned on webserver. We do the actions of turning it up
+                webserverProcess->start();
+                std::cout << "Started WEBSERVER process: " << webserverProcess->program().toStdString() << " " << webserverProcess->arguments().join(' ').toStdString() << '\n';
+
+                // Check if the process started normally
+                if (webserverProcess->state() == QProcess::Running) {
+                    // If webserverProcess ran without errors
+                    std::cout << "Successfully ran WEBSERVWER process with PID " << webserverProcess->processId() << "\n";
+                    webserverProcessButton->setText("Tắt Website");
+                } else {
+                    std::cout << "Process failed to start. Error: " << webserverProcess->error() << '\n'; 
+                    errorDialog("Thất bại trong quá trình mở hệ thống chấm bài. Hãy thử cài đặt lại chương trình hoặc cập nhật lên bản cập nhật mới nhất");
+                }
+            } else {
+                // Turning off actions
+                // Turn off JUDGING process via created socket HOLE
+                SOCKET exitSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+                if (exitSocket == INVALID_SOCKET) {
+                    std::cout << "exitSocket: INVALID_SOCKET\n";
+                    errorDialog("Lỗi tạo dựng SOCKET. Chương trình sẽ thoát và hãy mở lại chương trình. Thiết bị của bạn có thể không tương thích với ATOMIC.");
+                    WSACleanup();
+                    close();
+                    // judgingProcess->terminate();
+                    exit(0);
+                }
+
+                // Marking addresses for impending connection
+                sockaddr_in targetAddr;
+                targetAddr.sin_family = AF_INET;
+                targetAddr.sin_port = htons(WEBSERVER_EXITPORT);
+                targetAddr.sin_addr.s_addr = inet_addr(WEBSERVER_EXITADDR.c_str());
+
+                // Connecting to target with Winsock's connect
+                if (::connect(exitSocket, (SOCKADDR*)&targetAddr, sizeof(targetAddr)) == SOCKET_ERROR) {
+                    // Connection failure:
+                    // Connect to target returned SOCKET_ERROR
+
+                    errorDialog("Kết nối đến hệ thống website không thành công. Vui lòng đợi một chút và thử lại sau. Nếu vẫn không thành công thì hãy thử khởi động lại hệ thống.");
+                    closesocket(exitSocket);
+                }
+                else {
+                    const char* exitMsg = "exit";
+                    send(exitSocket, exitMsg, strlen(exitMsg), 0);
+
+                    // No need for recieving
+
+                    // Now, we have to set the button disabled because the user might just spam it up so...
+                    webserverProcessButton->setEnabled(false);
                 }
             }
         }
@@ -816,6 +918,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             msgBox->setWindowTitle(windowTitle);
             msgBox->setIcon(QMessageBox::Critical);
             msgBox->setStandardButtons(QMessageBox::StandardButton::Ok);
+            // msgBox->addButton("OK", QMessageBox::ButtonRole::AcceptRole);
             msgBox->setWindowIcon(QIcon(iconPixmap));
 
             msgBox->show();
@@ -827,10 +930,18 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             msgBox->setWindowTitle("Thành công");
             msgBox->setIcon(QMessageBox::Information);
             msgBox->setStandardButtons(QMessageBox::StandardButton::Ok);
+            // msgBox->addButton("OK", QMessageBox::ButtonRole::AcceptRole);
             msgBox->setWindowIcon(QIcon(iconPixmap));
 
             msgBox->show();
         }
+    }
+
+    void stoppedWebserver(int exitCode, QProcess::ExitStatus exitStatus) {
+        // Handle webserver exitting, along with creating log files.
+        webserverProcessButton->setText("Bật Website");
+        webserverProcessButton->setEnabled(true);
+        webserverEnabled = false;
     }
 
     // ------------------------------------------------
@@ -875,7 +986,15 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     }
 
     void errorDialog(std::string error) {
-        QMessageBox::information(this, "Lỗi", QString::fromStdString("Đã có lỗi xảy ra: " + error), QMessageBox::Ok);
+        QMessageBox *msgBox = new QMessageBox();
+        msgBox->setText(QString::fromStdString("Đã có lỗi xảy ra: " + error));
+        msgBox->setWindowTitle("Lỗi");
+        msgBox->setIcon(QMessageBox::Critical);
+        msgBox->setStandardButtons(QMessageBox::StandardButton::Ok);
+        // msgBox->addButton("OK", QMessageBox::ButtonRole::AcceptRole);
+        msgBox->setWindowIcon(QIcon(iconPixmap));
+
+        msgBox->show();
     }
 
     // -------------------------------------------

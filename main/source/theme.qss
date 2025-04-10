@@ -8,6 +8,11 @@
 */
 
 /* General elements styling */
+QWidget {
+    /* A Wild QWidget? */
+    background: transparent;
+}
+
 QLabel {
     /* Labels */
     color: #000000;
@@ -51,6 +56,11 @@ QScrollBar::handle {
 QScrollBar::handle:hover {
     /* Hover on handle of scroll bar */
     background: #8d8d8d
+}
+
+/* MessageBox styling */
+QMessageBox {
+    background: #ffffff;
 }
 
 /* Window styling */
