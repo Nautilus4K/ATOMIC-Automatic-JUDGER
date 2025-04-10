@@ -1,5 +1,19 @@
 /**********************************
 
+      ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: 
+     :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   
+    :+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     
+   +#+ +:+ +#+ +#++:++#++: +#+    +:+     +#+         +#+     +#+       +#+    +:+ +#++:++#++  +#+  +:+   +#++:++       
+  +#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       
+ #+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       
+###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###   
+
+This is free software made by Nautilus4K a.k.a Quang Vinh.
+Any form of credits is neccessary from the license in the repository
+
+Repo link: https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER/
+
+
 Compilation arguments:
 "-fdiagnostics-color=always",
 "-I\"C:\\Qt\\6.5.3\\mingw_64\\include\"",
@@ -164,6 +178,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     json version; // NULL at first
     QPixmap iconPixmap;
     QFont monospaceFont; // NULL at first
+    QString styleSheetResult;
 
     // Processes
     QProcess *judgingProcess = new QProcess();
@@ -198,6 +213,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             themeDataStr = themeDataBuffer.str();
             QString themeData = QString::fromStdString(themeDataStr);  // Convert std::string to QString
             std::cout << "Theme data:\n" << themeDataStr << "\n";
+            styleSheetResult = themeData;
             setStyleSheet(themeData);
         } else {
             // If file is unable to open
@@ -520,11 +536,14 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
     void about() {
         QWidget *aboutFrame = new QWidget();
-        aboutFrame->setFixedSize(300, 100);
+        aboutFrame->setFixedSize(500, 250);
         aboutFrame->show();
         aboutFrame->setWindowTitle("Về ATOMIC");
         aboutFrame->setWindowIcon(QIcon(iconPixmap));
+        aboutFrame->setObjectName("about");
         
+        aboutFrame->setStyleSheet(styleSheetResult); // Setting styles
+
         // Reading version info
         std::fstream versionFile(dirPath + VERSION_PATH, std::ios::in);
         if (versionFile.is_open()) {
@@ -548,7 +567,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                 // The rest of the operation stays here
                 QLabel *versionLabel = new QLabel();
-                versionLabel->setText(versionText.c_str());
+                versionLabel->setText(QString::fromStdString(versionText));
+                // versionLabel->setWordWrap(true);
 
                 // Adding Image
                 QLabel *appImage = new QLabel();
@@ -564,8 +584,25 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 splitter->addWidget(versionLabel);
                 splitter->addWidget(appImage);
 
+                // Setting width for easy splitting
+                splitter->setFixedHeight(75);
+
+                QString licensingText = "====== Giấy phép ======\n\nPhần mềm này được phát hành dưới Giấy phép Mã nguồn mở MIT (MIT License).\n\n====== Ghi nhận ======\n\nPhần mềm được phát triển dựa trên hoặc sử dụng các dự án mã nguồn mở sau:\n\n- Qt GUI Framework (https://qt.io)  \n- Python Interpreter (https://python.org)  \n- waitress (https://github.com/Pylons/waitress)  \n- Docker] https://docker.com)  \n- nlohmann/json - JSON for Modern C++ (https://github.com/nlohmann/json)  \n- boppreh/keyboard - Python keyboard library (https://github.com/boppreh/keyboard)";
+
+                QSplitter *licensingSplitter = new QSplitter();
+                licensingSplitter->setOrientation(Qt::Orientation::Vertical);
+                licensingSplitter->setChildrenCollapsible(false);
+                licensingSplitter->addWidget(splitter);
+                
+                QTextEdit *licensingInfo = new QTextEdit();
+                licensingInfo->setText(licensingText);
+                licensingInfo->setReadOnly(true);
+                licensingInfo->setObjectName("aboutLicensing");
+                licensingInfo->setFont(monospaceFont);
+                licensingSplitter->addWidget(licensingInfo);
+
                 QVBoxLayout *layout = new QVBoxLayout();
-                layout->addWidget(splitter);
+                layout->addWidget(licensingSplitter);
                 aboutFrame->setLayout(layout);
             } catch (const json::parse_error& e) { 
                 // If error got and it is JSON parsing error

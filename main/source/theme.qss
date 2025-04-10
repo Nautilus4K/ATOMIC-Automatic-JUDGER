@@ -7,6 +7,17 @@
     - Color of outlines: #e0e0e0
 */
 
+/* About page styling */
+#about {
+    background: #f7f7f7;
+}
+
+#aboutLicensing {
+    background: #ffffff;
+    margin-top: 20px;
+    border: 1px solid #e0e0e0;
+}
+
 /* General elements styling */
 QWidget {
     /* A Wild QWidget? */
