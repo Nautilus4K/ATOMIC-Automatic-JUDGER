@@ -6,6 +6,53 @@
 # ---------------------------------------
 # -74  :  Socket opening error
 
+# Setting I/O
+import os
+import sys
+import time
+import datetime
+dirPath = os.path.dirname(os.path.abspath(__file__))
+LOG_PATH_REL = "/central/valkyrie.log"
+
+log_path = dirPath + LOG_PATH_REL  # Or any custom path
+
+existedPrior = os.path.exists(log_path)
+
+log_file = open(log_path, "a", encoding="utf-8")
+
+if not existedPrior:
+    log_file.write("      ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: \n     :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   \n    :+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     \n   +#+ +:+ +#+ +#++:++#++: +#+    +:+     +#+         +#+     +#+       +#+    +:+ +#++:++#++  +#+  +:+   +#++:++       \n  +#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       \n #+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       \n###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###   \n")
+    log_file.write("\nMade with Pylons/wairess. Put together by Nautilus4K with love 💖.\n")
+
+log_file.write(f"\n\n\n------------------------------\nEXEC DATE: {datetime.datetime.now()}\n\n") # Writing headers for each section
+
+# Redirect standard output and error to log file
+sys.stdout = log_file
+sys.stderr = log_file
+
+# Doing prior cleaning
+import json
+SETTINGS_PATH = "/source/settings.json"
+SESSIONS_PATH = "/central/sessions.json"
+
+with open(dirPath + SETTINGS_PATH, "r", encoding='utf-8') as settingsFile:
+    settings = json.load(settingsFile)
+
+with open(dirPath + SESSIONS_PATH, "r", encoding='utf-8') as sessionsFile:
+    sessions = json.load(sessionsFile)
+
+awaiting_removal = []
+for session in sessions:
+    # If last active is too high
+    if (int(time.time()) - sessions[session]["lastactive"]) > settings["max_not_logged_in_session_seconds"]:
+        awaiting_removal.append(session)
+
+for removableSession in awaiting_removal:
+    del sessions[removableSession]
+
+with open(dirPath + SESSIONS_PATH, "w", encoding='utf-8') as sessionsFile:
+    json.dump(sessions, sessionsFile)
+
 # Nickname? Hell yea
 # Valkyrie.
 

@@ -9,7 +9,7 @@
 ###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###   
 
 This is free software made by Nautilus4K a.k.a Quang Vinh.
-Any form of credits is neccessary from the license in the repository
+Any form of credits is neccessary as described in the license in the repository
 
 Repo link: https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER/
 
@@ -59,6 +59,7 @@ Also, credits to:
 #include <QtGui/QAction>           // Action for menus. Wonder what fucker thought to put it in QtGui
 #include <QtGui/QCloseEvent>       // Close event. The action of 'X' button
 #include <QtGui/QDoubleValidator>  // Validator for edits.
+#include <QtGui/QIntValidator>     // Another validator, also for edits, now more like INTEGER revolved.
 #include <QtGui/QIcon>             // Icon readings
 #include <QtGui/QPixmap>           // Picture reading
 #include <QtGui/QFont>             // Fonts
@@ -104,9 +105,10 @@ const std::string ICON_PATH = "/icon.ico";
 const std::string PYDIR = "/.venv/Scripts/python.exe";
 const std::string JUDGING_PATH = "/judge.py";
 const std::string WEBSERVER_PATH = "/apache.py";
+const std::string LOG_PATH = "/central/valkyrie.log";
 
 // -> Qt Style Sheet
-const std::string STYLE_BIGLABEL = "font-size: 16px; font-weight: bold;";
+const QString STYLE_BIGLABEL = "font-size: 16px; font-weight: bold;";
 
 // -> Others
 const std::string GITHUB_PAGE = "\"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER\"";
@@ -167,6 +169,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QLineEdit *judgingWaitTimeInput = new QLineEdit();
     QLineEdit *judgingReloadTimeInput = new QLineEdit();
     QCheckBox *judgingShowTestCheckbox = new QCheckBox();
+
+    QLineEdit *webserverLogInSecsInput = new QLineEdit();
 
     // Sidebar elements
     QPushButton *judgingProcessButton = new QPushButton();
@@ -457,7 +461,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // WAIT TIME
         QLabel *judgingWaitTimeLabel = new QLabel();
         judgingWaitTimeLabel->setText("Thời gian đợi quét");
-        judgingWaitTimeLabel->setStyleSheet(QString::fromStdString(STYLE_BIGLABEL));
+        judgingWaitTimeLabel->setStyleSheet(STYLE_BIGLABEL);
         judgingTabLayout->addWidget(judgingWaitTimeLabel);
 
         QLabel *judgingWaitTimeDesc = new QLabel();
@@ -477,7 +481,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // RELOAD TIME
         QLabel *judgingReloadTimeLabel = new QLabel();
         judgingReloadTimeLabel->setText("Thời gian làm mới");
-        judgingReloadTimeLabel->setStyleSheet(QString::fromStdString(STYLE_BIGLABEL));
+        judgingReloadTimeLabel->setStyleSheet(STYLE_BIGLABEL);
         judgingTabLayout->addWidget(judgingReloadTimeLabel);
 
         QLabel *judgingReloadTimeDesc = new QLabel();
@@ -497,7 +501,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // SHOW TESTS
         QLabel *judgingShowTestLabel = new QLabel();
         judgingShowTestLabel->setText("Hiện đáp án (test)");
-        judgingShowTestLabel->setStyleSheet(QString::fromStdString(STYLE_BIGLABEL));
+        judgingShowTestLabel->setStyleSheet(STYLE_BIGLABEL);
         judgingTabLayout->addWidget(judgingShowTestLabel);
 
         QLabel *judgingShowTestDesc = new QLabel();
@@ -515,6 +519,40 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // Setting judging tab's layout
         judgingTabLayout->setAlignment(Qt::AlignTop);
         judgingTab->setLayout(judgingTabLayout);
+
+
+        // +---------------+
+        // | Webserver Tab |
+        // +---------------+
+        /*
+         * Like with judging tab, this will have the following options:
+         * - Maxmimum not logged in seconds
+         * - Aliases:
+         *   + Website name
+         *   + Slogan
+         *   + Host name
+         */
+        QVBoxLayout *webserverTabLayout = new QVBoxLayout();
+        webserverTabLayout->setAlignment(Qt::AlignTop);
+
+        // MAXIMUM NOT LOGGED IN SECONDS
+        QLabel *webserverLogInSecsLabel = new QLabel();
+        webserverLogInSecsLabel->setText("Thời gian không hoạt động tối đa");
+        webserverLogInSecsLabel->setWordWrap(true);
+        webserverLogInSecsLabel->setStyleSheet(STYLE_BIGLABEL);
+        webserverTabLayout->addWidget(webserverLogInSecsLabel);
+
+        QLabel *webserverLogInSecsDesc = new QLabel();
+        webserverLogInSecsDesc->setText("Thời gian tối đa từ lần cuối người dùng hoạt động trên thiết bị của họ cho đến bây giờ. Tính năng này sẽ tự động xóa các dữ liệu thiết bị (không phải dữ liệu người dùng/học sinh) nhằm tiết kiệm bộ nhớ và tăng tốc các hành động. (giây)");
+        webserverLogInSecsDesc->setWordWrap(true);
+        webserverTabLayout->addWidget(webserverLogInSecsDesc);
+        
+        QIntValidator *webserverLogInSecsValidator = new QIntValidator(0, 1000000);
+        webserverLogInSecsInput->setValidator(webserverLogInSecsValidator);
+        webserverTabLayout->addWidget(webserverLogInSecsInput);
+
+        // Applying neccessary layout
+        webserverTab->setLayout(webserverTabLayout);
 
 
         ///////////////////////
@@ -587,7 +625,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 // Setting width for easy splitting
                 splitter->setFixedHeight(75);
 
-                QString licensingText = "====== Giấy phép ======\n\nPhần mềm này được phát hành dưới Giấy phép Mã nguồn mở MIT (MIT License).\n\n====== Ghi nhận ======\n\nPhần mềm được phát triển dựa trên hoặc sử dụng các dự án mã nguồn mở sau:\n\n- Qt GUI Framework (https://qt.io)  \n- Python Interpreter (https://python.org)  \n- waitress (https://github.com/Pylons/waitress)  \n- Docker] https://docker.com)  \n- nlohmann/json - JSON for Modern C++ (https://github.com/nlohmann/json)  \n- boppreh/keyboard - Python keyboard library (https://github.com/boppreh/keyboard)";
+                // This text is like this because of some shit.
+                // It's just cause of C's poor strings...
+                QString licensingText = "====== Giấy phép ======\n\nPhần mềm này được phát hành dưới Giấy phép Mã nguồn mở MIT (MIT License).\n\n====== Ghi nhận ======\n\nPhần mềm được phát triển dựa trên hoặc sử dụng các dự án mã nguồn mở sau:\n\n- Qt GUI Framework (https://qt.io)  \n- Python Interpreter (https://python.org)  \n- waitress (https://github.com/Pylons/waitress)  \n- Docker (https://docker.com)  \n- nlohmann/json - JSON for Modern C++ (https://github.com/nlohmann/json)  \n- boppreh/keyboard - Python keyboard library (https://github.com/boppreh/keyboard)";
 
                 QSplitter *licensingSplitter = new QSplitter();
                 licensingSplitter->setOrientation(Qt::Orientation::Vertical);
@@ -979,6 +1019,24 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         webserverProcessButton->setText("Bật Website");
         webserverProcessButton->setEnabled(true);
         webserverEnabled = false;
+
+        if (exitCode != 0) {
+            // Error happened during execution
+            QMessageBox::StandardButton reply;
+
+            reply = QMessageBox::critical(this, "Lỗi trong web chấm bài trực tuyến", 
+                                  "Đã có lỗi xảy ra trong khi đang mở website chấm bài trực tuyến. Mở nhật ký đầu ra chương trình (Tiếng Anh, Nâng cao)?",
+                                  QMessageBox::Yes | QMessageBox::No);
+
+            if (reply == QMessageBox::Yes) {
+                // Open logfile
+                std::cout << "Opened Webserver's log file.\n";
+                ShellExecute(0, "open", (dirPath + LOG_PATH).c_str(), 0, 0, SW_SHOWNORMAL);
+            }
+        } else {
+            // Alright its fine
+            // QMessageBox::information(this, "Đã tắt trang web chấm bài trực tuyến");
+        }
     }
 
     // ------------------------------------------------
@@ -1086,14 +1144,56 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     }
 };
 
-int main(int argc, char *argv[])
-{
-    // Hide console if there is no argument regarding the console
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+    // Parse command line to check for --console
+    int argc;
+    LPWSTR* argv_w = CommandLineToArgvW(GetCommandLineW(), &argc);
+
+    // std::string argOld;
+    
+    // Check for console argument
     bool hideConsole = true;
-    for (int i = 0; i < argc; ++i) {
-        if (std::string(argv[i]) == "--console") hideConsole = false;
+    for (int i = 1; i < argc; ++i) {
+        // Convert wide string to regular string for comparison
+        int size = WideCharToMultiByte(CP_UTF8, 0, argv_w[i], -1, NULL, 0, NULL, NULL);
+        char* arg = new char[size];
+        WideCharToMultiByte(CP_UTF8, 0, argv_w[i], -1, arg, size, NULL, NULL);
+        
+        // argOld = std::string(arg);
+
+        if (std::string(arg) == "--console") {
+            hideConsole = false;
+        }
+        
+        delete[] arg;
     }
-    if (hideConsole) FreeConsole();
+    
+    // For Qt applications, we need to properly convert args to pass to QApplication
+    int qt_argc = argc;
+    char** qt_argv = new char*[argc];
+    
+    for (int i = 0; i < argc; i++) {
+        int size = WideCharToMultiByte(CP_UTF8, 0, argv_w[i], -1, NULL, 0, NULL, NULL);
+        qt_argv[i] = new char[size];
+        WideCharToMultiByte(CP_UTF8, 0, argv_w[i], -1, qt_argv[i], size, NULL, NULL);
+    }
+    
+    // Free the wide command line argument memory now that we're done with it
+    LocalFree(argv_w);
+    
+    if (!hideConsole) {
+        // Allocate a console
+        AllocConsole();
+        FILE* fp;
+        freopen_s(&fp, "CONOUT$", "w", stdout);
+        freopen_s(&fp, "CONOUT$", "w", stderr);
+        freopen_s(&fp, "CONIN$", "r", stdin);
+        
+        std::cout << "Console attached!\n";
+        std::cout << "Application running with console support.\n";
+    }
+
+    // std::cout << argOld << '\n';
 
     // Initializing winsock
     std::cout << "Initializing Winsock\n";
@@ -1102,15 +1202,30 @@ int main(int argc, char *argv[])
     if (result != 0) {
         std::cout << "WSAStartup failed\n";
         QMessageBox::critical(nullptr, "Lỗi mở WINSOCK", 
-                                    "Đã gặp lỗi mở WINSOCK. Thiết bị của bạn có thể không tương thích với phần mềm này", 
+                                    "Đã gặp lỗi thiết lập WINSOCK. Thiết bị của bạn có thể không tương thích với phần mềm này", 
                                     QMessageBox::StandardButton::Ok);
+        
+        // Clean up before returning
+        for (int i = 0; i < qt_argc; i++) {
+            delete[] qt_argv[i];
+        }
+        delete[] qt_argv;
+        
         return 1;
     }
 
-    // Main app
-    QApplication a(argc, argv);
+    // Main app - use qt_argc and qt_argv here
+    QApplication a(qt_argc, qt_argv);
     PanelWindow panel;
     panel.initialize();
     panel.show();
-    return a.exec();
+    int app_result = a.exec();
+    
+    // Clean up memory
+    for (int i = 0; i < qt_argc; i++) {
+        delete[] qt_argv[i];
+    }
+    delete[] qt_argv;
+    
+    return app_result;
 }
