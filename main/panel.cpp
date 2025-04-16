@@ -99,16 +99,21 @@ using json = nlohmann::json;
 // -> Paths
 const std::string THEME_PATH = "/source/theme.qss";
 const std::string THEMECOLORS_PATH = "/source/theme_color.opt";
+
 const std::string SETTINGS_PATH = "/source/settings.json";
 const std::string VERSION_PATH = "/source/version.json";
-const std::string ICON_PATH = "/icon.ico";
+const std::string ALIAS_PATH = "/source/aliases.json";
+
 const std::string PYDIR = "/.venv/Scripts/python.exe";
 const std::string JUDGING_PATH = "/judge.py";
 const std::string WEBSERVER_PATH = "/apache.py";
+
 const std::string LOG_PATH = "/central/valkyrie.log";
+const std::string ICON_PATH = "/icon.ico";
 
 // -> Qt Style Sheet
 const QString STYLE_BIGLABEL = "font-size: 16px; font-weight: bold;";
+const QString STYLE_BOLDLABEL = "font-weight: bold;";
 
 // -> Others
 const std::string GITHUB_PAGE = "\"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER\"";
@@ -159,6 +164,28 @@ double stringToDouble(const std::string &str) {
     }
 }
 
+
+int stringToInt(const std::string &s) {
+    int result = 0;
+    bool negative = false;
+    std::size_t i = 0;
+
+    if (s[i] == '-') {
+        negative = true;
+        i++;
+    }
+
+    for (; i < s.length(); ++i) {
+        if (s[i] < '0' || s[i] > '9') {
+            // Invalid character for number
+            break;
+        }
+        result = result * 10 + (s[i] - '0');
+    }
+
+    return negative ? -result : result;
+}
+
 class PanelWindow: public QMainWindow { // This is based on QMainWindow
     public: // PUBLIC. ACCESSIBLE FROM ANYWHERE
     QWidget *manageTab = new QWidget();
@@ -171,6 +198,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QCheckBox *judgingShowTestCheckbox = new QCheckBox();
 
     QLineEdit *webserverLogInSecsInput = new QLineEdit();
+    QLineEdit *webserverAliasWebnameInput = new QLineEdit();
+    QLineEdit *webserverAliasSloganInput = new QLineEdit();
+    QLineEdit *webserverAliasHostnameInput = new QLineEdit();
 
     // Sidebar elements
     QPushButton *judgingProcessButton = new QPushButton();
@@ -180,6 +210,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     // Data variables
     json settings; // NULL at first
     json version; // NULL at first
+    json aliases; // NULL at first
     QPixmap iconPixmap;
     QFont monospaceFont; // NULL at first
     QString styleSheetResult;
@@ -474,7 +505,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         judgingTabLayout->addWidget(judgingWaitTimeInput);
         // Connecting action of changing text to a function (Using Lambda)
         connect(judgingWaitTimeInput, &QLineEdit::textChanged, this, [this](const QString text) {
-            onInputChanges("wait_time", text.toStdString());
+            onInputChanges("wait_time", text);
         });
 
 
@@ -494,7 +525,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         judgingTabLayout->addWidget(judgingReloadTimeInput);
         // Connecting to a function with lambda
         connect(judgingReloadTimeInput, &QLineEdit::textChanged, this, [this](const QString text) {
-            onInputChanges("reload_time", text.toStdString());
+            onInputChanges("reload_time", text);
         });
 
 
@@ -512,7 +543,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         judgingTabLayout->addWidget(judgingShowTestCheckbox);
         // Connecting to a function w/ lambda (again)
         connect(judgingShowTestCheckbox, &QCheckBox::stateChanged, this, [this](const int state) {
-            onInputChanges("show_test", intToString(state));
+            onInputChanges("show_test", QString::fromStdString(intToString(state)));
         });
 
 
@@ -547,9 +578,60 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         webserverLogInSecsDesc->setWordWrap(true);
         webserverTabLayout->addWidget(webserverLogInSecsDesc);
         
-        QIntValidator *webserverLogInSecsValidator = new QIntValidator(0, 1000000);
+        QIntValidator *webserverLogInSecsValidator = new QIntValidator(0, 10000000); // Equivalent of nearly 116 days of not logged in (or 1158 if you count the variations)
         webserverLogInSecsInput->setValidator(webserverLogInSecsValidator);
         webserverTabLayout->addWidget(webserverLogInSecsInput);
+
+        // Connect the action of changing settings to a function through connect and lambda
+        connect(webserverLogInSecsInput, &QLineEdit::textChanged, this, [this](const QString &value) {
+            onInputChanges("maximum_login_seconds", value);
+        });
+
+        // ALIASES
+        QLabel *webserverAliasLabel = new QLabel();
+        webserverAliasLabel->setText("Thông tin trang web");
+        webserverAliasLabel->setStyleSheet(STYLE_BIGLABEL);
+        webserverTabLayout->addWidget(webserverAliasLabel);
+
+        // Alias: Website name
+        QLabel *webserverAliasWebnameLabel = new QLabel();
+        webserverAliasWebnameLabel->setText("Tên Website (hoặc lớp học. VD: Trang web chấm bài tự động, lớp học chuyên tin thầy N...):");
+        webserverAliasWebnameLabel->setWordWrap(true);
+        webserverAliasWebnameLabel->setStyleSheet(STYLE_BOLDLABEL);
+        webserverTabLayout->addWidget(webserverAliasWebnameLabel);
+
+        webserverTabLayout->addWidget(webserverAliasWebnameInput);
+
+        // Connecting to function
+        connect(webserverAliasWebnameInput, &QLineEdit::textChanged, this, [this](const QString &value) {
+            onInputChanges("website_name", value);
+        });
+
+        // Alias: Slogan
+        QLabel *webserverAliasSloganLabel = new QLabel();
+        webserverAliasSloganLabel->setText("Khẩu hiệu (VD: Càng học càng vui; keep typing, keep loving; Trên bước đường thành công không có dấu chân của kẻ thất bại...):");
+        webserverAliasSloganLabel->setWordWrap(true);
+        webserverAliasSloganLabel->setStyleSheet(STYLE_BOLDLABEL);
+        webserverTabLayout->addWidget(webserverAliasSloganLabel);
+
+        webserverTabLayout->addWidget(webserverAliasSloganInput);
+
+        connect(webserverAliasSloganInput, &QLineEdit::textChanged, this, [this](const QString &value) {
+            onInputChanges("slogan", value);
+        });
+
+        // Alias: Host name
+        QLabel *webserverAliasHostnameLabel = new QLabel();
+        webserverAliasHostnameLabel->setText("Tên chủ sở hữu (hoặc quản trị viên. VD: Nguyễn Văn A, Lê Văn B, Trần Thị C...):");
+        webserverAliasHostnameLabel->setWordWrap(true);
+        webserverAliasHostnameLabel->setStyleSheet(STYLE_BOLDLABEL);
+        webserverTabLayout->addWidget(webserverAliasHostnameLabel);
+
+        webserverTabLayout->addWidget(webserverAliasHostnameInput);
+
+        connect(webserverAliasHostnameInput, &QLineEdit::textChanged, this, [this](const QString &value) {
+            onInputChanges("hostname", value);
+        });
 
         // Applying neccessary layout
         webserverTab->setLayout(webserverTabLayout);
@@ -627,7 +709,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                 // This text is like this because of some shit.
                 // It's just cause of C's poor strings...
-                QString licensingText = "====== Giấy phép ======\n\nPhần mềm này được phát hành dưới Giấy phép Mã nguồn mở MIT (MIT License).\n\n====== Ghi nhận ======\n\nPhần mềm được phát triển dựa trên hoặc sử dụng các dự án mã nguồn mở sau:\n\n- Qt GUI Framework (https://qt.io)  \n- Python Interpreter (https://python.org)  \n- waitress (https://github.com/Pylons/waitress)  \n- Docker (https://docker.com)  \n- nlohmann/json - JSON for Modern C++ (https://github.com/nlohmann/json)  \n- boppreh/keyboard - Python keyboard library (https://github.com/boppreh/keyboard)";
+                QString licensingText = "====== Giấy phép ======\n\nPhần mềm này được phát hành dưới Giấy phép Mã nguồn mở MIT (MIT License) đã qua sửa đổi. Thông tin chi tiết truy cập trang dự án GitHub.\n\n====== Ghi nhận ======\n\nPhần mềm được phát triển dựa trên hoặc sử dụng các dự án mã nguồn mở sau:\n\n- Qt GUI Framework (https://qt.io)  \n- Python Interpreter (https://python.org)  \n- waitress (https://github.com/Pylons/waitress)  \n- Docker (https://docker.com)  \n- nlohmann/json - JSON for Modern C++ (https://github.com/nlohmann/json)  \n- boppreh/keyboard - Python keyboard library (https://github.com/boppreh/keyboard)";
 
                 QSplitter *licensingSplitter = new QSplitter();
                 licensingSplitter->setOrientation(Qt::Orientation::Vertical);
@@ -825,7 +907,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 // Check if the process started normally
                 if (webserverProcess->state() == QProcess::Running) {
                     // If webserverProcess ran without errors
-                    std::cout << "Successfully ran WEBSERVWER process with PID " << webserverProcess->processId() << "\n";
+                    std::cout << "Successfully ran WEBSERVER process with PID " << webserverProcess->processId() << "\n";
                     webserverProcessButton->setText("Tắt Website");
                 } else {
                     std::cout << "Process failed to start. Error: " << webserverProcess->error() << '\n'; 
@@ -997,7 +1079,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             msgBox->setStandardButtons(QMessageBox::StandardButton::Ok);
             // msgBox->addButton("OK", QMessageBox::ButtonRole::AcceptRole);
             msgBox->setWindowIcon(QIcon(iconPixmap));
-
+            
+            msgBox->setStyleSheet(styleSheetResult);
             msgBox->show();
         } else {
             // If the software exitted gracefully, we do a little bit of windowin'
@@ -1010,6 +1093,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             // msgBox->addButton("OK", QMessageBox::ButtonRole::AcceptRole);
             msgBox->setWindowIcon(QIcon(iconPixmap));
 
+            msgBox->setStyleSheet(styleSheetResult);
             msgBox->show();
         }
     }
@@ -1065,6 +1149,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 judgingReloadTimeInput->setText(QString::fromStdString(doubleToString(settings["reload_time"])));
                 judgingShowTestCheckbox->setCheckState(settings["show_test"] ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
 
+                webserverLogInSecsInput->setText(QString::fromStdString(intToString(settings["max_not_logged_in_session_seconds"])));
+
             } catch (const json::parse_error& e) { 
                 // If error got and it is JSON parsing error
                 errorDialog("Tệp cài đặt đã bị hỏng. Hãy cài đặt lại ứng dụng để sửa lỗi.");
@@ -1072,9 +1158,36 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 exit(0);
             }
             settingsFile.close();
-        }
-        else {
+        } else {
             errorDialog("Tệp cài đặt không tồn tại. Hãy cài đặt lại ứng dụng để sửa lỗi.");
+            close();
+            exit(0);
+        }
+
+        std::fstream aliasFile(dirPath + ALIAS_PATH, std::ios::in);
+        if (aliasFile.is_open()) {
+            try {
+                aliases = json::parse(aliasFile);
+
+                // If sucessfully parsed
+                std::cout << aliases << '\n';
+
+                std::string webname = aliases["website_name"];
+                webserverAliasWebnameInput->setText(QString::fromUtf8(webname.c_str()));
+
+                std::string slogan = aliases["slogan"];
+                webserverAliasSloganInput->setText(QString::fromUtf8(slogan.c_str()));
+
+                std::string hostname = aliases["hostname"];
+                webserverAliasHostnameInput->setText(QString::fromUtf8(hostname.c_str()));
+            } catch (const json::parse_error& e) { 
+                // If error got and it is JSON parsing error
+                errorDialog("Tệp dữ liệu hiển thị không tồn tại. Hãy cài đặt lại ứng dụng để sửa lỗi.");
+                close();
+                exit(0);
+            }
+        } else {
+            errorDialog("Tệp dữ liệu hiển thị không tồn tại. Hãy cài đặt lại ứng dụng để sửa lỗi.");
             close();
             exit(0);
         }
@@ -1096,24 +1209,28 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     // Purpose: Change settings for inputs from a
     //          predetermined 'type' value
     // -------------------------------------------
-    void onInputChanges(std::string type, std::string value) {
-        std::cout << "onInputChanges(std::string type, std::string value): " << type << ": -> " << value << '\n';
+    void onInputChanges(std::string type, QString value) {
+        std::cout << "onInputChanges(std::string type, std::string value): " << type << ": -> " << value.toStdString() << '\n';
 
         // Checking which type the input belongs to
-        if (type == "wait_time" || type == "reload_time" || type == "show_test") {
+        if (type == "wait_time" || type == "reload_time" || type == "show_test" || type == "maximum_login_seconds") {
             std::fstream settingsFile(dirPath + SETTINGS_PATH, std::ios::out);
 
             // Checking which value does the input correspond to
             if (type == "wait_time") {
                 // Applying changes
-                settings["wait_time"] = stringToDouble(value);
+                settings["wait_time"] = stringToDouble(value.toStdString());
             } else if (type == "reload_time") {
                 // This is reload time. So we will change the reload_time key
-                settings["reload_time"] = stringToDouble(value);
+                settings["reload_time"] = stringToDouble(value.toStdString());
             } else if (type == "show_test") {
                 // Alright. This is showing tests, so we save into show_test key
                 // std::cout << "!!!";
                 settings["show_test"] = value == "2" ? true : false;
+            } else if (type == "maximum_login_seconds") {
+                // Now, save into the correct key.
+                // NOTICE: the key is not the same as type this time. Might happen in the future tho
+                settings["max_not_logged_in_session_seconds"] = stringToInt(value.toStdString());
             }
 
             if (settingsFile.is_open()) {
@@ -1123,7 +1240,27 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 // Flush I/O
                 settingsFile.close();
             } else {
-                errorDialog("Tệp cài đặt không tồn tại. Hãy cài đặt lại ứng dụng để sửa lỗi.");
+                errorDialog("Tệp cài đặt không tồn tại hoặc bị lỗi. Hãy cài đặt lại ứng dụng để sửa lỗi.");
+                close();
+                exit(0);
+            }
+        } else if (type == "website_name" || type == "slogan" || type == "hostname") {
+            std::fstream aliasFile(dirPath + ALIAS_PATH, std::ios::out);
+
+            // Checking which type?
+            if (type == "website_name") {
+                aliases["website_name"] = value.toUtf8().toStdString();
+            } else if (type == "slogan") {
+                aliases["slogan"] = value.toUtf8().toStdString();
+            } else if (type == "hostname") {
+                aliases["hostname"] = value.toUtf8().toStdString();
+            }
+
+            if (aliasFile.is_open()) {
+                aliasFile << aliases;
+                aliasFile.close();
+            } else {
+                errorDialog("Tệp thông tin hiển thị không tồn tại hoặc bị lỗi. Hãy cài đặt lại ứng dụng để sửa lỗi.");
                 close();
                 exit(0);
             }
@@ -1132,14 +1269,23 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
     protected: // Events in which are native Qt events
     void closeEvent(QCloseEvent *event) override {
-        QMessageBox::StandardButton reply;
-        reply = QMessageBox::question(this, "Xác nhận", "Bạn có chắc muốn thoát?",
-                                      QMessageBox::Yes | QMessageBox::No);
-        if (reply == QMessageBox::Yes) {
-            event->accept();  // Allow closing
-            exit(0);
+        if (judgingProcess->state() == QProcess::Running || webserverProcess->state() == QProcess::Running) {
+            // If these processes are still running
+            QMessageBox::information(this, "Không thể hoàn thành yêu cầu", 
+                "Không thể thoát vì hệ thống chấm bài hoặc website chấm bài trực tuyến vẫn còn đang chạy hoặc đang trong quá trình tắt. Vui lòng đợi và thử lại sau.",
+                QMessageBox::Ok);
+
+            event->ignore(); // Prevent event from closing
         } else {
-            event->ignore();  // Prevent closing
+            QMessageBox::StandardButton reply;
+            reply = QMessageBox::question(this, "Xác nhận", "Bạn có chắc muốn thoát?",
+                                        QMessageBox::Yes | QMessageBox::No);
+            if (reply == QMessageBox::Yes) {
+                event->accept();  // Allow closing
+                exit(0);
+            } else {
+                event->ignore();  // Prevent closing
+            }
         }
     }
 };

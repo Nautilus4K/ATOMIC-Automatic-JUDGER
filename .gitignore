@@ -29,3 +29,6 @@ styles/
 tls/
 platforms/
 translations/
+
+# Some environmental stuff
+compile_and_run.ps1
