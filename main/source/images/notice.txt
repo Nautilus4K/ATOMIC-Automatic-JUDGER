@@ -1,0 +1,2 @@
+This is only created for the Qt Resource file.
+It should not be included in retail usage.

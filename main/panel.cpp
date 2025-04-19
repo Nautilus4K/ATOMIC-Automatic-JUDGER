@@ -56,6 +56,9 @@ Also, credits to:
 #include <QtWidgets/QCheckBox>     // Checkboxes. Of course. What did you expect, sucker?
 #include <QtWidgets/QPushButton>   // Buttons as we know it
 #include <QtWidgets/QTextEdit>     // A text frame
+#include <QtWidgets/QComboBox>     // Dropdown. Yeah. Qt is very nice with their names
+#include <QtWidgets/QTableWidget>  // Table of content
+#include <QtWidgets/QStyleFactory> // Styling. Once again
 #include <QtGui/QAction>           // Action for menus. Wonder what fucker thought to put it in QtGui
 #include <QtGui/QCloseEvent>       // Close event. The action of 'X' button
 #include <QtGui/QDoubleValidator>  // Validator for edits.
@@ -103,6 +106,7 @@ const std::string THEMECOLORS_PATH = "/source/theme_color.opt";
 const std::string SETTINGS_PATH = "/source/settings.json";
 const std::string VERSION_PATH = "/source/version.json";
 const std::string ALIAS_PATH = "/source/aliases.json";
+const std::string CLASSES_PATH = "/source/classes.json";
 
 const std::string PYDIR = "/.venv/Scripts/python.exe";
 const std::string JUDGING_PATH = "/judge.py";
@@ -202,6 +206,10 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QLineEdit *webserverAliasSloganInput = new QLineEdit();
     QLineEdit *webserverAliasHostnameInput = new QLineEdit();
 
+    // Main manager for the management of data and profiles
+    QComboBox *classDropdown = new QComboBox();
+    QTableWidget *currentTable = new QTableWidget();
+
     // Sidebar elements
     QPushButton *judgingProcessButton = new QPushButton();
     QTextEdit *judgingProcessConsole = new QTextEdit();
@@ -211,6 +219,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     json settings; // NULL at first
     json version; // NULL at first
     json aliases; // NULL at first
+    json classes; // Classes object. NULL at first
     QPixmap iconPixmap;
     QFont monospaceFont; // NULL at first
     QString styleSheetResult;
@@ -472,6 +481,22 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         // Add tabs into splitter
         splitter->addWidget(tabs);
+
+        // +------------+
+        // | Manage tab |
+        // +------------+
+        QVBoxLayout *manageTabLayout = new QVBoxLayout();
+
+        classDropdown->setFixedWidth(100);
+        QWidget *classDropdownPopUp = classDropdown->view()->window();
+        classDropdownPopUp->setAttribute(Qt::WA_TranslucentBackground);        // Allow transparency
+        classDropdownPopUp->setWindowFlag(Qt::FramelessWindowHint, true);      // Remove window frame
+        classDropdownPopUp->setWindowFlag(Qt::NoDropShadowWindowHint, true);   // Disable drop shadow
+        manageTabLayout->addWidget(classDropdown);
+        manageTabLayout->addWidget(currentTable);
+
+        // Settings
+        manageTab->setLayout(manageTabLayout);
         
 
         // +-------------+
@@ -1123,9 +1148,35 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         }
     }
 
+    // --------------------------------------------------
+    // Purpose: To refresh the classlist in the dropdown
+    // -------------------------------------------------
+    void refreshClassDropdown() {
+        // classDropdown->addItem("Wassup");
+        // classDropdown->addItem("Boys");
+
+        // Getting amount of items in dropdown
+        int amount = classDropdown->count();
+
+        // 2 possibilities
+        if (amount == 0) { // In case the dropdown has not been loaded
+            std::cout << "[classDropdown] Dropdown EMPTY\n";
+            for (auto& item: classes.items()) { // Iterate through EACH element
+                classDropdown->addItem(QString::fromStdString(item.key()));
+            }
+        } else { // In case the dropdown still has something
+            std::cout << "[classDropdown] Dropdown NOT EMPTY\n";
+            classDropdown->clear();
+            for (auto& item: classes.items()) { // Iterate through EACH element
+                classDropdown->addItem(QString::fromStdString(item.key()));
+            }
+        }
+    }
+
     // ------------------------------------------------
     // Purpose: Refresh current configurations on each
-    //          tab switch to update contents
+    //          tab switch to update contents and also
+    //          update variables.
     // ------------------------------------------------
     void onTabSwitches(int index) {
         // When user switches tabs. It's good to update all contents of ALL TABS.
@@ -1182,7 +1233,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 webserverAliasHostnameInput->setText(QString::fromUtf8(hostname.c_str()));
             } catch (const json::parse_error& e) { 
                 // If error got and it is JSON parsing error
-                errorDialog("Tệp dữ liệu hiển thị không tồn tại. Hãy cài đặt lại ứng dụng để sửa lỗi.");
+                errorDialog("Tệp dữ liệu hiển thị đã bị hỏng. Hãy cài đặt lại ứng dụng để sửa lỗi.");
                 close();
                 exit(0);
             }
@@ -1191,8 +1242,44 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             close();
             exit(0);
         }
+
+        std::fstream classesFile(dirPath + CLASSES_PATH, std::ios::in);
+        if (classesFile.is_open()) {
+            try {
+                classes = json::parse(classesFile);
+
+                // Sucessfully parsed?
+                std::cout << classes << '\n';
+            } catch (const json::parse_error& e) {
+                // If parsing the JSON returned to be a failure
+                errorDialog("Tệp dữ liệu lớp học đã bị hỏng. Vui lòng cài đặt lại ứng dụng để sửa lỗi.");
+                close();
+                exit(0);
+            }
+        } else {
+            errorDialog("Tệp dữ liệu lớp học không tồn tại.");
+            
+            // Creating file
+            std::fstream file(dirPath + CLASSES_PATH, std::ios::out | std::ios::trunc);
+
+            if (!file.is_open()) {
+                errorDialog("Tệp dữ liệu lớp học không thể được tạo. Sửa chữa không thành công. Vui lòng cài đặt lại ứng dụng để sửa lỗi.");
+                close();
+                exit(0);
+            }
+            file << "{}";
+            std::cout << "Repair successful\n";
+            file.close();
+
+            onTabSwitches(0); // Call it up!!! BRING IT ONN
+        }
+
+        refreshClassDropdown();
     }
 
+    // -------------------------------------------------------------------------
+    // Purpose: Showing errors faster than having to type an actual long command
+    // -------------------------------------------------------------------------
     void errorDialog(std::string error) {
         QMessageBox *msgBox = new QMessageBox();
         msgBox->setText(QString::fromStdString("Đã có lỗi xảy ra: " + error));
@@ -1362,6 +1449,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Main app - use qt_argc and qt_argv here
     QApplication a(qt_argc, qt_argv);
+    Q_INIT_RESOURCE(qres);
     PanelWindow panel;
     panel.initialize();
     panel.show();

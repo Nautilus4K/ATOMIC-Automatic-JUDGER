@@ -69,6 +69,54 @@ QScrollBar::handle:hover {
     background: #8d8d8d
 }
 
+/* Dropdown styling */
+QComboBox {
+    /* ensure enough padding so text and arrow don't overlap */
+    padding-right: 20px;
+    border: 1px solid #e0e0e0;
+    background: #f7f7f7;
+    padding: 4px;
+}
+
+QComboBox::down-arrow {
+    border: 0px solid transparent;
+    image: url(":/images/down.png");
+    width: 12px;
+    height: 12px;
+    padding: 2px;
+}
+
+QComboBox::down-arrow:disabled {
+    opacity: 0.5;
+}
+
+QComboBox::drop-down {
+    background: #ffffff;
+}
+
+QComboBox QAbstractItemView {
+    background: #dfdfdf;
+    border: 1px solid #e0e0e0;
+    color: #000000;
+    padding: 4px 6px;
+    margin-top: 5px;
+}
+
+QComboBox QAbstractItemView::item {
+    
+}
+
+QComboBox QAbstractItemView::item:selected {
+    background-color: #e0e0e0;
+    color: #000000;
+} 
+
+/* QTableWidget styling */
+QTableWidget {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+}
+
 /* MessageBox styling */
 QMessageBox {
     background: #ffffff;
