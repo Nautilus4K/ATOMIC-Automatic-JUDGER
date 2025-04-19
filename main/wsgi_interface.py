@@ -7,6 +7,9 @@ import string
 from hashlib import sha256
 from base64 import b64decode
 
+from PIL import Image
+import io
+
 # Variables
 ALIASES_FILENAME = "aliases.json"
 WEBSITERULE_FILENAME = "websites.json"
@@ -87,6 +90,33 @@ def del_session(token: str):
         del currentSessions[token]
     with open(dirPath+SESSION_JSON, "w", encoding='utf-8') as sessionFile:
         json.dump(currentSessions, sessionFile)
+
+def resize_image(image_bytes, max_size=(600, 600), format="JPEG"):
+    # Create an image object from bytes
+    img = Image.open(io.BytesIO(image_bytes))
+    
+    # Get current dimensions
+    width, height = img.size
+    
+    # Calculate new dimensions while preserving aspect ratio
+    if width > max_size[0] or height > max_size[1]:
+        # Calculate the ratio
+        ratio = min(max_size[0] / width, max_size[1] / height)
+        new_width = int(width * ratio)
+        new_height = int(height * ratio)
+        
+        # Resize the image
+        img = img.resize((new_width, new_height), Image.LANCZOS)
+    
+    # Convert back to bytes with explicit format
+    output_bytes = io.BytesIO()
+    # If img.format is None, use the provided format
+    img_format = img.format if img.format else format
+    img.save(output_bytes, format=img_format)
+    output_bytes.seek(0)
+    
+    return output_bytes.getvalue()
+
 
 def api_interface(path: str, headers, ip_addr, body) -> dict:
     # print("API called from ANONYMOUS DEVICE")
@@ -332,7 +362,9 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
             with open(dirPath + USERPROFILEPICTURE_PATH + username + ".jpg", "wb") as userprofilepicturefile:
                 # img.save(userprofilepicturefile, format="JPEG", quality=95)
                 # print(body.decode('utf-8'))
-                userprofilepicturefile.write(b64decode(body.decode('utf-8')))
+                # Command:
+                # b64decode(body.decode('utf-8'))
+                userprofilepicturefile.write(resize_image(b64decode(body.decode('utf-8')), (600, 600), "JPEG"))
 
         except Exception as e:
             success = False
