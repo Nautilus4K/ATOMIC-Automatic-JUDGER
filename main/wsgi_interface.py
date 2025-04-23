@@ -575,7 +575,7 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
             # then add their results in along with the contest results.
 
             for _class in userclass:
-                if classes[_class]["scoreboard"]: # DO NOT EVER DARES TO DREAM OF ANYTHING IF YOU'RE NOT ALLOWED TO
+                if classes[_class]["scoreboard"] or userdata[username]["priv"] > 0: # DO NOT EVER DARES TO DREAM OF ANYTHING IF YOU'RE NOT ALLOWED TO
                     # Initialize class dict if not exists
                     if _class not in resultclasses:
                         resultclasses[_class] = {}

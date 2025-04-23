@@ -163,6 +163,23 @@ function refreshScoreboard() {
                     }
                 })
 
+                // Add the Total column header
+                const totalHeaderElement = document.createElement("div");
+                totalHeaderElement.id = "scoreboardElement";
+                totalHeaderElement.className = "headers";
+                totalHeaderElement.innerHTML = "<p id=\"scoreboardElement\"><strong>Tổng</strong></p>";
+                tableElement.appendChild(totalHeaderElement);
+                
+                // Calculate and add total scores for each user
+                users.forEach(user => {
+                    const totalScore = Object.values(json["result"][_class][user]).reduce((sum, score) => sum + (score || 0), 0);
+                    const totalScoreBox = document.createElement("p");
+                    totalScoreBox.id = "scoreboardElement";
+                    totalScoreBox.textContent = totalScore.toFixed(1);
+                    totalScoreBox.style.fontWeight = "bold";
+                    totalHeaderElement.appendChild(totalScoreBox);
+                });
+
                 // Onto the next one, we should make it for each contest in the class being given
                 contestsList = json["contestslist"][_class];
                 contestsList.forEach(contest => {

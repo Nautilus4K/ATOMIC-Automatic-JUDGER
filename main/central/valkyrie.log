@@ -42,3 +42,45 @@ Now opened socket with capacity of 1 concurrent connection.
 Connected with a target. Awaiting instructions...
 Stopped by communication interface. Shutting down waitress...
 Successful.
+
+
+
+------------------------------
+EXEC DATE: 2025-04-20 18:33:31.228693
+
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+
+
+
+------------------------------
+EXEC DATE: 2025-04-20 18:33:30.949025
+
+Opened Socket at 127.0.0.1:28473
+Now opened socket with capacity of 1 concurrent connection.
+Connected with a target. Awaiting instructions...
+Stopped by communication interface. Shutting down waitress...
+Successful.
+
+
+
+------------------------------
+EXEC DATE: 2025-04-21 22:15:28.573118
+
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+
+
+
+------------------------------
+EXEC DATE: 2025-04-21 22:15:28.144352
+
+Opened Socket at 127.0.0.1:28473
+Now opened socket with capacity of 1 concurrent connection.
+Connected with a target. Awaiting instructions...
+Stopped by communication interface. Shutting down waitress...
+Successful.

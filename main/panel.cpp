@@ -99,6 +99,9 @@ using json = nlohmann::json;
 #include <iostream>
 
 // Constants
+// -> Values
+#define NONE_PLACEHOLDER -0x7fffffff
+
 // -> Paths
 const std::string THEME_PATH = "/source/theme.qss";
 const std::string THEMECOLORS_PATH = "/source/theme_color.opt";
@@ -107,6 +110,9 @@ const std::string SETTINGS_PATH = "/source/settings.json";
 const std::string VERSION_PATH = "/source/version.json";
 const std::string ALIAS_PATH = "/source/aliases.json";
 const std::string CLASSES_PATH = "/source/classes.json";
+const std::string CONTESTS_PATH = "/source/contests.json";
+const std::string USERDATA_PATH = "/source/users.json";
+const std::string USERSTATS_DIR = "/workspace/result/";
 
 const std::string PYDIR = "/.venv/Scripts/python.exe";
 const std::string JUDGING_PATH = "/judge.py";
@@ -220,6 +226,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     json version; // NULL at first
     json aliases; // NULL at first
     json classes; // Classes object. NULL at first
+    json contests; // Contests object. NULL at first
+    json users; // Users object. NULL at first
     QPixmap iconPixmap;
     QFont monospaceFont; // NULL at first
     QString styleSheetResult;
@@ -492,7 +500,13 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         classDropdownPopUp->setAttribute(Qt::WA_TranslucentBackground);        // Allow transparency
         classDropdownPopUp->setWindowFlag(Qt::FramelessWindowHint, true);      // Remove window frame
         classDropdownPopUp->setWindowFlag(Qt::NoDropShadowWindowHint, true);   // Disable drop shadow
+
+        connect(classDropdown, &QComboBox::currentIndexChanged, this, [this] {
+            refreshTable();
+        });
+
         manageTabLayout->addWidget(classDropdown);
+        
         manageTabLayout->addWidget(currentTable);
 
         // Settings
@@ -1166,11 +1180,195 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             }
         } else { // In case the dropdown still has something
             std::cout << "[classDropdown] Dropdown NOT EMPTY\n";
+            
+            const std::string oldCurrentValue = classDropdown->currentText().toStdString(); // For the sake of keeping the selection correct
             classDropdown->clear();
+
+            bool currentTextStillExists = false;
             for (auto& item: classes.items()) { // Iterate through EACH element
                 classDropdown->addItem(QString::fromStdString(item.key()));
+
+                // Check if the current text still exists in the new texts
+                if (oldCurrentValue == item.key()) currentTextStillExists = true;
+            }
+
+            if (currentTextStillExists)
+                classDropdown->setCurrentText(QString::fromStdString(oldCurrentValue));
+        }
+    }
+
+    // --------------------------------------------------------------------------
+    // Purpose: To refresh the table to account for changes in the whole result. 
+    //          Probably needs to be better made but I am running out of time.
+    // --------------------------------------------------------------------------
+    void refreshTable() {
+        // To refresh the table for the results in the management tab
+        // To achieve this. We have to clear the table first
+        currentTable->clear();
+
+        // Get the current class
+        std::string currentClass = classDropdown->currentText().toStdString();
+
+        // Okay. Fine. Let's finally get a vector<std::string> of contests
+        std::vector<std::string> currentContests;
+
+        for (const auto& item: contests.items()) {
+            // std::cout << item.value() << '\n';  // Used for debugging only
+
+            // Now: Read through and process one by one if the class we need and the class its
+            // valid for is in the same place
+            bool classExists = false;
+            for (const std::string classValue: item.value()["Classes"]) {
+                // std::cout << classValue << '\n'; // Debugging
+
+                // So... it seems like the classes are in fact, valid in this way.
+                // So we compare with the current class
+                if (classValue == currentClass) {
+                    classExists = true;
+                    break;
+                }
+            }
+
+            // If the class does exists in the list of valid classes of the contest we are pointing to
+            // then we add it into the vector created previously
+            if (classExists) currentContests.push_back(item.key());
+        }
+
+        // With the current contests of this tab processed through. We prepare the space needed for them
+        // to occupy (set into). Also accounting the collumn for the names and the sum of points too
+        currentTable->setColumnCount(currentContests.size() + 1);
+
+        QTableWidgetItem *columnHeaderSumOfPointsText = new QTableWidgetItem();
+        columnHeaderSumOfPointsText->setText("Tổng");
+        currentTable->setHorizontalHeaderItem(0, columnHeaderSumOfPointsText);
+
+        // With the header for the users column done. We add in the columns for contests
+        int index = 1;
+        for (const std::string& contest : currentContests) {
+            // For each contest we has for this class
+
+            QTableWidgetItem *columnHeaderContestText = new QTableWidgetItem();
+            columnHeaderContestText->setText(QString::fromStdString(contest));
+            currentTable->setHorizontalHeaderItem(index, columnHeaderContestText);
+            index++;
+        }
+
+        // Now. We move onto gathering the required informations for the users
+        std::vector<std::string> usersList;
+
+        for (const auto& item : users.items()) {
+            // Automatically account for difference in classes
+            // usersList.push_back(item.key());
+            bool classExists = false;
+
+            for (const std::string cls : item.value()["class"]) {
+                // Just like the contest purification.
+                // We find the users with matching classes
+
+                if (cls == currentClass) {
+                    classExists = true;
+                    break;
+                }
+            }
+
+            if (classExists) {
+                usersList.push_back(item.key());
+                // std::cout << "[refreshTable() / DEBUGGING #182] " << item.key() << '\n';  // Should not exists to reserve I/O speed
+            }
+            
+        }
+
+        // Variable for contests' points
+        // contestsPointsByOrder[username] -> {int contest1Point, int contest2Point...}
+        // Order will go with the order of currentContests (std::vector<>)
+        std::unordered_map<std::string, std::vector<int>> contestsPointsByOrder;
+        std::vector<std::pair<int, std::string>> usersSums; // More sorting friendly
+
+        // We go through EACH user
+        for (const std::string user : usersList) {
+            // Get the contests of EACH user (in JSON format)
+            std::fstream userSubmitResultFile(dirPath + USERSTATS_DIR + user + std::string(".json"), std::ios::in);
+            if (userSubmitResultFile.is_open()) {
+                try {
+                    const json submissions = json::parse(userSubmitResultFile);
+
+                    // Success? Nice. Now we just need to do some checking through.
+                    // Now we read the submissions relative to the contests
+                    int sum = 0;
+                    for (std::string contest : currentContests) {
+                        // Okay. Maybe also calculate the sums along the way?
+                        if (submissions.contains(contest)) {
+                            const int relativePoints = submissions[contest];
+                            sum += relativePoints;
+
+                            // Now, we add the constest points
+                            contestsPointsByOrder[user].push_back(relativePoints);
+                        } else {
+                            contestsPointsByOrder[user].push_back(NONE_PLACEHOLDER);
+                        }
+                    }
+
+                    // Adding the user's sum into the destination vector
+                    // to prepare for the sorting later on
+                    usersSums.push_back({sum, user});
+                    // std::cout << "[refreshTable() / DEBUGGING #412] " << user << " -> " << sum << "\n";  // Another I/O waste
+                } catch (const json::parse_error& e) {
+                    // If error caught. We just delete that file.
+                    remove((dirPath + USERSTATS_DIR + user + std::string(".json")).c_str());
+
+                    // Fill the value with NOTHING? Let's just put LOWEST INT VALUE as a placeholder
+                    contestsPointsByOrder[user].push_back(NONE_PLACEHOLDER);
+
+                    // Adding user's sum in for sorting
+                    usersSums.push_back({0, user});
+                }
+            } else {
+                // Fill the value with NOTHING? Let's just put LOWEST INT VALUE as a placeholder
+                contestsPointsByOrder[user].push_back(NONE_PLACEHOLDER);
+
+                // Adding user's sum in for sorting
+                usersSums.push_back({0, user});
             }
         }
+
+        sort(usersSums.begin(), usersSums.end(), [](const auto &a, const auto &b) { // Descending
+            return a.first > b.first;
+        });
+
+        // Now? Sink it all in. Because... We are gonna INITIATE THIS SHIT
+        // Prepare room for users to sit in
+        currentTable->setRowCount(usersSums.size());
+
+        // Add the users in one by one
+        index = 0; // Reuse the variable
+        for (const auto &userSorterValue : usersSums) {
+            // Go through usersSums as we already sorted
+            QTableWidgetItem *usernameItem = new QTableWidgetItem();
+            usernameItem->setText(QString::fromStdString(userSorterValue.second)); // Second is name, actually.
+            currentTable->setVerticalHeaderItem(index, usernameItem);
+
+            // Set the sum amount of points (0 is hardcoded cus of the position of the sum column)
+            QTableWidgetItem *pointsItem = new QTableWidgetItem();
+            pointsItem->setText(QString::fromStdString(intToString(userSorterValue.first)));  // First is the actual index value
+            currentTable->setItem(index, 0, pointsItem);
+
+            // With this done, let's move onto the final nail - the contest points
+            int cindex = 1; // Index of column
+            for (const int &point : contestsPointsByOrder[userSorterValue.second]) {
+                // Yeah it looks like I cant reuse any QTableWidgetItem, actually.
+                QTableWidgetItem *contestPointsItem = new QTableWidgetItem();
+                contestPointsItem->setText(QString::fromStdString(intToString(point)));
+                currentTable->setItem(index, cindex, contestPointsItem);
+
+                // Prepare for next loop
+                cindex++;
+            }
+
+            // Prepare for next loop
+            index++;
+        }
+
+        std::cout << "[currentTable] Table refreshed!\n";
     }
 
     // ------------------------------------------------
@@ -1193,7 +1391,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                 // If file has successfully been parsed
                 // std::cout << "settings[\"wait_time\"] = " << settings["wait_time"] << '\n';
-                std::cout << settings << '\n';
+                std::cout << "[JSON: settings] " << settings << '\n';
 
                 // Applying current settings from fcking JSON into Qt Line Input elements
                 judgingWaitTimeInput->setText(QString::fromStdString(doubleToString(settings["wait_time"])));
@@ -1221,7 +1419,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 aliases = json::parse(aliasFile);
 
                 // If sucessfully parsed
-                std::cout << aliases << '\n';
+                std::cout << "[JSON: aliases] " <<  aliases << '\n';
 
                 std::string webname = aliases["website_name"];
                 webserverAliasWebnameInput->setText(QString::fromUtf8(webname.c_str()));
@@ -1249,7 +1447,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 classes = json::parse(classesFile);
 
                 // Sucessfully parsed?
-                std::cout << classes << '\n';
+                std::cout << "[JSON: classes] " <<  classes << '\n';
             } catch (const json::parse_error& e) {
                 // If parsing the JSON returned to be a failure
                 errorDialog("Tệp dữ liệu lớp học đã bị hỏng. Vui lòng cài đặt lại ứng dụng để sửa lỗi.");
@@ -1274,7 +1472,68 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             onTabSwitches(0); // Call it up!!! BRING IT ONN
         }
 
+        std::fstream contestsFile(dirPath + CONTESTS_PATH, std::ios::in);
+        if (contestsFile.is_open()) {
+            try {
+                contests = json::parse(contestsFile);
+
+                // Successfully parsed. Prints logging
+                std::cout << "[JSON: contests] " <<  contests << '\n';
+            } catch (const json::parse_error& e) {
+                errorDialog("Tệp dữ liệu bài thi đã bị hỏng. Vui lòng cài đặt lại ứng dụng để sửa lỗi");
+                close();
+                exit(0);
+            }
+        } else {
+            errorDialog("Tệp dữ liệu bài thi không tồn tại");
+
+            // Creating file
+            std::fstream file(dirPath + CONTESTS_PATH, std::ios::out | std::ios::trunc);
+
+            if (!file.is_open()) {
+                errorDialog("Tệp dữ liệu bài thi không thể được tạo. Sửa chữa không thành công. Vui lòng cài đặt lại ứng dụng để sửa lỗi.");
+                close();
+                exit(0);
+            }
+            file << "{}";
+            std::cout << "Repair successful\n";
+            file.close();
+
+            onTabSwitches(0); // Call it up!!! BRING IT ONN
+        }
+
+        std::fstream usersFile(dirPath + USERDATA_PATH, std::ios::in);
+        if (usersFile.is_open()) {
+            try {
+                users = json::parse(usersFile);
+
+                // Successfully parsed w/o any error whatsoever
+                std::cout << "[JSON: users] " << users << '\n';
+            } catch (const json::parse_error& e) {
+                errorDialog("Tệp dữ liệu người dùng đã bị hỏng. Vui lòng cài đặt lại ứng dụng để sửa lỗi");
+                close();
+                exit(0);
+            }
+        } else {
+            errorDialog("Tệp dữ liệu người dùng không tồn tại");
+
+            // Creating file
+            std::fstream file(dirPath + USERDATA_PATH, std::ios::out | std::ios::trunc);
+
+            if (!file.is_open()) {
+                errorDialog("Tệp dữ liệu người dùng không thể được tạo. Sửa chữa không thành công. Vui lòng cài đặt lại ứng dụng để sửa lỗi.");
+                close();
+                exit(0);
+            }
+            file << "{}";
+            std::cout << "Repair successful\n";
+            file.close();
+
+            onTabSwitches(0); // Call it up!!! BRING IT ONN
+        }
+
         refreshClassDropdown();
+        refreshTable();
     }
 
     // -------------------------------------------------------------------------
@@ -1424,6 +1683,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         
         std::cout << "Console attached!\n";
         std::cout << "Application running with console support.\n";
+        std::cout << "\n\n" << "      ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: \n     :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   \n    :+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     \n   +#+ +:+ +#+ +#++:++#++: +#+    +:+     +#+         +#+     +#+       +#+    +:+ +#++:++#++  +#+  +:+   +#++:++       \n  +#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       \n #+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       \n###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###   \n"; 
     }
 
     // std::cout << argOld << '\n';

@@ -106,12 +106,19 @@ if __name__ == "__main__":
                 print(index, "-", ncsl)
                 classes.append(ncsl)
                 index+=1
-        classindex = int(input("Enter class index: "))
-        if classindex < index and classindex >= 0:
-            print("Selected class: " + classes[classindex])
-        else:
-            print("Error: OUT OF BOUNDS")
-            exit()
+        classindex = str(input("Enter class index (separated by space): "))
+        classIndexes = classindex.split(' ')
+        resultIndexes = []
+        print("Selected classes: ", end="")
+        for CLSindex in classIndexes:
+            CLSindex = int(CLSindex)
+            if CLSindex < index and CLSindex >= 0:
+                print(classes[CLSindex], end=", ")
+                resultIndexes.append(classes[CLSindex])
+            else:
+                print("Error: OUT OF BOUNDS")
+                exit()
+        print("")
         
         desc = str(input("Description: "))
         priv = int(input("Privillege level: "))
@@ -119,7 +126,7 @@ if __name__ == "__main__":
         userdata[username] = {
             "password": password,
             "fullname": fullname,
-            "class": classes[classindex],
+            "class": resultIndexes,
             "desc": desc,
             "picture": False,
             "priv": priv

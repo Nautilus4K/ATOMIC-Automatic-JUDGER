@@ -1,12 +1,1 @@
-{
-    "D0": {
-        "shortname": "D-0",
-        "longname": "Data Class 0",
-        "scoreboard": true
-    },
-    "A0": {
-        "shortname": "A-0",
-        "longname": "Abnormal 1",
-        "scoreboard": true
-    }
-}
+{"D0": {"shortname": "D-0", "longname": "Data Class 0", "scoreboard": true}, "A0": {"shortname": "A-0", "longname": "Abnormal 1", "scoreboard": true}}
