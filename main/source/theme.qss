@@ -4,6 +4,7 @@
     - Background of QWidgets: #ffffff
     - Background of elements: #f1f1f1, #f7f7f7
     - Border of main container elements: #dfdfdf
+    - Background (primary): #a6deff
     - Color of outlines: #e0e0e0
 */
 
@@ -69,6 +70,21 @@ QScrollBar::handle:hover {
     background: #8d8d8d
 }
 
+QMenu {
+    background: #ffffff;
+    color: #000000;
+}
+
+QMenu::item {
+    padding: 5px 20px;
+    background: transparent;
+}
+
+QMenu::item:selected, QMenu::item:hover {
+    background:#a6deff;
+    color: #000000;
+}
+
 /* Dropdown styling */
 QComboBox {
     /* ensure enough padding so text and arrow don't overlap */
@@ -100,10 +116,6 @@ QComboBox QAbstractItemView {
     color: #000000;
     padding: 4px 6px;
     margin-top: 5px;
-}
-
-QComboBox QAbstractItemView::item {
-    
 }
 
 QComboBox QAbstractItemView::item:selected {
@@ -209,4 +221,9 @@ QScrollArea QWidget {
 QScrollArea QWidget QLineEdit {
     /* Tabs' main subwindows' line inputs */
     margin-bottom: 20px;
+}
+
+/* Dialog styling */
+#dialog {
+    background: #ffffff;
 }

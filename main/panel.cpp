@@ -59,6 +59,9 @@ Also, credits to:
 #include <QtWidgets/QComboBox>     // Dropdown. Yeah. Qt is very nice with their names
 #include <QtWidgets/QTableWidget>  // Table of content
 #include <QtWidgets/QStyleFactory> // Styling. Once again
+#include <QtWidgets/QDialog>       // Dialogs, even custom ones
+#include <QtWidgets/QRadioButton>  // Radio buttons
+#include <QtWidgets/QButtonGroup>  // Grouping multiple buttons
 #include <QtGui/QAction>           // Action for menus. Wonder what fucker thought to put it in QtGui
 #include <QtGui/QCloseEvent>       // Close event. The action of 'X' button
 #include <QtGui/QDoubleValidator>  // Validator for edits.
@@ -88,6 +91,7 @@ using json = nlohmann::json;
 #include <winsock2.h> // Socket programming
 #include <shellapi.h> // ShellExecute, etc...
 #include <ws2tcpip.h>
+#include <filesystem> // File managing
 
 #pragma comment(lib, "Ws2_32.lib") // Required library to link with
 
@@ -102,6 +106,9 @@ using json = nlohmann::json;
 // -> Values
 #define NONE_PLACEHOLDER -0x7fffffff
 
+// -> Arrays
+const std::vector<std::string> supportedExtensions = {".cpp", ".py", ".pas"};
+
 // -> Paths
 const std::string THEME_PATH = "/source/theme.qss";
 const std::string THEMECOLORS_PATH = "/source/theme_color.opt";
@@ -113,6 +120,8 @@ const std::string CLASSES_PATH = "/source/classes.json";
 const std::string CONTESTS_PATH = "/source/contests.json";
 const std::string USERDATA_PATH = "/source/users.json";
 const std::string USERSTATS_DIR = "/workspace/result/";
+const std::string USERQUEUE_DIR = "/workspace/queue/";
+const std::string USERSUBHISTORY_DIR = "/userdata/";
 
 const std::string PYDIR = "/.venv/Scripts/python.exe";
 const std::string JUDGING_PATH = "/judge.py";
@@ -195,6 +204,75 @@ int stringToInt(const std::string &s) {
 
     return negative ? -result : result;
 }
+
+// Special widgets / functionalities
+class CST_RadioButtonDialog: public QDialog {
+    public:
+    // Create a vector so that we can browse through and check the result in the future
+    std::vector<QRadioButton*> choices;
+
+    CST_RadioButtonDialog(QWidget *parent = nullptr, QString title = "Radio Button Dialog", QString question = "Question field", QStringList entries = {}) : QDialog(parent) {
+        setObjectName("dialog");
+        setStyleSheet(parent->styleSheet());
+        setWindowTitle(title);
+        setWindowIcon(parent->windowIcon());
+
+        QVBoxLayout *layout = new QVBoxLayout();
+
+        QLabel *questionLabel =  new QLabel();
+        questionLabel->setText(question);
+        layout->addWidget(questionLabel);
+
+        QButtonGroup *bGroup = new QButtonGroup();
+        for (const QString &entry : entries) { // Yeah this WILL be a QString
+            // Mind if I create a new QRadioButton? Hell yeah!
+            QRadioButton *selection = new QRadioButton();
+            selection->setText(entry);
+
+            // Adding into vector
+            choices.push_back(selection);
+
+            // Adding buttons
+            bGroup->addButton(selection);
+            layout->addWidget(selection);
+        }
+
+        QPushButton *okButton = new QPushButton("OK", this); // Okay button
+        layout->addWidget(okButton);
+
+        connect(okButton, &QPushButton::clicked, this, &CST_RadioButtonDialog::finishDialog);
+
+        setLayout(layout);
+    }
+
+    QString selectedOption() const {
+        for (const QRadioButton *button : choices) {
+            if (button->isChecked()) {
+                return button->text();
+            }
+        }
+        
+        // In case NOTHING is selected
+        return "";
+    }
+
+    private:
+    void finishDialog() {
+        bool selectedAtLeast1Button = false;
+        for (const QRadioButton *button : choices) {
+            if (button->isChecked()) {
+                selectedAtLeast1Button = true;
+                break;
+            }
+        }
+
+        if (selectedAtLeast1Button) {
+            accept();
+        } else {
+            QMessageBox::information(this, "Không thể hoàn thành tác vụ", "Hãy chọn ít nhất 1 lựa chọn.", QMessageBox::Ok);
+        }
+    }
+};
 
 class PanelWindow: public QMainWindow { // This is based on QMainWindow
     public: // PUBLIC. ACCESSIBLE FROM ANYWHERE
@@ -507,6 +585,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         manageTabLayout->addWidget(classDropdown);
         
+        currentTable->setContextMenuPolicy(Qt::CustomContextMenu); // Uses custom context menu
+        connect(currentTable, &QTableWidget::customContextMenuRequested, this, &PanelWindow::showScoreContextMenu);
         manageTabLayout->addWidget(currentTable);
 
         // Settings
@@ -1197,6 +1277,119 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         }
     }
 
+    // ------------------------------------------------------------
+    // Purpose: To move submissions back into queue for retesting.
+    // ------------------------------------------------------------
+    void replaceTestToQueue(std::string username, std::string contestName, bool allTest) {
+        if (allTest) { // In case we have to retestALL tests, use recursive
+
+        } else {
+            // First, check if the file exists (the user's submission has already been tested once before)
+            // We check for EACH extension
+            bool doesExist = false;
+            std::vector<std::string> extensionsFound;
+            for (std::string extension : supportedExtensions) {
+                if (std::filesystem::exists(dirPath + USERSUBHISTORY_DIR + username + std::string("/") + contestName + extension)) {
+                    extensionsFound.push_back(extension);
+                    doesExist = true;
+                }
+            }
+
+            if (!doesExist) { // If the file does not exists
+                errorDialog("Người dùng không có bài làm nào đã chấm thuộc về bài thi này.");
+                return; // HALT immediately
+            }
+
+            std::string selectedExtension;
+            if (extensionsFound.size() > 1) { // More than 1 language submitted???
+                QStringList languages;
+                for (std::string extension: extensionsFound) {
+                    languages << QString::fromStdString(extension);
+                }
+
+                std::cout << "[replaceTestIntoQueue()] Found more than 1 extension. Opening dialog...\n";
+                CST_RadioButtonDialog *dialog = new CST_RadioButtonDialog(this, "Đuôi tệp", "Hãy chọn đuôi cần chấm lại.", languages);
+                if (dialog->exec() == QDialog::Accepted) {
+                    selectedExtension = dialog->selectedOption().toStdString();
+                    std::cout << "Selected " << selectedExtension << '\n';
+                }
+
+            } else { // When there is only 1 language
+                selectedExtension = extensionsFound[0];
+            }
+
+            // Prepare the name for future use
+            const std::string filename = std::string("[") + username + std::string("][") + contestName + std::string("]") + selectedExtension;
+
+            // Check if a submission awaiting testing exists for this same user
+            if (std::filesystem::exists(dirPath + USERQUEUE_DIR + filename)) {
+                QMessageBox::StandardButton reply;
+                reply = QMessageBox::question(this, "Xác nhận vị trí", 
+                    "Hiện đang có một bài nộp của bài thi này và của học sinh này chưa được chấm. Bạn có chắc muốn tiếp tục (ghi đè)?",
+                    QMessageBox::Yes | QMessageBox::No);
+                
+                if (reply == QMessageBox::No) { // If user doesn't want to continue
+                    return;
+                }
+            }
+
+            // Actually doing the job
+            std::fstream queueFile(dirPath + USERQUEUE_DIR + filename, std::ios::out | std::ios::trunc); // Truncates the file if already exists
+            std::fstream orgFile(dirPath + USERSUBHISTORY_DIR + username + std::string("/") + contestName + selectedExtension, std::ios::in);
+
+            if (queueFile.is_open()) {
+                if (orgFile.is_open()) {
+                    // Passed all loophole tests
+                    // We do the job
+                    queueFile << orgFile.rdbuf();
+                } else {
+                    errorDialog("Không thể mở tệp bài nộp (đã chấm) hiện tại của học sinh.");
+                }
+            } else {
+                errorDialog("Thất bại trong quá trình tạo/chỉnh sửa tệp. Có lẽ tệp đang được sử dụng bởi một ứng dụng khác?");
+            }
+
+            queueFile.close();
+            orgFile.close();
+        }
+    }
+
+    // -----------------------------------------------------------------------------
+    // Purpose: To show a custom context menu for each user's result score in order
+    //          to help the user interface more intuitive
+    // -----------------------------------------------------------------------------
+    void showScoreContextMenu(const QPoint &pos) {
+        QTableWidgetItem *item = currentTable->itemAt(pos);
+        if (!item) return; // Only execute if the cell was clicked on
+
+        QMenu contextMenu(this); // The context menu in which the options are built upon
+
+        QAction *reTest = contextMenu.addAction("Chấm lại");
+        
+        // Getting information before checking anything
+        QString username = currentTable->verticalHeaderItem(item->row())->text();
+        if (item->column() == 0) {
+            // So user wants to do this for ALL submissions
+            QAction *selectedAction = contextMenu.exec(currentTable->viewport()->mapToGlobal(pos));
+
+            if (selectedAction == reTest) {
+                replaceTestToQueue(username.toStdString(), "", true);
+                std::cout << "[showScoreContextMenu()] " << username.toStdString() << ": All test replaced into queue.\n";
+            }
+        } else {
+            QAction *showInfo = contextMenu.addAction("Thông tin bài làm");
+            QAction *selectedAction = contextMenu.exec(currentTable->viewport()->mapToGlobal(pos));
+            
+            QString contestName = currentTable->horizontalHeaderItem(item->column())->text();
+            if (selectedAction == reTest) {
+                std::cout << "[showScoreContextMenu()] " << username.toStdString() << ": Test " << contestName.toStdString() << " replaced into queue.\n";
+                replaceTestToQueue(username.toStdString(), contestName.toStdString(), false);
+            } else if (selectedAction == showInfo) {
+                std::cout << "[showScoreContextMenu()] " << username.toStdString() << ": Test " << contestName.toStdString() << " infomation shown.\n";
+            }
+        }
+    }
+
     // --------------------------------------------------------------------------
     // Purpose: To refresh the table to account for changes in the whole result. 
     //          Probably needs to be better made but I am running out of time.
@@ -1239,6 +1432,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         currentTable->setColumnCount(currentContests.size() + 1);
 
         QTableWidgetItem *columnHeaderSumOfPointsText = new QTableWidgetItem();
+        columnHeaderSumOfPointsText->setFlags(columnHeaderSumOfPointsText->flags() & ~Qt::ItemFlag::ItemIsEditable);
         columnHeaderSumOfPointsText->setText("Tổng");
         currentTable->setHorizontalHeaderItem(0, columnHeaderSumOfPointsText);
 
@@ -1248,6 +1442,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             // For each contest we has for this class
 
             QTableWidgetItem *columnHeaderContestText = new QTableWidgetItem();
+            columnHeaderContestText->setFlags(columnHeaderContestText->flags() & ~Qt::ItemFlag::ItemIsEditable);
             columnHeaderContestText->setText(QString::fromStdString(contest));
             currentTable->setHorizontalHeaderItem(index, columnHeaderContestText);
             index++;
@@ -1344,24 +1539,38 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         for (const auto &userSorterValue : usersSums) {
             // Go through usersSums as we already sorted
             QTableWidgetItem *usernameItem = new QTableWidgetItem();
+            usernameItem->setFlags(usernameItem->flags() & ~Qt::ItemFlag::ItemIsEditable);
             usernameItem->setText(QString::fromStdString(userSorterValue.second)); // Second is name, actually.
             currentTable->setVerticalHeaderItem(index, usernameItem);
 
             // Set the sum amount of points (0 is hardcoded cus of the position of the sum column)
             QTableWidgetItem *pointsItem = new QTableWidgetItem();
+            pointsItem->setFlags(pointsItem->flags() & ~Qt::ItemFlag::ItemIsEditable);
             pointsItem->setText(QString::fromStdString(intToString(userSorterValue.first)));  // First is the actual index value
             currentTable->setItem(index, 0, pointsItem);
 
             // With this done, let's move onto the final nail - the contest points
-            int cindex = 1; // Index of column
-            for (const int &point : contestsPointsByOrder[userSorterValue.second]) {
-                // Yeah it looks like I cant reuse any QTableWidgetItem, actually.
-                QTableWidgetItem *contestPointsItem = new QTableWidgetItem();
-                contestPointsItem->setText(QString::fromStdString(intToString(point)));
-                currentTable->setItem(index, cindex, contestPointsItem);
+            if (contestsPointsByOrder[userSorterValue.second].size() == 1 && contestsPointsByOrder[userSorterValue.second][0] == NONE_PLACEHOLDER) {
+                // In case this contest does NOT exist (the user never done the contest)
+                const int& amountOfDestBlankCells = currentTable->columnCount();
 
-                // Prepare for next loop
-                cindex++;
+                for (int i = 0; i < amountOfDestBlankCells; i++) {
+                    QTableWidgetItem *blankItem = new QTableWidgetItem();
+                    blankItem->setFlags(blankItem->flags() & ~Qt::ItemFlag::ItemIsEditable);
+                    currentTable->setItem(index, i, blankItem);
+                }
+            } else {
+                int cindex = 1; // Index of column
+                for (const int &point : contestsPointsByOrder[userSorterValue.second]) {
+                    // Yeah it looks like I cant reuse any QTableWidgetItem, actually.
+                    QTableWidgetItem *contestPointsItem = new QTableWidgetItem();
+                    contestPointsItem->setFlags(contestPointsItem->flags() & ~Qt::ItemFlag::ItemIsEditable);
+                    contestPointsItem->setText(QString::fromStdString(intToString(point)));
+                    currentTable->setItem(index, cindex, contestPointsItem);
+
+                    // Prepare for next loop
+                    cindex++;
+                }
             }
 
             // Prepare for next loop
@@ -1429,6 +1638,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                 std::string hostname = aliases["hostname"];
                 webserverAliasHostnameInput->setText(QString::fromUtf8(hostname.c_str()));
+
+                aliasFile.close();
             } catch (const json::parse_error& e) { 
                 // If error got and it is JSON parsing error
                 errorDialog("Tệp dữ liệu hiển thị đã bị hỏng. Hãy cài đặt lại ứng dụng để sửa lỗi.");
@@ -1454,6 +1665,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 close();
                 exit(0);
             }
+
+            classesFile.close();
         } else {
             errorDialog("Tệp dữ liệu lớp học không tồn tại.");
             
@@ -1479,6 +1692,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                 // Successfully parsed. Prints logging
                 std::cout << "[JSON: contests] " <<  contests << '\n';
+
+                contestsFile.close();
             } catch (const json::parse_error& e) {
                 errorDialog("Tệp dữ liệu bài thi đã bị hỏng. Vui lòng cài đặt lại ứng dụng để sửa lỗi");
                 close();
@@ -1509,6 +1724,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                 // Successfully parsed w/o any error whatsoever
                 std::cout << "[JSON: users] " << users << '\n';
+
+                usersFile.close();
             } catch (const json::parse_error& e) {
                 errorDialog("Tệp dữ liệu người dùng đã bị hỏng. Vui lòng cài đặt lại ứng dụng để sửa lỗi");
                 close();
@@ -1547,6 +1764,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         msgBox->setStandardButtons(QMessageBox::StandardButton::Ok);
         // msgBox->addButton("OK", QMessageBox::ButtonRole::AcceptRole);
         msgBox->setWindowIcon(QIcon(iconPixmap));
+        msgBox->setStyleSheet(styleSheetResult);
 
         msgBox->show();
     }
