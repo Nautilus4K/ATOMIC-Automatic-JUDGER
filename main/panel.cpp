@@ -106,8 +106,9 @@ using json = nlohmann::json;
 // -> Values
 #define NONE_PLACEHOLDER -0x7fffffff
 
-// -> Arrays
+// -> Extensions
 const std::vector<std::string> supportedExtensions = {".cpp", ".py", ".pas"};
+const std::string logExt = ".log";
 
 // -> Paths
 const std::string THEME_PATH = "/source/theme.qss";
@@ -122,6 +123,7 @@ const std::string USERDATA_PATH = "/source/users.json";
 const std::string USERSTATS_DIR = "/workspace/result/";
 const std::string USERQUEUE_DIR = "/workspace/queue/";
 const std::string USERSUBHISTORY_DIR = "/userdata/";
+const std::string SUBMITLOG_DIR = "/workspace/result/logs/";  // EVERY SINGLE DIRECTORY PATH NEEDS TO HAVE A TRAILING `/`
 
 const std::string PYDIR = "/.venv/Scripts/python.exe";
 const std::string JUDGING_PATH = "/judge.py";
@@ -206,6 +208,10 @@ int stringToInt(const std::string &s) {
 }
 
 // Special widgets / functionalities
+
+// ------------------------------------------------------
+// Feature: To have a dialog consisting of radio buttons
+// ------------------------------------------------------
 class CST_RadioButtonDialog: public QDialog {
     public:
     // Create a vector so that we can browse through and check the result in the future
@@ -274,6 +280,49 @@ class CST_RadioButtonDialog: public QDialog {
     }
 };
 
+// ---------------------------------------------------------------------
+// Feature: To have a dialog consisting of text input. Or in short, a
+//          text editor dialog (that doesn't interrupt the main window)
+// ---------------------------------------------------------------------
+class CST_TextEditorDialog: public QWidget {
+    public:
+    QLabel *mainText = new QLabel();
+    CST_TextEditorDialog(QWidget *parent = nullptr, QString title = "", std::string filePath = "", bool readOnly = false) {
+        setObjectName("dialog");
+        setWindowTitle(title);
+        setWindowIcon(parent->windowIcon());
+        setStyleSheet(parent->styleSheet());
+
+        QVBoxLayout *layout = new QVBoxLayout();
+
+        QTextEdit *lineage = new QTextEdit();
+        lineage->setReadOnly(readOnly);
+
+        // Opening the file
+        std::fstream file(filePath.c_str(), std::ios::in);
+        if (file.is_open()) {
+            std::stringstream fileData;
+            fileData << file.rdbuf();
+
+            lineage->setText(QString::fromStdString(fileData.str()));
+        } else {
+            lineage->setText("Mở tệp không thành công.");
+        }
+
+        // Adding the main elements for dialog. Which isn't really a dialog.
+        layout->addWidget(mainText);
+        layout->addWidget(lineage);
+        setLayout(layout);
+    }
+
+    void setText(QString text) {
+        mainText->setText(text);
+    }
+};
+
+// --------------------------------------
+// Main panel window for all operations.
+// --------------------------------------
 class PanelWindow: public QMainWindow { // This is based on QMainWindow
     public: // PUBLIC. ACCESSIBLE FROM ANYWHERE
     QWidget *manageTab = new QWidget();
@@ -1277,12 +1326,74 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         }
     }
 
+    // ----------------------------------------------------------------
+    // Purpose: To display the information of a particular submission.
+    // ----------------------------------------------------------------
+    void displaySubmissionInfo(std::string username, std::string contestName) {
+        // Prepare the name for future use
+        const std::string filenameNoEXT = std::string("[") + username + std::string("][") + contestName + std::string("]");
+
+        // Check if a log exists while also accounting for multiple log files OF multiple EXTENSIONS
+        bool doesExist = false;
+        std::vector<std::string> extensionsFound;
+        for (std::string extension : supportedExtensions) {
+            if (std::filesystem::exists(dirPath + SUBMITLOG_DIR + filenameNoEXT + extension + logExt)) {
+                extensionsFound.push_back(extension);
+                doesExist = true;
+            }
+        }
+
+        if (!doesExist) {
+            errorDialog("Người dùng không có tệp thông tin bài làm của bài thi này.");
+            return; // Halt right away if continuing will only become a nuisance
+        }
+
+        // Use the same method as the replaceTestToQueue one when there are multiple
+        // extensions' log file.
+        std::string selectedExtension;
+        if (extensionsFound.size() > 1) { // More than 1 language submitted that has generated an information file
+            QStringList languages;
+            for (std::string extension: extensionsFound) {
+                languages << QString::fromStdString(extension);
+            }
+
+            std::cout << "[replaceTestIntoQueue()] Found more than 1 extension. Opening dialog...\n";
+
+            CST_RadioButtonDialog *dialog = new CST_RadioButtonDialog(
+                this, "Đuôi tệp", 
+                QString::fromStdString(contestName + std::string(": Tìm thấy nhiều đuôi đã được nộp. Hãy chọn đuôi cần biết thông tin.")), languages
+            );
+
+            if (dialog->exec() == QDialog::Accepted) {
+                selectedExtension = dialog->selectedOption().toStdString();
+                std::cout << "Selected " << selectedExtension << '\n';
+            }
+        } else {
+            // Assumes that the first and only language is the one the user would want to check out
+            selectedExtension = extensionsFound[0];
+        }
+
+        // Now, we just run up the text editor?
+        CST_TextEditorDialog *diag = new CST_TextEditorDialog(
+            this, QString::fromStdString(filenameNoEXT),
+            dirPath + SUBMITLOG_DIR + filenameNoEXT + selectedExtension + logExt,
+            true
+        );
+        diag->setText("Thông tin bài làm học sinh:");
+        diag->show();
+    }
+
     // ------------------------------------------------------------
     // Purpose: To move submissions back into queue for retesting.
     // ------------------------------------------------------------
     void replaceTestToQueue(std::string username, std::string contestName, bool allTest) {
         if (allTest) { // In case we have to retestALL tests, use recursive
-
+            // Get all the tests with the column's display
+            int cAmount = currentTable->columnCount();
+            for (int i = 0; i < cAmount; i++) {
+                QString text = currentTable->horizontalHeaderItem(i)->text();
+                replaceTestToQueue(username, text.toStdString(), false);
+            }
         } else {
             // First, check if the file exists (the user's submission has already been tested once before)
             // We check for EACH extension
@@ -1296,7 +1407,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             }
 
             if (!doesExist) { // If the file does not exists
-                errorDialog("Người dùng không có bài làm nào đã chấm thuộc về bài thi này.");
+                // errorDialog("Người dùng không có bài làm nào đã chấm thuộc về bài thi này.");
                 return; // HALT immediately
             }
 
@@ -1308,7 +1419,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 }
 
                 std::cout << "[replaceTestIntoQueue()] Found more than 1 extension. Opening dialog...\n";
-                CST_RadioButtonDialog *dialog = new CST_RadioButtonDialog(this, "Đuôi tệp", "Hãy chọn đuôi cần chấm lại.", languages);
+                CST_RadioButtonDialog *dialog = new CST_RadioButtonDialog(this, "Đuôi tệp", QString::fromStdString(contestName + std::string(": Hãy chọn đuôi cần chấm lại.")), languages);
                 if (dialog->exec() == QDialog::Accepted) {
                     selectedExtension = dialog->selectedOption().toStdString();
                     std::cout << "Selected " << selectedExtension << '\n';
@@ -1386,6 +1497,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 replaceTestToQueue(username.toStdString(), contestName.toStdString(), false);
             } else if (selectedAction == showInfo) {
                 std::cout << "[showScoreContextMenu()] " << username.toStdString() << ": Test " << contestName.toStdString() << " infomation shown.\n";
+                displaySubmissionInfo(username.toStdString(), contestName.toStdString());
             }
         }
     }
