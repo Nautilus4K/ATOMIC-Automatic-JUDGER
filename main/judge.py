@@ -916,17 +916,18 @@ while running:
                     
                     existingFileContent = ""
                     if os.path.exists(filePath+"/userdata/"+filedata[0]+"/"+filedata[1]+"."+filedata[2]):
-                        with open(filePath+"/userdata/"+filedata[0]+"/"+filedata[1]+"."+filedata[2], "r", encoding='utf-8') as file:
-                            existingFileContent = file.read()
+                        with open(filePath+"/userdata/"+filedata[0]+"/"+filedata[1]+"."+filedata[2], "r", encoding='utf-8') as submissionFile:
+                            existingFileContent = submissionFile.read()
                     shutil.move(filePath+"/workspace/queue/"+file, filePath+"/userdata/"+filedata[0]+"/"+filedata[1]+"."+filedata[2])
 
                     # If error happens at shutil.move(), the function below wont be called
                     # This is what we need
                     timestamp = str(int(time.time()))
                     os.mkdir(filePath+"/userdata/"+filedata[0]+"/"+timestamp)
-                    with open(filePath+"/userdata/"+filedata[0]+"/"+timestamp+"/"+filedata[1]+"."+filedata[2], "w", encoding='utf-8') as file:
-                        file.write(existingFileContent)
+                    with open(filePath+"/userdata/"+filedata[0]+"/"+timestamp+"/"+filedata[1]+"."+filedata[2], "w", encoding='utf-8') as userdataDirFile:
+                        userdataDirFile.write(existingFileContent)
                 except:
+                    traceback.print_exc();
                     perr(f"Không thể di chuyển {file} đến USERDATA, có gì đó đã xảy ra?")
         else:
             # With nothing to judge/held onto, we returns as if we're idling

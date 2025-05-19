@@ -227,3 +227,19 @@ QScrollArea QWidget QLineEdit {
 #dialog {
     background: #ffffff;
 }
+
+/* QScrollArea styling */
+QScrollArea {
+    border: 0px solid transparent;
+}
+
+/* Contest dialog styling */
+#con_usersec {
+    background: #ffffff;
+    border: 1px solid #dfdfdf;
+}
+
+#formatBtn {
+    font-size: 10px;
+    padding: 0px;
+}
