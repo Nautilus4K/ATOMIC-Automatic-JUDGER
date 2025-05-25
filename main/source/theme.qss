@@ -35,19 +35,6 @@ QLineEdit {
     color: #000000;
 }
 
-QPushButton {
-    border: 1px solid #e0e0e0;
-    background-color: #f7f7f7;
-    padding: 8px 20px;
-}
-
-QPushButton:hover {
-    background-color: #ffffff;
-}
-
-QPushButton:pressed {
-    background-color: #dfdfdf;
-}
 
 QScrollBar {
     /* Scroll bar */
@@ -233,13 +220,54 @@ QScrollArea {
     border: 0px solid transparent;
 }
 
-/* Contest dialog styling */
-#con_usersec {
+QListView {
     background: #ffffff;
     border: 1px solid #dfdfdf;
 }
 
+/* Settings dialog styling */
+#con_sec {
+    background: #ffffff;
+    border: 1px solid #dfdfdf;
+}
+
+#con_lab {
+    /* Label in settings */
+    margin-top: 4px;
+}
+
 #formatBtn {
     font-size: 10px;
+    background: #f7f7f7; /* Yeah we have to redeclare this shit */
     padding: 0px;
+}
+
+/* Putting this down here since there will be many instances where its gonna be overwritten */
+#genericBtn {
+    border: 1px solid #e0e0e0;
+    background: #f7f7f7;
+    padding: 8px 20px;
+}
+
+#genericBtn:hover {
+    background: #ffffff;
+}
+
+#genericBtn:pressed {
+    background: #dfdfdf;
+}
+
+/* Reserved for some widget that doesn't need to reoverwrite its themes. But needs to be kept the same as genericBtn */
+QPushButton {
+    border: 1px solid #e0e0e0;
+    background: #f7f7f7;
+    padding: 8px 20px;
+}
+
+QPushButton:hover {
+    background: #ffffff;
+}
+
+QPushButton:pressed {
+    background: #dfdfdf;
 }
