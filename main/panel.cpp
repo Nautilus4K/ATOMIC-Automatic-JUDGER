@@ -93,9 +93,9 @@ using json = nlohmann::json;
 
 #include <filesystem>
 #include <Windows.h>
-#include <winsock2.h> // Socket programming
-#include <shellapi.h> // ShellExecuteA, etc...
-#include <ws2tcpip.h>
+#include "winsock2.h" // Socket programming
+#include "shellapi.h" // ShellExecuteA, etc...
+#include "ws2tcpip.h"
 #include <filesystem> // File managing
 
 #pragma comment(lib, "Ws2_32.lib") // Required library to link with
@@ -108,837 +108,20 @@ using json = nlohmann::json;
 // Debug console
 #include <iostream>
 
-// Constants
-// -> Values
-#define NONE_PLACEHOLDER -0x7fffffff
-
-// -> Extensions
-const std::vector<std::string> supportedExtensions = {".cpp", ".py", ".pas"};
-const std::string logExt = ".log";
-
-// -> Paths
-static const std::string THEME_PATH = "/source/theme.qss";
-static const std::string THEMECOLORS_PATH = "/source/theme_color.opt";
-
-static const std::string SETTINGS_PATH = "/source/settings.json";
-static const std::string VERSION_PATH = "/source/version.json";
-static const std::string ALIAS_PATH = "/source/aliases.json";
-static const std::string CLASSES_PATH = "/source/classes.json";
-static const std::string CONTESTS_PATH = "/source/contests.json";
-static const std::string USERDATA_PATH = "/source/users.json";
-static const std::string USERSTATS_DIR = "/workspace/result/";
-static const std::string USERQUEUE_DIR = "/workspace/queue/";
-static const std::string USERSUBHISTORY_DIR = "/userdata/";
-static const std::string SUBMITLOG_DIR = "/workspace/result/logs/";  // EVERY SINGLE DIRECTORY PATH NEEDS TO HAVE A TRAILING `/`
-
-static const std::string PYDIR = "/.venv/Scripts/python.exe";
-static const std::string JUDGING_PATH = "/judge.py";
-static const std::string WEBSERVER_PATH = "/apache.py";
-
-static const std::string LOG_PATH = "/central/valkyrie.log";
-static const std::string ICON_PATH = "/icon.ico";
-static const QString EXITICON_PATH = ":/images/exit.png";
-static const QString CONTESTSICON_PATH = ":/images/contests.png";
-
-// Paths
-const std::string dirPath = std::filesystem::current_path().string();
-
-// -> Qt Style Sheet
-const QString STYLE_BIGLABEL = "font-size: 16px; font-weight: bold;";
-const QString STYLE_BOLDLABEL = "font-weight: bold;";
-
-// -> Others
-const std::string GITHUB_PAGE = "\"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER\"";
-const int JUDGING_EXITPORT = 28472;
-const std::string JUDGING_EXITADDR = "127.0.0.1";
-const int WEBSERVER_EXITPORT = 28473;
-const std::string WEBSERVER_EXITADDR = "127.0.0.1";
-
-// -> ANSI Color codes
-const std::string INFO_COL = "\x1b[0m";
-const std::string ERROR_COL = "\x1b[31m";
-const std::string WARN_COL = "\x1b[33m";
-const std::string OK_COL = "\x1b[32m";
-const std::string RESET_COL = "\x1b[0m";
+// Custom shits
+#include "utilities.h"
+#include "consts.h"
+#include "CST_RadioButtonDialog.h"
+#include "CST_TextEditorDialog.h"
+#include "CST_RichTextEdit.h"
+#include "CST_Listing.h"
+#include "WIN_ContestsSettings.h"
 
 // -> Color values
 QColor COLOR_CONSOLE_ERROR;
 QColor COLOR_CONSOLE_WARNING;
 QColor COLOR_CONSOLE_OK;
 QColor COLOR_CONSOLE_DEFAULT;
-QString FORMATBTN_DEFAULT;
-QString FORMATBTN_SELECTED;
-
-// Custom functions as tools
-std::string intToString(int n) {
-    // Conversion from INTEGER to STRING
-    if (n == 0) return "0";
-    
-    std::string value = "";
-    while (n > 0) {
-        value += char((n % 10) + '0'); // Literal magic
-        n /= 10;
-    }
-    std::reverse(value.begin(), value.end());
-
-    return value;
-}
-
-std::string doubleToString(double d) {
-    // Conversion from DOUBLE to STRING
-    std::ostringstream oss;
-    oss << d; // Yeah this is the true magic
-    return oss.str();
-}
-
-double stringToDouble(const std::string &str) {
-    try {
-        return std::stod(str); // Built-in function
-    } catch (const std::invalid_argument &e) {
-        return 0.0; // Handle invalid input (e.g., empty string or non-numeric data)
-    } catch (const std::out_of_range &e) {
-        return 0.0; // Handle out-of-range errors
-    }
-}
-
-
-int stringToInt(const std::string &s) {
-    int result = 0;
-    bool negative = false;
-    std::size_t i = 0;
-
-    if (s[i] == '-') {
-        negative = true;
-        i++;
-    }
-
-    for (; i < s.length(); ++i) {
-        if (s[i] < '0' || s[i] > '9') {
-            // Invalid character for number
-            break;
-        }
-        result = result * 10 + (s[i] - '0');
-    }
-
-    return negative ? -result : result;
-}
-
-// Special widgets / functionalities
-
-// ------------------------------------------------------
-// Feature: To have a dialog consisting of radio buttons
-// ------------------------------------------------------
-class CST_RadioButtonDialog: public QDialog {
-    public:
-    // Create a vector so that we can browse through and check the result in the future
-    std::vector<QRadioButton*> choices;
-
-    CST_RadioButtonDialog(QWidget *parent = (QWidget *)nullptr, QString title = "Radio Button Dialog", QString question = "Question field", QStringList entries = {}) : QDialog(parent) {
-        setObjectName("dialog");
-        setWindowTitle(title);
-        if (parent) {
-            setStyleSheet(parent->styleSheet());
-            setWindowIcon(parent->windowIcon());
-        }
-
-        QVBoxLayout *layout = new QVBoxLayout();
-
-        QLabel *questionLabel =  new QLabel();
-        questionLabel->setText(question);
-        layout->addWidget(questionLabel);
-
-        QButtonGroup *bGroup = new QButtonGroup();
-        for (const QString &entry : entries) { // Yeah this WILL be a QString
-            // Mind if I create a new QRadioButton? Hell yeah!
-            QRadioButton *selection = new QRadioButton();
-            selection->setText(entry);
-
-            // Adding into vector
-            choices.push_back(selection);
-
-            // Adding buttons
-            bGroup->addButton(selection);
-            layout->addWidget(selection);
-        }
-
-        QPushButton *okButton = new QPushButton("OK", this); // Okay button
-        layout->addWidget(okButton);
-
-        connect(okButton, &QPushButton::clicked, this, &CST_RadioButtonDialog::finishDialog);
-
-        setLayout(layout);
-    }
-
-    QString selectedOption() const {
-        for (const QRadioButton *button : choices) {
-            if (button->isChecked()) {
-                return button->text();
-            }
-        }
-        
-        // In case NOTHING is selected
-        return "";
-    }
-
-    private:
-    void finishDialog() {
-        bool selectedAtLeast1Button = false;
-        for (const QRadioButton *button : choices) {
-            if (button->isChecked()) {
-                selectedAtLeast1Button = true;
-                break;
-            }
-        }
-
-        if (selectedAtLeast1Button) {
-            accept();
-        } else {
-            QMessageBox::information(this, "Không thể hoàn thành tác vụ", "Hãy chọn ít nhất 1 lựa chọn.", QMessageBox::Ok);
-        }
-    }
-};
-
-// ---------------------------------------------------------------------
-// Feature: To have a dialog consisting of text input. Or in short, a
-//          text editor dialog (that doesn't interrupt the main window)
-// ---------------------------------------------------------------------
-class CST_TextEditorDialog: public QWidget {
-    public:
-    QLabel *mainText = new QLabel();
-    CST_TextEditorDialog(QWidget *parent = (QWidget *)nullptr, QString title = "", std::string filePath = "", bool readOnly = false) {
-        setObjectName("dialog");
-        setWindowTitle(title);
-        if (parent) {
-            setWindowIcon(parent->windowIcon());
-            setStyleSheet(parent->styleSheet());
-        }
-
-        QVBoxLayout *layout = new QVBoxLayout();
-
-        QTextEdit *lineage = new QTextEdit();
-        lineage->setReadOnly(readOnly);
-
-        // Opening the file (use a buffer to read that file's I/O)
-        std::fstream file(filePath.c_str(), std::ios::in);
-        if (file.is_open()) {
-            std::stringstream fileData;
-            fileData << file.rdbuf();
-
-            lineage->setText(QString::fromStdString(fileData.str()));
-        } else {
-            lineage->setText("Mở tệp không thành công.");
-        }
-
-        // Adding the main elements for dialog. Which isn't really a dialog.
-        layout->addWidget(mainText);
-        layout->addWidget(lineage);
-        setLayout(layout);
-    }
-
-    void setText(QString text) {
-        mainText->setText(text);
-    }
-};
-
-// ---------------------------------------------------------------------
-// Feature: To have a RICH text editor widget. Which will be very nice.
-//          Along with some features such as image inserting...
-// ---------------------------------------------------------------------
-class CST_RichTextEdit: public QWidget {
-    public:
-    QWidget *formatBar = new QWidget(this);
-    QTextEdit *editor = new QTextEdit(this);
-    QPushButton *boldFrmBtn = new QPushButton(formatBar);
-    QPushButton *italicFrmBtn = new QPushButton(formatBar);
-    QPushButton *ulFrmBtn = new QPushButton(formatBar); // The name is quite ridiculous but its 'underline'
-
-    CST_RichTextEdit(QWidget *parent = (QWidget*)nullptr) {
-        setStyleSheet(parent->styleSheet());
-
-        QVBoxLayout *layout = new QVBoxLayout(this);
-        setLayout(layout);
-        layout->setContentsMargins(0, 0, 0, 0);
-
-        // The formatting bar should be a QWidget to house multiple buttons. Should work, too.
-        QHBoxLayout *formatBarLayout = new QHBoxLayout(formatBar);
-        formatBarLayout->setAlignment(Qt::AlignLeft);
-        formatBarLayout->setContentsMargins(0, 0, 0, 0);
-
-        boldFrmBtn->setObjectName("formatBtn");
-        boldFrmBtn->setStyleSheet("font-weight: bold;");
-        boldFrmBtn->setFixedSize(20, 20);
-        boldFrmBtn->setText("B");
-        connect(boldFrmBtn, &QPushButton::clicked, this, [this] {
-            toggleFormatting('B');
-        });
-
-        formatBarLayout->addWidget(boldFrmBtn); // Finalize with a pop
-
-        italicFrmBtn->setObjectName("formatBtn");
-        italicFrmBtn->setStyleSheet("font-style: italic;");
-        italicFrmBtn->setFixedSize(20, 20);
-        italicFrmBtn->setText("I");
-        connect(italicFrmBtn, &QPushButton::clicked, this, [this] {
-            toggleFormatting('I');
-        });
-
-        formatBarLayout->addWidget(italicFrmBtn); // Add the italic button in
-
-        ulFrmBtn->setObjectName("formatBtn");
-        ulFrmBtn->setStyleSheet("text-decoration: underline;");
-        ulFrmBtn->setFixedSize(20, 20);
-        ulFrmBtn->setText("U");
-        connect(ulFrmBtn, &QPushButton::clicked, this, [this] {
-            toggleFormatting('U');
-        });
-
-        formatBarLayout->addWidget(ulFrmBtn);
-
-        layout->addWidget(formatBar);
-
-        // The editor
-        editor->installEventFilter(this);
-        editor->setAcceptRichText(false);
-        editor->setMinimumHeight(140); // Yeah we WILL definitely need this. ngl its trickery but still...
-
-        connect(editor, &QTextEdit::cursorPositionChanged, this, &CST_RichTextEdit::reloadCurrentCursorState);
-        connect(editor, &QTextEdit::selectionChanged, this, &CST_RichTextEdit::reloadCurrentCursorState);
-        layout->addWidget(editor);
-
-        // Initialize variables (and statuses...)
-        initVars();
-    }
-
-    void initVars() {
-        // isCurrentlyBold = false;
-        // isCurrentlyItalic = false;
-        // isCurrentlyUnderlined = false;
-        editor->setFontWeight(QFont::Normal);
-        editor->setFontItalic(false);
-        editor->setFontUnderline(false);
-
-        // Setting editor stats
-        editor->setFontWeight(QFont::Normal);
-    }
-
-    void reloadCurrentCursorState() {
-        // To reload the current cursor's state (including its formatting, area, etc...)
-        // QTextCursor cursor = editor->textCursor();
-
-        // If current font weight is bold
-        if (editor->fontWeight() == QFont::Bold) boldFrmBtn->setStyleSheet("background-color: " + FORMATBTN_SELECTED + "; font-weight: bold;");
-        else boldFrmBtn->setStyleSheet("background-color: " + FORMATBTN_DEFAULT + "; font-weight: bold;");
-
-        if (editor->fontItalic()) italicFrmBtn->setStyleSheet("background-color: " + FORMATBTN_SELECTED + "; font-style: italic;");
-        else italicFrmBtn->setStyleSheet("background-color: " + FORMATBTN_DEFAULT + "; font-style: italic;");
-
-        if (editor->fontUnderline()) ulFrmBtn->setStyleSheet("background-color: " + FORMATBTN_SELECTED + "; text-decoration: underline;");
-        else ulFrmBtn->setStyleSheet("background-color: " + FORMATBTN_DEFAULT + "; text-decoration: underline;");
-    }
-
-    // A function for toggling a certain 'kind' of formatting
-    //
-    // For instance, can be used as: toggleFormatting('B') to toggle bold
-    // formatting, so on and so forth
-    void toggleFormatting(char frm) {
-        if (frm == 'B' || frm == 'b') {
-            if (editor->fontWeight() != QFont::Bold) {
-                editor->setFontWeight(QFont::Bold);
-            } else {
-                editor->setFontWeight(QFont::Normal);
-            }
-        } else if (frm == 'I' || frm == 'i') {
-            if (!editor->fontItalic()) {
-                editor->setFontItalic(true); // Now its italic
-            } else {
-                editor->setFontItalic(false);
-            }
-        } else if (frm == 'U' || frm == 'u') {
-            if (!editor->fontUnderline()) {
-                editor->setFontUnderline(true);
-            } else {
-                editor->setFontUnderline(false);
-            }
-        }
-
-        reloadCurrentCursorState();
-    }
-
-    // Appending text. Kinda nice, isn't it?
-    void append(QString text) {
-        editor->append(text);
-    }
-
-    // Fast oneclick formatless text setting
-    void setText(QString text, bool reset) {
-        if (reset) initVars();
-        editor->setText(text);
-    }
-
-    QString toHtml() const {
-        QTextDocumentFragment frag(editor->document());
-        QString fullHtml = frag.toHtml();
-
-        // Time to slice this to pieces
-        // So we already know that there will be tags:
-        // <!--StartFragment-->
-        // <!--EndFragment-->
-        // And because of that, it should be safe to say
-        // we dont need anything else over this.
-        static const QString& startTag = "<!--StartFragment-->";
-        static const QString& endTag = "<!--EndFragment-->";
-
-        int slStart = fullHtml.indexOf(startTag);
-        int slEnd = fullHtml.indexOf(endTag);
-
-        // Validating the newly accquired positions
-        if (slStart >= 0 && slEnd > slStart) {
-            // Slicing and returning.
-            // Also skipping the unneccessary tags
-            return fullHtml.mid(slStart + startTag.length(), slEnd - (slStart + startTag.length()));
-        }
-
-        return "";
-    }
-
-    void setHtml(const QString& text) {
-        editor->clear();
-        editor->insertHtml(text);
-    }
-
-    protected:
-    // Filtering event if it happens. Override the stock function
-    bool eventFilter(QObject* obj, QEvent* event) override {
-        // Check if user is pressing when selecting the editor (setting it as active)
-        if (obj == editor && event->type() == QEvent::KeyPress) {
-            if (!editor) {
-                std::cout << "[*RICH TEXT EDIT* WIDGET] editor is nullptr\n";
-                return QObject::eventFilter(obj, event);
-            }
-
-            // Get the underlying key event
-            auto *keyEvent = static_cast<QKeyEvent*>(event);
-
-            // if (!editor->focused)
-
-            // Debugging
-            // std::cout << "Key pressed:" << keyEvent->key() << "Modifiers:" << keyEvent->modifiers().toInt() << '\n';
-
-            // FUCKING BITMASK
-            // What are those shits?
-            // They gives a bunch of logic errors and they are fucking nauseating...
-            if ((keyEvent->modifiers() & Qt::ControlModifier) && keyEvent->key() == Qt::Key_B) {
-                // Yeah Ctrl+B
-                toggleFormatting('B');
-                return true; // Handled. Skip default
-            }
-
-            if ((keyEvent->modifiers() & Qt::ControlModifier) && keyEvent->key() == Qt::Key_I) {
-                // Ctrl+I babyyyyy
-                toggleFormatting('I');
-                return true;
-            }
-
-            if ((keyEvent->modifiers() & Qt::ControlModifier) && keyEvent->key() == Qt::Key_U) {
-                // Ctrl+U for underline
-                toggleFormatting('U');
-                return true;
-            }
-
-            return false; // Not handled.
-        }
-
-        return QObject::eventFilter(obj, event);
-    }
-};
-
-// ---------------------------------------------------------------
-// Feature: A list view that cans be modified in terms of entries
-// ---------------------------------------------------------------
-class CST_Listing: public QWidget {
-    public:
-    QListView *listView = new QListView(this);
-    QStringListModel *model = new QStringListModel(this); // NULL AT FIRST, I GUESS
-    QPushButton *addBtn = new QPushButton(this); // It's shit, i know, its inefficient, i know
-    QPushButton *subBtn = new QPushButton(this); // what do you honestly expect from a fucking 14 years old?
-
-    CST_Listing(QWidget *parent = (QWidget *)nullptr) {
-        setStyleSheet(parent->styleSheet());
-
-        QVBoxLayout *layout = new QVBoxLayout(this);
-        setLayout(layout);
-
-        layout->setContentsMargins(0, 0, 0, 0);
-        layout->addWidget(listView);
-        
-        // The buttons need to be on the same plane
-        addBtn->setText("+ Thêm");
-        subBtn->setText("- Bớt");
-        addBtn->setObjectName("genericBtn"); // Idk man, we need this so that the btns have
-        subBtn->setObjectName("genericBtn"); // the correct looks
-
-        // Connecting to the neccessary functions
-        connect(addBtn, &QPushButton::clicked, this, CST_Listing::addEntry);
-        connect(subBtn, &QPushButton::clicked, this, CST_Listing::removeEntry);
-
-        // Creates a horizontally aligned QWidget
-        QWidget *btnPlane = new QWidget(this);
-        btnPlane->setStyleSheet(styleSheet());
-        QHBoxLayout *btnPlaneLayout = new QHBoxLayout(btnPlane);
-
-        btnPlaneLayout->setAlignment(Qt::AlignLeft);
-        btnPlaneLayout->setContentsMargins(0, 0, 0, 0);
-        btnPlaneLayout->addWidget(addBtn);
-        btnPlaneLayout->addWidget(subBtn);
-
-        btnPlane->setLayout(btnPlaneLayout);
-
-        layout->addWidget(btnPlane);
-    }
-
-    // Setting entries of list
-    void setEntries(QStringList entList) {
-        model->setStringList(entList);
-        listView->setModel(model);
-    }
-
-    // Getting entries of list
-    QStringList getEntries() const {
-        return model->stringList();
-    }
-
-    void setReadOnly(bool b) {
-        listView->setEditTriggers(b ? QAbstractItemView::NoEditTriggers : QAbstractItemView::AllEditTriggers);
-    }
-
-    private:
-    void addEntry() {
-        bool ok; // This is NOT a pointer
-        // Using a pointer pointing to the ok variable (which is not a pointer) to get the value.
-        // Very fun
-        QString name = QInputDialog::getText(this, "Nhập tên của mục mới", "Hãy nhập tên cho mục mới bạn cần thêm:", QLineEdit::Normal, "", &ok);
-
-        if (ok && !name.isEmpty()) { // User clicked OK and did not leave name blank
-            QStringList curEnt = getEntries(); // Get current entries so that I can add more
-
-            // Validifying
-            bool unique = true;
-            for (const QString entName : curEnt) {
-                if (entName == name)  {
-                    // So what this does is it browse through the LIST
-                    // If it found just a single matching entry, it would HALT immediately
-                    // and return that the one we just typed in is NOT unique.
-                    // If it didn't and ran through the entire QStringList, then we accepts this as unique
-                    unique = false;
-                    break;
-                }
-            }
-
-            if (unique) {
-                curEnt << name;
-                setEntries(curEnt); // Set the new entries we just created as the current entries
-            } else {
-                QMessageBox::warning(this, "Chưa thêm mục", "Mục không được thêm vào vì có sự trùng lặp", QMessageBox::Ok);
-                addEntry(); // Recursiveness is something I like? Idk man, its just fascinating asf.
-            }
-        }
-    }
-
-    void removeEntry() {
-        // To remove an entry, we need to index where is that entry we are selecting...
-        QModelIndexList indexes = listView->selectionModel()->selectedRows(0);
-
-        QStringList curEnts = getEntries();
-
-        for (const auto& index : indexes) {
-            curEnts.removeAt(index.row());
-        }
-
-        // Update string model
-        setEntries(curEnts);
-    }
-};
-
-// ------------------------------------------------
-// Functionality: To edit/change contests settings
-// ------------------------------------------------
-class WIN_ContestsSettings: public QWidget {
-    public:
-    // Sidebar widget
-    QListWidget *listView = new QListWidget(this);
-    CST_RichTextEdit *descEdit = new CST_RichTextEdit(this);
-    CST_Listing *classList = new CST_Listing(this);
-    QLabel *contestNameLabel = new QLabel(); // Give it nullptr since I am a lazy bitch
-    QPushButton *saveBtn = new QPushButton();
-
-    json contests; // Contest data in JSON. Would allow for faster reading since the whole thing is already based around JSON
-    std::string currentCnts = "";
-    
-    WIN_ContestsSettings(QWidget *parent = (QWidget *)nullptr) {
-        setObjectName("container");
-        setWindowIcon(parent->windowIcon());
-        setStyleSheet(parent->styleSheet());
-        setWindowTitle("Cài đặt bài thi");
-        setAttribute(Qt::WA_DeleteOnClose); // Cleaning
-        
-        setMinimumHeight(400);
-        setMinimumWidth(600);
-        resize(QSize(700, 450)); // this is tiring asf ngl
-        
-        // LAYOUT
-        QVBoxLayout *layout = new QVBoxLayout();
-        setLayout(layout);
-        
-        // SPLITTER (for sidebar and details pane)
-        QSplitter *splitter = new QSplitter();
-        layout->addWidget(splitter);
-        
-        // The label showing the currently selected contest. Needs to be way up here since this has
-        // to be the first reference (except for the part to register this variable).
-        contestNameLabel->setStyleSheet(STYLE_BIGLABEL);
-        contestNameLabel->setText("Chưa chọn bài thi nào"); // TODO: Fix this useless crap
-
-        // Save button. Reference before fetch contests. All details widgets needs to be referenced first
-        // before fetchContests() is called since that's gotta be how it works or else it will be overwritten
-        // by the default settings.
-        saveBtn->setObjectName("genericBtn");
-        saveBtn->setText("Lưu");
-        saveBtn->setEnabled(false); // Turns disabled IF there is no contest to save to.
-        saveBtn->setFixedWidth(100);
-        connect(saveBtn, &QPushButton::clicked, this, WIN_ContestsSettings::saveInfo);
-
-        // INITIALIZATION STEP. I have no idea why I need to put this function caller way up here. But whatever.
-        // after all it does work and thats what matters.
-        fetchContests(true);
-        
-        // SIDEBAR
-        listView->setObjectName("con_sec");
-        listView->setMaximumWidth(280);
-        
-        // CONTEST DETAILS (A normal containable widget)
-        QScrollArea *contestDetailsScrollable = new QScrollArea();
-        contestDetailsScrollable->setWidgetResizable(true); // IMPORTANT: This makes the scroll area resize the widget
-        contestDetailsScrollable->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-        contestDetailsScrollable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
-
-        // Set size policy to expand in both directions
-        contestDetailsScrollable->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-        
-        QWidget *contestDetails = new QWidget();
-        contestDetails->setObjectName("con_sec");
-        contestDetails->setStyleSheet(styleSheet());
-        QVBoxLayout *contestDetailsLayout = new QVBoxLayout(contestDetails);
-        
-        // Setting the layout
-        contestDetails->setLayout(contestDetailsLayout);
-
-        contestDetailsLayout->addWidget(contestNameLabel);
-
-        // The label showing the description section
-        QLabel *descLabel = new QLabel(contestDetails);
-        descLabel->setObjectName("con_lab");
-        descLabel->setText("Mô tả bài thi");
-
-        QLabel *classLabel = new QLabel(contestDetails);
-        classLabel->setObjectName("con_lab");
-        classLabel->setText("Các lớp nhận bài thi");
-        
-        // Configuring classList
-        classList->setReadOnly(true);
-
-        // Adding in the widgets in order (for the looks actually.).
-        contestDetailsLayout->addWidget(descLabel);
-        contestDetailsLayout->addWidget(descEdit);
-        contestDetailsLayout->addWidget(classLabel);
-        contestDetailsLayout->addWidget(classList);
-        contestDetailsLayout->addWidget(saveBtn);
-        
-        contestDetailsScrollable->setWidget(contestDetails);
-        
-        splitter->addWidget(listView);
-        splitter->addWidget(contestDetailsScrollable);
-    }
-    
-    private:
-    std::vector<std::string> contestByRowOrder;
-    // --------------------------
-    // Purpose: Look at the name
-    // --------------------------
-    void reloadContestsVar() {
-        std::fstream contestsFile(dirPath + CONTESTS_PATH, std::ios::in);
-        if (contestsFile.is_open()) {
-            // No errors
-            try {
-                // Apply the neccessary data
-                contests = json::parse(contestsFile);
-
-                std::cout << contests << '\n';
-            } catch (const json::parse_error& e) {
-                // Yes errors
-                errorDialog("Không thể đọc dữ liệu bài thi (Tệp bị hỏng?).");
-                close();
-            }
-        } else {
-            std::cout << "Unable to open contestsFile\n";
-            errorDialog("Không thể truy cập dữ liệu bài thi.");
-            close();
-        }
-        contestsFile.close();
-    }
-
-    // ---------------------------------------------------------------
-    // Purpose: A way to fetch new contests when I just opened it up.
-    // ---------------------------------------------------------------
-    void fetchContests(bool selectEntryAutomatically) {
-        reloadContestsVar();
-        listView->clear();
-
-
-        // After we've got the required data to secure the ticket to showing whats needed
-        // A.K.A showing the contests in a LIST VIEW. Which is pretty much obsolete at this
-        // point but I dont have any other alternative that is much easier to use.
-        for (const auto& item : contests.items()) {
-            // std::cout << "[*ContestsSettings] Now processing: " << item.key() << '\n';
-            contestByRowOrder.push_back(item.key());
-            const QString contestName = QString::fromStdString(item.key());
-
-            QListWidgetItem *listItem = new QListWidgetItem(listView);
-
-            // Actually. Even though it will be kinda a memory hog, I still wants to make it looks BEAUTIFUL
-            // So. What's the looks?
-            // +-----------------------+
-            // | BIG LABEL FOR CONTEST |
-            // | smaller for classes   |
-            // +-----------------------+
-            // This will be achievable with a QWidget
-            QWidget *listItemWidget = new QWidget(this);
-            QVBoxLayout *listItemWidgetLayout = new QVBoxLayout(listItemWidget); // Actually, I don't like the names to be too
-                                                                                 // fucking long. But I have no other choices
-
-            listItemWidget->setLayout(listItemWidgetLayout); // Setting the layout. Now we just need to make all these work by
-                                                             // Adding QLabels
-            
-            QLabel *contestHeader = new QLabel(listItemWidget);
-            contestHeader->setStyleSheet(STYLE_BIGLABEL);
-            contestHeader->setText(contestName);
-
-            QLabel *contestInf = new QLabel(listItemWidget); // The smaller information label
-
-            // Setting text
-            contestInf->setText(QString::fromStdString(contests[item.key()]["Desc"]));
-            contestInf->setTextFormat(Qt::RichText);
-            contestInf->setWordWrap(false); // No automatic wrapping
-            contestInf->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed); // No expanding.
-            contestInf->setFixedHeight(contestInf->fontMetrics().height() + 4); // Housing ONE LINE only
-            // std::cout << item.key() << ": " << item.value() << '\n';
-
-            // Adding the newly made headers and inf elements
-            listItemWidgetLayout->addWidget(contestHeader);
-            listItemWidgetLayout->addWidget(contestInf);
-
-            // Now we apply the QWidget in
-            listItem->setSizeHint(listItemWidget->sizeHint());
-            listView->setItemWidget(listItem, listItemWidget);
-
-            if (contestByRowOrder.size() == 1 && selectEntryAutomatically) { // If this is a first
-                // This is created so that it will execute only if there is at least one contest
-                // available.
-                // Else then nothing will show and it should be disabled (by default).
-                listView->setCurrentItem(listItem);
-                contestNameLabel->setText(contestName);
-                saveBtn->setEnabled(true);
-                currentCnts = contestName.toStdString();
-
-                toCnts(contestName.toStdString());
-                std::cout << "Performed special move on contestByRowOrder. Guess what it is :)\n";
-            }
-        }
-
-        // Styling to make the list view works like a navigation pane
-        listView->setSelectionMode(QAbstractItemView::SingleSelection);
-        listView->setEditTriggers(QAbstractItemView::NoEditTriggers); // Prevent editing
-
-        // Connecting the signal of selection.
-        connect(listView, &QListWidget::itemClicked, this, [this](const QListWidgetItem *item) {
-            const int index = listView->row(item);
-
-            std::cout << "Clicked on " << contestByRowOrder[index] << '\n';
-            currentCnts = contestByRowOrder[index];
-            toCnts(contestByRowOrder[index]);
-        });
-    }
-
-    // --------------------------------------------------------------------
-    // Purpose: To save the information to the FILE. Alright? Not the JSON
-    //          variable but the FILE ITSELF. Kinda like syncing
-    // --------------------------------------------------------------------
-    void saveInfo() {
-        contests[currentCnts]["Desc"] = descEdit->toHtml().toStdString();
-
-        // Classes will be different since it is a list
-        std::vector<std::string> classVectorList;
-        for (const QString& className : classList->getEntries()) {
-            classVectorList.push_back(className.toStdString());
-        }
-        contests[currentCnts]["Classes"] = classVectorList;
-        // std::cout << descEdit->toHtml().toStdString();
-
-        // Now some I/O trickery because to be honest, Idk how it works either
-        std::fstream contestsFile(dirPath + CONTESTS_PATH, std::ios::out);
-        if (contestsFile.is_open()) {
-            contestsFile << contests;
-        } else {
-            errorDialog("Mở tệp bài làm không thành công. Đã có lỗi xảy ra.");
-        }
-    }
-
-    // --------------------------------------------------------
-    // Purpose: To refresh currently clicked on contest with a
-    //          compact function
-    // --------------------------------------------------------
-    void toCnts(std::string contestName) {
-        reloadContestsVar();
-
-        contestNameLabel->setText(QString::fromStdString(contestName));
-        descEdit->setHtml(QString::fromStdString(contests[contestName]["Desc"]));
-
-        // Identifying all classes that will be recieving this contest
-        QStringList classStringList;
-        for (const std::string& className : contests[contestName]["Classes"]) {
-            classStringList << QString::fromStdString(className); // Incorporate to a QStringList
-            std::cout << className << ", "; // Debugging
-        }
-        std::cout << "\b\b\n"; // Idk my man
-
-        // Apply into the classList
-        classList->setEntries(classStringList);
-        
-        std::cout << "[*ContestsSettings] Refreshed Information (details) panel.\n";
-    }
-
-    // ---------------------------------------------------------------------------
-    // Purpose: Showing errors faster than having to type an actual long command.
-    //          Can't believe I have to make a duplicate
-    // ---------------------------------------------------------------------------
-    void errorDialog(std::string error) {
-        QMessageBox *msgBox = new QMessageBox();
-        msgBox->setText(QString::fromStdString("Đã có lỗi xảy ra: " + error));
-        msgBox->setWindowTitle("Lỗi");
-        msgBox->setIcon(QMessageBox::Critical);
-        msgBox->setStandardButtons(QMessageBox::StandardButton::Ok);
-        // msgBox->addButton("OK", QMessageBox::ButtonRole::AcceptRole);
-        msgBox->setWindowIcon(windowIcon());
-        msgBox->setStyleSheet(styleSheet());
-
-        msgBox->show();
-    }
-
-    protected: // Events in which are native Qt events
-    void closeEvent(QCloseEvent *event) override {
-        event->accept();
-        this->deleteLater(); // Cleaning.
-    }
-};
 
 // --------------------------------------
 // Main panel window for all operations.
@@ -978,12 +161,15 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QPixmap iconPixmap;
     QFont monospaceFont; // NULL at first
     QString styleSheetResult;
-
+    
     // Processes
     QProcess *judgingProcess = new QProcess();
     bool judgingEnabled;
     QProcess *webserverProcess = new QProcess();
     bool webserverEnabled;
+
+    // Settings bars
+    QPushButton *contestsSettings = new QPushButton(this);
 
     PanelWindow() { // Extremely powerful? Extremely complex.
         // This is the configuration part of panelWindow.
@@ -1248,7 +434,6 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         const int btnWidth = 55, btnHeight = 55;  // Perfect square
 
-        QPushButton *contestsSettings = new QPushButton(settingsLine);
         contestsSettings->setObjectName("genericBtn");
         contestsSettings->setFixedHeight(btnHeight); contestsSettings->setFixedWidth(btnWidth);
         // Applying icon
@@ -1484,6 +669,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         loadThemeColors();
         judgingEnabled = false;
         webserverEnabled = false;
+
+        // Settings boxes info
+        contestOpened = false;
     }
 
     void about() {
@@ -1579,8 +767,6 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         COLOR_CONSOLE_WARNING = QColor(185, 153, 0);
         COLOR_CONSOLE_OK = QColor(0, 185, 0);
         COLOR_CONSOLE_DEFAULT = QColor(0, 0, 0);
-        FORMATBTN_DEFAULT = "#ffffff";
-        FORMATBTN_SELECTED = "#9cc2ff";
 
         if (themeColorsFile.is_open()) {
             std::stringstream stream;
@@ -1637,10 +823,6 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                     if (ok) COLOR_CONSOLE_DEFAULT = QColor(valR, valG, valB);
                     else continue;
-                } else if (name == "FORMATBTN_DEFAULT") {
-                    FORMATBTN_DEFAULT = value;
-                } else if (name == "FORMATBTN_SELECTED") {
-                    FORMATBTN_SELECTED = value;
                 } else {
                     std::cout << "[THEMECOLOR OPTION PARSER] Unknown parameter: " << name.toStdString() << '\n';
                 }
@@ -1667,7 +849,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     }
 
     private: // PRIVATE FUNCTIONS. These cannot be connected to outside of whatever this object is.
-
+    bool contestOpened; // A variable for showing the information of if the contest settings is opened or not
     // -------------------------------------------------
     // Purpose: [GROUPED] (onSidebarFeatureButtonPushed, 
     //          readyJudgingOutput, stoppedJudging)
@@ -2379,9 +1561,17 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     //          weird bar above the table in the management tab
     // -----------------------------------------------------------------
     void showButtonInfoFromBarType(std::string type) {
-        if (type == "contests") {
+        if (type == "contests" && !contestOpened) {
             WIN_ContestsSettings *cstWin = new WIN_ContestsSettings(this);
             cstWin->show();
+
+            contestOpened = true;
+            contestsSettings->setEnabled(false); // Disable the button
+
+            connect(cstWin, &WIN_ContestsSettings::closed, this, [this]{
+                contestOpened = false;
+                contestsSettings->setEnabled(true);
+            });
         }
     }
 
