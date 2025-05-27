@@ -4,10 +4,10 @@
     justify-content: center;
     text-align: center;
     align-items: center;
-    background-color: var(--background-active);
+    background: #295d73;
+    background: linear-gradient(160deg,rgba(41, 93, 115, 1) 0%, rgba(66, 115, 189, 1) 53%, rgba(28, 28, 255, 1) 100%);
     padding: 40px;
     border-radius: 10px;
-    background-image: url('/assets/techiebanner.jpg');
     background-size: cover;
     background-position: 60% 16%;
     box-shadow: var(--shadow) 0px 4px 10px;
@@ -42,7 +42,8 @@
 
 .content .info .header {
     font-weight: 440;
-    background-image: url('/assets/techiebanner.jpg');
+    background: #295d73;
+    background: linear-gradient(347deg,rgba(41, 93, 115, 1) 0%, rgba(66, 115, 189, 1) 53%, rgba(28, 28, 255, 1) 100%); 
     color: white;
     background-size: cover;
     background-position: 60% 16%;
@@ -54,7 +55,8 @@
 .content .listview .header {
     /* width: 100%; */
     font-weight: 440;
-    background-image: url('/assets/techiebanner.jpg');
+    background: #295d73;
+    background: linear-gradient(10deg,rgba(41, 93, 115, 1) 0%, rgba(66, 115, 189, 1) 53%, rgba(28, 28, 255, 1) 100%);
     color: white;
     background-size: cover;
     background-position: 60% 5%;

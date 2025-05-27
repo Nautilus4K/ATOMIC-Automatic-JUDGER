@@ -26,7 +26,7 @@ static const std::string USERQUEUE_DIR = "/workspace/queue/";
 static const std::string USERSUBHISTORY_DIR = "/userdata/";
 static const std::string SUBMITLOG_DIR = "/workspace/result/logs/";  // EVERY SINGLE DIRECTORY PATH NEEDS TO HAVE A TRAILING `/`
 
-static const std::string PYDIR = "/.venv/Scripts/python.exe";
+static const std::string PYDIR = "/python3118/python.exe";
 static const std::string JUDGING_PATH = "/judge.py";
 static const std::string WEBSERVER_PATH = "/apache.py";
 

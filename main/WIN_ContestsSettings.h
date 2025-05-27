@@ -4,6 +4,7 @@
 #include <QtWidgets/QWidget>
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QLabel>
+#include <QtWidgets/QTableWidget>
 
 #include "CST_RichTextEdit.h"
 #include "CST_Listing.h"
@@ -26,6 +27,7 @@ class WIN_ContestsSettings: public QWidget {
     CST_Listing *classList = new CST_Listing(this);
     QLabel *contestNameLabel = new QLabel(); // Give it nullptr since I am a lazy bitch
     QPushButton *saveBtn = new QPushButton();
+    QTableWidget *testTable = new QTableWidget(this);
 
     json contests; // Contest data in JSON. Would allow for faster reading since the whole thing is already based around JSON
     std::string currentCnts = "";

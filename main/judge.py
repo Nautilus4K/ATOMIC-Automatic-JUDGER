@@ -562,7 +562,14 @@ def judge(fullfilename: str, show_test: bool):
         pinfo(f"Đang chấm {filename}...")
 
         # Prepare to write logs
-        logfile = open(filePath+LOG_PATH+fullfilename+".log", "w", encoding="utf-8")
+        logfiles = os.listdir(os.path.join(filePath, LOG_PATH))
+        filenamenoext = os.path.splitext(fullfilename)[0]
+
+        for log in logfiles:
+            if log.startswith(filenamenoext):
+                os.remove(os.path.join(filePath, LOG_PATH, log))
+
+        logfile = open(filePath + LOG_PATH + fullfilename + ".log", "w", encoding="utf-8")
         logfile.write("BÀI: " + fullfilename + "\n")
         # Get extensions of file
         ext = filedata[2]
@@ -586,7 +593,8 @@ def judge(fullfilename: str, show_test: bool):
                         outputFromFile,
                         inputstr + "\n",
                         normalized_contests[filename]["InputFile"],
-                        normalized_contests[filename]["OutputFile"]
+                        normalized_contests[filename]["OutputFile"],
+                        normalized_contests[filename]["TimeLimit"]
                     )
                     pok(f"Đã chạy file với exit code {code} trong {exectime} giây")
                     if exc or excmsg:
@@ -697,7 +705,8 @@ def judge(fullfilename: str, show_test: bool):
                             outputFromFile,
                             inputstr + "\n",
                             normalized_contests[filename]["InputFile"],
-                            normalized_contests[filename]["OutputFile"]
+                            normalized_contests[filename]["OutputFile"],
+                            normalized_contests[filename]["TimeLimit"]
                         )
                         pok(f"Đã chạy file với exit code {code} trong {exectime} giây")
                         if exc or excmsg:

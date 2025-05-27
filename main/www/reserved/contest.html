@@ -18,7 +18,8 @@
         %%statsbar%%
 
         <div class="infoframe">
-            <h1>%%contest_name%%</h1>
+            <h1 id="contestname">%%contest_name%%</h1>
+            <h3 id="grade">[]</h3>
             <p>%%contest_desc%%</p>
         </div>
 
@@ -35,6 +36,12 @@
 
             <p id="notice">Lỗi</p>
             <button class="submit" onclick="submit('%%contest_name%%')">Nộp bài</button>
+        </div>
+
+        <div class="logframe">
+            <h3>Thông tin bài làm trước</h3>
+
+            <p id="loglabel">Không có thông tin</p>
         </div>
 
         <footer>

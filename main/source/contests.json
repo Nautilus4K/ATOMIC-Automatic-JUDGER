@@ -1,1 +1,70 @@
-{"SumOfAB":{"Classes":["D0"],"Desc":"Nhập a, b. Xuất a + b","InputFile":"SumOfAB.INP","InputType":"raw","OutputFile":"SumOfAB.OUT","OutputType":"raw","TestAmount":2,"Tests":[["1 1","2"],["3 3","6"]],"TimeLimit":1},"Test1":{"Classes":["D0","A0"],"Desc":"Prints out `Test` on execution","InputFile":"Test1.INP","InputType":"raw","OutputFile":"Test1.OUT","OutputType":"raw","TestAmount":2,"Tests":[["","Test"],["","Test2"]],"TimeLimit":1},"Test2":{"Classes":["D0","A0"],"Desc":"What is 1 + 1?","InputFile":"Test2.INP","InputType":"file","OutputFile":"Test2.OUT","OutputType":"file","TestAmount":2,"Tests":[["","2"],["","2"]],"TimeLimit":1}}
+{
+    "SumOfAB": {
+        "Classes": [
+            "D0"
+        ],
+        "Desc": "Nhập a, b. Xuất a + b",
+        "InputFile": "SumOfAB.INP",
+        "InputType": "raw",
+        "OutputFile": "SumOfAB.OUT",
+        "OutputType": "raw",
+        "TestAmount": 2,
+        "Tests": [
+            [
+                "1 1",
+                "2"
+            ],
+            [
+                "3 3",
+                "6"
+            ]
+        ],
+        "TimeLimit": 1.0
+    },
+    "Test1": {
+        "Classes": [
+            "D0",
+            "A0"
+        ],
+        "Desc": "Prints out `Test` on execution",
+        "InputFile": "Test1.INP",
+        "InputType": "raw",
+        "OutputFile": "Test1.OUT",
+        "OutputType": "raw",
+        "TestAmount": 2,
+        "Tests": [
+            [
+                "",
+                "Test"
+            ],
+            [
+                "",
+                "Test2"
+            ]
+        ],
+        "TimeLimit": 1.0
+    },
+    "Test2": {
+        "Classes": [
+            "D0",
+            "A0"
+        ],
+        "Desc": "What is 1 + 1?",
+        "InputFile": "Test2.INP",
+        "InputType": "file",
+        "OutputFile": "Test2.OUT",
+        "OutputType": "file",
+        "TestAmount": 2,
+        "Tests": [
+            [
+                "",
+                "2"
+            ],
+            [
+                "",
+                "2"
+            ]
+        ],
+        "TimeLimit": 1.0
+    }
+}

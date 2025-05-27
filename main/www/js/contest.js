@@ -7,6 +7,28 @@ editor.setFontSize("18px");
 editor.setShowPrintMargin(false)
 editor.session.setUseWrapMode(true);
 
+// Now let's initialize the entire thing!
+fetch("/api/getsubmissioninfo", {
+  method: 'GET',
+  headers: {
+    "TOKEN": getCookie("token"),
+    "CONTEST": document.getElementById("contestname").textContent
+  }
+}).then(response => response.json()).then((json) => {
+  // console.log(json)
+
+  if (json["result"] == -1) {
+    document.getElementById("grade").textContent = "[ Chưa có điểm ]";
+  } else {
+    document.getElementById("grade").textContent = "[ " + json["result"] + " / 10 điểm ]";
+  }
+
+  if (json["log"] != "") {
+    document.getElementById("loglabel").innerHTML = json["log"].replace(/\r?\n/g, "<br>");
+  }
+});
+
+
 let lang = "cpp";
 
 // Function to switch the language mode of the editor
@@ -47,7 +69,7 @@ function switchMode(lang) {
 
 function submit(contestName) {
   const value = editor.getValue();
-  console.log(value)
+  // console.log(value)
   // console.log(value)
   
   const noticeElement = document.getElementById("notice");
@@ -56,6 +78,9 @@ function submit(contestName) {
     noticeElement.style.display = "block";
     noticeElement.style.color = "var(--dangerous)";
   } else {
+    noticeElement.textContent = "Đang nộp...";
+    noticeElement.style.display = "block";
+    noticeElement.style.color = "var(--text-color)";
     fetch("/api/submitcode", {
       method: "POST",
       headers: {

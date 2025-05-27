@@ -5,6 +5,7 @@
 #include <QtWidgets/QSplitter>
 #include <QtWidgets/QScrollArea>
 #include <QtWidgets/QMessageBox>
+#include <QtWidgets/QTableWidget>
 
 #include <QtGui/QCloseEvent>
 
@@ -83,11 +84,21 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
     // Configuring classList
     classList->setReadOnly(true);
 
+    // Label for the table that would represent tests
+    QLabel *cnTestLabel = new QLabel(contestDetails);
+    cnTestLabel->setObjectName("con_lab");
+    cnTestLabel->setText("Các bộ kiểm tra kết quả");
+
+    // Table that will represent tests
+    testTable->setMinimumHeight(130);
+
     // Adding in the widgets in order (for the looks actually.).
     contestDetailsLayout->addWidget(descLabel);
     contestDetailsLayout->addWidget(descEdit);
     contestDetailsLayout->addWidget(classLabel);
     contestDetailsLayout->addWidget(classList);
+    contestDetailsLayout->addWidget(cnTestLabel);
+    contestDetailsLayout->addWidget(testTable);
     contestDetailsLayout->addWidget(saveBtn);
     
     contestDetailsScrollable->setWidget(contestDetails);
@@ -127,7 +138,6 @@ void WIN_ContestsSettings::reloadContestsVar() {
 void WIN_ContestsSettings::fetchContests(bool selectEntryAutomatically) {
     reloadContestsVar();
     listView->clear();
-
 
     // After we've got the required data to secure the ticket to showing whats needed
     // A.K.A showing the contests in a LIST VIEW. Which is pretty much obsolete at this
@@ -247,6 +257,9 @@ void WIN_ContestsSettings::toCnts(std::string contestName) {
 
     // Apply into the classList
     classList->setEntries(classStringList);
+
+    // Now we see the amount of tests in correspondant with the amount of rows
+    testTable->setRowCount(contests[contestName]["TestAmount"]);
     
     std::cout << "[*ContestsSettings] Refreshed Information (details) panel.\n";
 }

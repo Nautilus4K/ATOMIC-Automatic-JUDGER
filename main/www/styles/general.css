@@ -46,6 +46,11 @@
     font-style: normal;
 } */
 
+@font-face {
+  font-family: 'Cascadia Code';
+  src: url("/styles/fonts/CascadiaCode.ttf");
+}
+
 html, body {
     background-color: var(--background);
     color: var(--text-color);

@@ -27,6 +27,8 @@ CONTESTS_JSON = "/source/contests.json"
 RESULT_DIR = "/workspace/result/"
 SUBMIT_DIR = "/workspace/queue/"
 CONTEST_WEBFILE = "/www/reserved/contest.html"
+LOG_DIR = "/workspace/result/logs/"
+
 from usermanage import USERFILE_PATH as USERDATA_JSON, CLASSFILE_PATH
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
@@ -95,26 +97,28 @@ def resize_image(image_bytes, max_size=(600, 600), format="JPEG"):
     # Create an image object from bytes
     img = Image.open(io.BytesIO(image_bytes))
     
-    # Get current dimensions
+    # Step 1: Crop to square using the shortest side
     width, height = img.size
+    min_side = min(width, height)
     
-    # Calculate new dimensions while preserving aspect ratio
-    if width > max_size[0] or height > max_size[1]:
-        # Calculate the ratio
-        ratio = min(max_size[0] / width, max_size[1] / height)
-        new_width = int(width * ratio)
-        new_height = int(height * ratio)
-        
-        # Resize the image
-        img = img.resize((new_width, new_height), Image.LANCZOS)
+    # Calculate coordinates to center-crop the image
+    left = (width - min_side) // 2
+    upper = (height - min_side) // 2
+    right = left + min_side
+    lower = upper + min_side
     
-    # Convert back to bytes with explicit format
+    img = img.crop((left, upper, right, lower))  # Now it's a square
+
+    # Step 2: Resize if necessary
+    if min_side > max_size[0]:  # compare to one side, since it's square
+        img = img.resize(max_size, Image.LANCZOS)
+
+    # Step 3: Save back to bytes
     output_bytes = io.BytesIO()
-    # If img.format is None, use the provided format
     img_format = img.format if img.format else format
     img.save(output_bytes, format=img_format)
     output_bytes.seek(0)
-    
+
     return output_bytes.getvalue()
 
 
@@ -531,7 +535,7 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
             with open(dirPath + SESSION_JSON, "w", encoding='utf-8') as sessionsFile:
                 json.dump(sessions, sessionsFile)
 
-            with open(dirPath + SUBMIT_DIR + f"[{username}][{headers["CONT"]}].{headers["LANG"]}", "w", encoding='utf-8') as submitFile:
+            with open(dirPath + SUBMIT_DIR + f"[{username}][{headers['CONT']}].{headers['LANG']}", "w", encoding='utf-8') as submitFile:
                 submitFile.write(body.decode('utf-8'))
 
         except Exception as e:
@@ -616,6 +620,47 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
             "message": message,
             "result": resultclasses,
             "contestslist": contestList,
+        }
+
+    elif path == "/api/getsubmissioninfo" and "TOKEN" in headers and "CONTEST" in headers:
+        try:
+            success = True
+            message = ""
+            logdata = ""
+            result = -1
+            
+            # Get username
+            with open(dirPath + SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
+                sessions = json.load(sessionsFile)
+            username = sessions[headers["TOKEN"]]["username"]
+
+            # Get log file's data
+            logfiles = os.listdir(dirPath + LOG_DIR)
+            for log in logfiles:
+                if log.startswith(f"[{username}][{headers['CONTEST']}]"):
+                    with open(dirPath + LOG_DIR + log, "r", encoding='utf-8') as logFile:
+                        logdata = logFile.read()
+
+            # Get submission grades (points)
+            if os.path.exists(dirPath + RESULT_DIR + username + ".json"):
+                with open(dirPath + RESULT_DIR + username + ".json", "r", encoding='utf-8') as resultFile:
+                    resultJson = json.load(resultFile)
+
+            if headers["CONTEST"] in resultJson:
+                result = resultJson[headers["CONTEST"]]
+
+        except Exception as e:
+            success = False
+            message = str(e)
+            logdata = ""
+            result = -1
+            print("/api/getsubmissioninfo" + str(e))
+
+        json_response = {
+            "success": success,
+            "message": message,
+            "log": logdata,
+            "result": result
         }
 
     return json_response

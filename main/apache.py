@@ -22,7 +22,7 @@ log_file = open(log_path, "a", encoding="utf-8")
 
 if not existedPrior:
     log_file.write("      ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: \n     :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   \n    :+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     \n   +#+ +:+ +#+ +#++:++#++: +#+    +:+     +#+         +#+     +#+       +#+    +:+ +#++:++#++  +#+  +:+   +#++:++       \n  +#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       \n #+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       \n###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###   \n")
-    log_file.write("\nMade with Pylons/wairess. Put together by Nautilus4K with love 💖.\n")
+    log_file.write("\nMade with Pylons/waitress. Put together by Nautilus4K with love 💖.\n")
 
 log_file.write(f"\n\n\n------------------------------\nEXEC DATE: {datetime.datetime.now()}\n\n") # Writing headers for each section
 
