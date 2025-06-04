@@ -1,5 +1,7 @@
-#include "WIN_ContestsSettings.h"
-#include "consts.h"
+#include "WIN_ContestsSettings.h" // The main shyt
+#include "CST_TestCaseDialog.h"   // For the dialog of the test cases
+#include "consts.h"               // Constants
+#include "utilities.h"            // Utilities (custom conversion functions)
 
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QSplitter>
@@ -88,9 +90,16 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
     QLabel *cnTestLabel = new QLabel(contestDetails);
     cnTestLabel->setObjectName("con_lab");
     cnTestLabel->setText("Các bộ kiểm tra kết quả");
+    
+    // List of test cases
+    testCasesList->setMinimumHeight(150);
 
-    // Table that will represent tests
-    testTable->setMinimumHeight(130);
+    // Adding test cases functionality
+    QPushButton *addTestCaseBtn = new QPushButton(this);
+    addTestCaseBtn->setObjectName("genericBtn");
+    addTestCaseBtn->setFixedWidth(110);
+    addTestCaseBtn->setText("Thêm bộ test");
+    connect(addTestCaseBtn, &QPushButton::clicked, this, WIN_ContestsSettings::addCase);
 
     // Adding in the widgets in order (for the looks actually.).
     contestDetailsLayout->addWidget(descLabel);
@@ -98,7 +107,8 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
     contestDetailsLayout->addWidget(classLabel);
     contestDetailsLayout->addWidget(classList);
     contestDetailsLayout->addWidget(cnTestLabel);
-    contestDetailsLayout->addWidget(testTable);
+    contestDetailsLayout->addWidget(testCasesList);
+    contestDetailsLayout->addWidget(addTestCaseBtn);
     contestDetailsLayout->addWidget(saveBtn);
     
     contestDetailsScrollable->setWidget(contestDetails);
@@ -139,6 +149,16 @@ void WIN_ContestsSettings::fetchContests(bool selectEntryAutomatically) {
     reloadContestsVar();
     listView->clear();
 
+    if (!contests.is_object() || contests.empty()) {
+        // That is not safe. Also I/O is stuck.
+        // std::cout << "[*] INVALID CONTEST JSON. ABORT IMMEDIATELY. NO SEGMENTATION FAULT ALLOWED\n";
+        // _sleep(100); // 100 miliseconds and DARN IT DOESN'T WORK. WHY THO
+
+        // If this happens, we will be so limited on stuffs that it will be like this:
+        // No IO (stuck), no function calling (crash) and the other idk.
+        return; // or handle the empty case appropriately
+    }
+
     // After we've got the required data to secure the ticket to showing whats needed
     // A.K.A showing the contests in a LIST VIEW. Which is pretty much obsolete at this
     // point but I dont have any other alternative that is much easier to use.
@@ -158,10 +178,10 @@ void WIN_ContestsSettings::fetchContests(bool selectEntryAutomatically) {
         // This will be achievable with a QWidget
         QWidget *listItemWidget = new QWidget(this);
         QVBoxLayout *listItemWidgetLayout = new QVBoxLayout(listItemWidget); // Actually, I don't like the names to be too
-                                                                                // fucking long. But I have no other choices
+                                                                             // fucking long. But I have no other choices
 
         listItemWidget->setLayout(listItemWidgetLayout); // Setting the layout. Now we just need to make all these work by
-                                                            // Adding QLabels
+                                                         // Adding QLabels
         
         QLabel *contestHeader = new QLabel(listItemWidget);
         contestHeader->setStyleSheet(STYLE_BIGLABEL);
@@ -228,12 +248,183 @@ void WIN_ContestsSettings::saveInfo() {
     contests[currentCnts]["Classes"] = classVectorList;
     // std::cout << descEdit->toHtml().toStdString();
 
+    // -----------------------------------------------
+    // Remove the tests that are marked to be removed.
+    // -----------------------------------------------
+    // First, we need to sort the vector again since its very highly possible is
+    // not organized from Big to Small. The reason?
+    // -> When removing the smaller indexes, the bigger indexes will be shifted, causing some bad behavior.
+    // So we need to sort first (cuz the indexes are indexes of a stationary vector, not an ever changing one)
+    std::sort(indexesToBeRemoved.begin(), indexesToBeRemoved.end(), [](const int& a, const int& b) { // Use lambda because this is easy
+        return a > b; // Descending order.
+    });
+
+    // Now we go through each and everything in the indexes
+    for (const int& i : indexesToBeRemoved) {
+        // Remove the test cases with that same indexes
+        contests[currentCnts]["Tests"].erase(i);
+    }
+
+    // ---------------------------
+    // Applying edited test cases
+    // ---------------------------
+    // This is done because of the edit functionality, which saved its edit history into a vector variable.
+    // We have to go through each element in that vector and apply the data that is correct
+    for (const auto& iv : indexesToBeModified) { // iv means index value
+        // The newly created pair will have this layout:
+        // {index, {input, output}}
+        // We now just needs to save it all in
+
+        // Meaning: Set Test input data at the specified index to specified input data
+        contests[currentCnts]["Tests"][iv.first][0] = iv.second.first;
+
+        // Also similar
+        contests[currentCnts]["Tests"][iv.first][1] = iv.second.second;
+    }
+
+    // -------------------
+    // Adding added cases
+    // -------------------
+    // This is done for the add case functionality in here.
+    // It's very ass and does not have the capability of removing cases, but I mean, its fine, right?
+    for (const auto& v : indexesToBeAdded) {
+        // Adding the values to a predetermined variable
+        // std::cout << v.first << ", " << v.second << '\n';
+        std::vector<std::string> value = {v.first, v.second};
+
+        // Adding it in
+        contests[currentCnts]["Tests"].push_back(value);
+    }
+    
+    // Also, because we are in fact, modifying the tests amount too, so we also need to update that.
+    contests[currentCnts]["TestAmount"] = contests[currentCnts]["Tests"].size();
+
     // Now some I/O trickery because to be honest, Idk how it works either
+    bool successfullyOpenFile = false;
     std::fstream contestsFile(dirPath + CONTESTS_PATH, std::ios::out);
     if (contestsFile.is_open()) {
         contestsFile << contests;
+
+        // Tbh I am just gonna refresh the entire thing to make sure its safe and
+        // up to date. WELP. IT DOESN'T WORK THAT WAY. Let's set a variable after we closed this fully.
+        // toCnts(currentCnts); // SOUNDS GOOD
+        successfullyOpenFile = true;
     } else {
         errorDialog("Mở tệp bài làm không thành công. Đã có lỗi xảy ra.");
+    }
+    contestsFile.close();
+
+    if (successfullyOpenFile) {
+        toCnts(currentCnts);
+    }
+}
+
+void WIN_ContestsSettings::addCase() {
+    // Let's do this
+    std::cout << "WIN_ContestsSettings::addCase() called\n";
+
+    CST_TestCaseDialog *dialog = new CST_TestCaseDialog(this, 
+        "", ""
+    );
+
+    if (dialog->exec() == QDialog::Accepted) {
+        QStringList result = dialog->getResult();
+
+        QString inputValue = result[0];
+        QString outputValue = result[1];
+        
+        // In the case the user entered both sides blank. We need to ask for confirmation
+        if (inputValue == "" && outputValue == "") {
+            QMessageBox::StandardButton askResult = QMessageBox::warning(this, "Nhập trống hoàn toàn?", "Bạn có chắc muốn để trống cả đầu vào và đầu ra không?", QMessageBox::Yes | QMessageBox::No);
+
+            if (askResult == QMessageBox::No) return;
+            else {
+                std::cout << "User entered blank for both sides. Very weird\n";
+            }
+        }
+
+        indexesToBeAdded.push_back({inputValue.toStdString(), outputValue.toStdString()}); // Add in the queue
+        
+        // ALSO, before the user actually decided to save or clear the whole thing, we need to add a
+        // dummy entry (index) in the list so that the user can modify them. Very easy...? Just not
+        // removing. Cuz working on that makes my head explodes
+        int currentIndex = indexesToBeAdded.size() - 1; // Since we just added an entry to the list. The index
+                                                        // should be the final one, which can be found using
+                                                        // the good ol' size - 1 mathing*
+        
+        // Now, let's actually try to justify our targets of adding an entry that could be edited, but NOT removed
+        // since working on these is really fucking ASS
+        int orderIndex = currentIndex + contests[currentCnts]["Tests"].size();
+        
+        // Initialize item (COPY PASTED. VERY BAD BUT THIS IS THE ONLY WAY)
+        QListWidgetItem *item = new QListWidgetItem(QString::fromStdString(intToString(orderIndex)), testCasesList); // The cases is the parent since this will be inside
+
+        QWidget *itemWidget = new QWidget(testCasesList);
+        QHBoxLayout* itemLayout = new QHBoxLayout(itemWidget);
+
+        QLabel *testLabel = new QLabel(itemWidget);
+        testLabel->setText(QString::fromStdString("Test " + intToString(orderIndex)));
+        itemLayout->addWidget(testLabel, 1); // Stretch all the way to the moon (100% of space)
+
+        QWidget *buttonsArea = new QWidget(itemWidget);
+        QHBoxLayout *btnAreaLayout = new QHBoxLayout(buttonsArea);
+        itemLayout->addWidget(buttonsArea);
+
+        // Button for editting
+        QPushButton *editBtn = new QPushButton(buttonsArea);
+        editBtn->setObjectName("genericBtn");
+        QPixmap editBtnPixmap(EDITICON_PATH);
+        QIcon editBtnIcon(editBtnPixmap);
+        editBtn->setIcon(editBtnIcon);
+        editBtn->setFixedSize(30, 30);
+        editBtn->setToolTip("Chỉnh sửa test này");
+
+        connect(editBtn, &QPushButton::clicked, this, [this, currentIndex] {
+            // Best to construct a lambda. I'm sorry. But this is the only way.
+            // Creating a separate function will be too costly for my time cus
+            // this is just a passion project I made for fun
+            bool indexAlreadyModified = false;
+            std::pair<std::string, std::string> modifiedValue;
+
+            // Yeah now let's make sure the data is read dynamically. We have the indexes required now too
+            modifiedValue = indexesToBeAdded[currentIndex];
+
+            CST_TestCaseDialog *dialog = new CST_TestCaseDialog(this, 
+                QString::fromStdString(modifiedValue.first), 
+                QString::fromStdString(modifiedValue.second)
+            );
+
+            if (dialog->exec() == QDialog::Accepted) {
+                // If the user actually finished the damn thing normally
+                // Get the result of their choices
+                QStringList result = dialog->getResult();
+
+                QString inputValue = result[0];
+                QString outputValue = result[1];
+
+                std::cout << "[CST_TestCaseDialog] Returned result\n";
+                std::cout << "INPUT:\n" << inputValue.toStdString() << "\n\nOUTPUT:\n" << outputValue.toStdString() << '\n';
+
+                // Modifying these entries? Ofc its fine! We just need to save it into indexesToBeAdded
+                indexesToBeAdded[currentIndex] = {inputValue.toStdString(), outputValue.toStdString()};
+            }
+        });
+
+        // Adding the buttons in a specific order (left -> right)
+        btnAreaLayout->addWidget(editBtn);
+        
+        // Applying the layout
+        btnAreaLayout->setAlignment(Qt::AlignRight);
+        btnAreaLayout->setContentsMargins(0, 0, 0, 0);
+        buttonsArea->setLayout(btnAreaLayout);
+
+        itemLayout->setAlignment(Qt::AlignLeft);
+        itemWidget->setLayout(itemLayout);
+
+        // Doing the normal shyt of adding item into the list
+        item->setSizeHint(itemWidget->sizeHint());
+        testCasesList->addItem(item);
+        testCasesList->setItemWidget(item, itemWidget);
     }
 }
 
@@ -243,6 +434,20 @@ void WIN_ContestsSettings::saveInfo() {
 // --------------------------------------------------------
 void WIN_ContestsSettings::toCnts(std::string contestName) {
     reloadContestsVar();
+    indexesToBeRemoved.clear(); // Not a pointer, so its gonna be fine
+    indexesToBeModified.clear();
+    indexesToBeAdded.clear();
+    currentCnts = contestName;
+
+    if (!contests.is_object() || contests.empty()) { // Save lives of thousands
+        // That is not safe. Also I/O is stuck.
+        // std::cout << "[*] INVALID CONTEST JSON. ABORT IMMEDIATELY. NO SEGMENTATION FAULT ALLOWED\n";
+        // _sleep(100); // 100 miliseconds and DARN IT DOESN'T WORK. WHY THO
+
+        // If this happens, we will be so limited on stuffs that it will be like this:
+        // No IO (stuck), no function calling (crash) and the other idk.
+        return; // or handle the empty case appropriately
+    }
 
     contestNameLabel->setText(QString::fromStdString(contestName));
     descEdit->setHtml(QString::fromStdString(contests[contestName]["Desc"]));
@@ -258,8 +463,161 @@ void WIN_ContestsSettings::toCnts(std::string contestName) {
     // Apply into the classList
     classList->setEntries(classStringList);
 
-    // Now we see the amount of tests in correspondant with the amount of rows
-    testTable->setRowCount(contests[contestName]["TestAmount"]);
+    // Get the test cases
+    std::vector<std::vector<std::string>> testCases; // Kinda a 2 dimensional list, you know
+    // Broad preview:
+    // [ ] [0] [1]   |  0: Input    1: Output
+    // [0] "I" "O"   |  Test 1
+    // [1] "A" "E"   |  Test 2
+    // [2] "X" "Y"   |  Test 3
+    // Fetch it straight from the JSON
+    testCases = contests[contestName]["Tests"];
+
+    // Now, apply it to the list of test cases
+    // Howver, we have to clear the list before anything bad happens
+    testCasesList->clear();
+
+    int index = 0; // The index of the test cases
+                   // Responsible for numbering the tests
+    for (const std::vector<std::string>& testCase : testCases) {
+        // REMINDER [!] Index rules
+        // - 0: Input
+        // - 1: Output
+
+        // Initialize item
+        QListWidgetItem *item = new QListWidgetItem(QString::fromStdString(intToString(index)), testCasesList); // The cases is the parent since this will be inside
+
+        // The QWidget storing a smaller QWidget and a label 🔥
+        QWidget *itemWidget = new QWidget(testCasesList);
+        QHBoxLayout* itemLayout = new QHBoxLayout(itemWidget);
+
+        // The QLabel of the test 💔
+        QLabel *testLabel = new QLabel(itemWidget);
+        testLabel->setText(QString::fromStdString("Test " + intToString(index)));
+        itemLayout->addWidget(testLabel, 1); // Stretch all the way to the moon (100% of space)
+
+        // The QWidget housing the buttons 🍷
+        QWidget *buttonsArea = new QWidget(itemWidget);
+        QHBoxLayout *btnAreaLayout = new QHBoxLayout(buttonsArea);
+        itemLayout->addWidget(buttonsArea);
+
+        // The buttons 🍶
+        QPushButton *delBtn = new QPushButton(buttonsArea);
+        delBtn->setObjectName("genericBtn");
+        QPixmap delBtnPixmap(DELETEICON_PATH);
+        QIcon delBtnIcon(delBtnPixmap);
+        delBtn->setIcon(delBtnIcon);
+        delBtn->setFixedHeight(30);
+        delBtn->setFixedWidth(30);
+        delBtn->setToolTip("Xoá test này");
+        
+        connect(delBtn, &QPushButton::clicked, this, [index, item, this] {
+            // The indexes start from 0, both for the JSON and the index variable
+            std::cout << "DELETE TestIndex " << '\n';
+            
+            int row = testCasesList->row(item);
+            
+            // Safely take control the item and itemWidget's memory areas
+            QWidget *widgetToDelete = testCasesList->itemWidget(item);
+            testCasesList->removeItemWidget(item);
+            QListWidgetItem *removedItem = testCasesList->takeItem(row);
+            
+            // Safely removes the item
+            delete widgetToDelete;
+            delete removedItem;
+            
+            // Mark index as to be removed
+            indexesToBeRemoved.push_back(index);
+        });
+        
+        // Button for editting
+        QPushButton *editBtn = new QPushButton(buttonsArea);
+        editBtn->setObjectName("genericBtn");
+        QPixmap editBtnPixmap(EDITICON_PATH);
+        QIcon editBtnIcon(editBtnPixmap);
+        editBtn->setIcon(editBtnIcon);
+        editBtn->setFixedSize(30, 30);
+        editBtn->setToolTip("Chỉnh sửa test này");
+
+        connect(editBtn, &QPushButton::clicked, this, [this, contestName, index] {
+            // Best to construct a lambda. I'm sorry. But this is the only way.
+            // Creating a separate function will be too costly for my time cus
+            // this is just a passion project I made for fun
+            bool indexAlreadyModified = false;
+            std::pair<std::string, std::string> modifiedValue;
+
+            for (const auto& indexModifiedValue : indexesToBeModified) {
+                // Will only happen if the list still remains => Only if the user
+                // haven't changed tab or clicked on save
+                if (indexModifiedValue.first == index) {
+                    indexAlreadyModified = true;
+                    modifiedValue = indexModifiedValue.second; // Apply the data
+                    break;
+                }
+            }
+
+            if (!indexAlreadyModified) {
+                modifiedValue = {contests[contestName]["Tests"][index][0], contests[contestName]["Tests"][index][1]};
+            }
+
+            CST_TestCaseDialog *dialog = new CST_TestCaseDialog(this, 
+                QString::fromStdString(modifiedValue.first), 
+                QString::fromStdString(modifiedValue.second)
+            );
+
+            if (dialog->exec() == QDialog::Accepted) {
+                // If the user actually finished the damn thing normally
+                // Get the result of their choices
+                QStringList result = dialog->getResult();
+
+                QString inputValue = result[0];
+                QString outputValue = result[1];
+
+                std::cout << "[CST_TestCaseDialog] Returned result\n";
+                std::cout << "INPUT:\n" << inputValue.toStdString() << "\n\nOUTPUT:\n" << outputValue.toStdString() << '\n';
+
+                // Save into a variable(?) for pending saves (WILL AUTOMATICALLY BE CLEARED THE MOMENT THE ENTIRE THING IS REFRESHED)
+                // indexesToBeModified.first = index;
+                // indexesToBeModified.second.first = inputValue.toStdString();
+                // indexesToBeModified.second.second = outputValue.toStdString();
+                if (indexAlreadyModified) {
+                    for (int i = 0; i < indexesToBeModified.size(); i++) {
+                        // We should change the values directly
+                        if (indexesToBeModified[i].first == index) {
+                            // Good, found it
+                            // Now we just have to apply the values
+                            indexesToBeModified[i].second = {inputValue.toStdString(), outputValue.toStdString()};
+                            break;
+                        }
+                    }
+                } else {
+                    std::pair<int, std::pair<std::string, std::string>> indexValue = {index, {inputValue.toStdString(), outputValue.toStdString()}};
+                    indexesToBeModified.push_back(indexValue);
+                }
+            }
+        });
+
+        // Adding the buttons in a specific order (left -> right)
+        btnAreaLayout->addWidget(editBtn);
+        btnAreaLayout->addWidget(delBtn);
+        
+        // Applying the layout
+        btnAreaLayout->setAlignment(Qt::AlignRight);
+        btnAreaLayout->setContentsMargins(0, 0, 0, 0);
+        buttonsArea->setLayout(btnAreaLayout);
+
+        itemLayout->setAlignment(Qt::AlignLeft);
+        itemWidget->setLayout(itemLayout);
+
+        // Doing the normal shyt of adding item into the list
+        item->setSizeHint(itemWidget->sizeHint());
+        testCasesList->addItem(item);
+        testCasesList->setItemWidget(item, itemWidget);
+
+        // Yeah please dont forget this
+        // ever again.
+        index++;
+    }
     
     std::cout << "[*ContestsSettings] Refreshed Information (details) panel.\n";
 }
@@ -282,6 +640,11 @@ void WIN_ContestsSettings::errorDialog(std::string error) {
 }
 
 void WIN_ContestsSettings::closeEvent(QCloseEvent *event) {
+    // These work, I guess since I don't really understand how these work.
+    // Maybe some time later. Still, these are fucking magic.
+    // The whole concept of using silicon to answer mathematical questions
+    // is already absurd enough. And now we have this.
+    // Nice.
     emit closed();
     event->accept();
     this->deleteLater(); // Cleaning.

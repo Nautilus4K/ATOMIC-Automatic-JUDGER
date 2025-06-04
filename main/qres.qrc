@@ -3,5 +3,7 @@
         <file alias="down.png">source/images/down.png</file>
         <file alias="contests.png">source/images/contests.png</file>
         <file alias="exit.png">source/images/exit.png</file>
+        <file alias="delete.png">source/images/delete.png</file>
+        <file alias="edit.png">source/images/edit.png</file>
     </qresource>
 </RCC>

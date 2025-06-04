@@ -168,6 +168,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QProcess *webserverProcess = new QProcess();
     bool webserverEnabled;
 
+    // Fine shyt
+    QTabWidget *tabs = new QTabWidget();
+
     // Settings bars
     QPushButton *contestsSettings = new QPushButton(this);
 
@@ -327,7 +330,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         QWidget *sidebar = new QWidget();
         sidebar->setObjectName("sidebar");
         sidebar->setMinimumWidth(150);
-        sidebar->setMaximumWidth(250);
+        sidebar->setMaximumWidth(350);
 
         QVBoxLayout *sidebarLayout = new QVBoxLayout();
 
@@ -392,7 +395,6 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // +--------------------+
         // | Tabs configuration |
         // +--------------------+
-        QTabWidget *tabs = new QTabWidget();
         
         // On tab switches action
         connect(tabs, &QTabWidget::currentChanged, this, &PanelWindow::onTabSwitches);
@@ -672,6 +674,17 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         // Settings boxes info
         contestOpened = false;
+
+        // Make sure segfault doesn't happen for no fucking reason, like, dude. Idk man
+        // It only happens when I click on the contest page immediately after I opened
+        // and not after I switched some tabs, and I suspect it might be because of the
+        // fact that the whole thing wasn't ready yet. So now we have this
+        // tabs->setCurrentIndex(0);
+        // tabs->setCurrentIndex(1);
+        // tabs->setCurrentIndex(2);
+
+        // Apparently, it doesn't work. And will never work.
+        // I am just gonna leave it there
     }
 
     void about() {
@@ -1830,7 +1843,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     void closeEvent(QCloseEvent *event) override {
         if (judgingProcess->state() == QProcess::Running || webserverProcess->state() == QProcess::Running) {
             // If these processes are still running
-            QMessageBox::information(this, "Không thể hoàn thành yêu cầu", 
+            QMessageBox::warning(this, "Không thể hoàn thành yêu cầu", 
                 "Không thể thoát vì hệ thống chấm bài hoặc website chấm bài trực tuyến vẫn còn đang chạy hoặc đang trong quá trình tắt. Vui lòng đợi và thử lại sau.",
                 QMessageBox::Ok);
 
@@ -1849,87 +1862,42 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     }
 };
 
-/* PROPOSED BY CHATGPT. IDK HOW THIS WORKS BUT LOOKS LIKE ITS WAY BETTER */
+/* PROPOSED BY CLAUDE. IDK HOW THIS WORKS BUT LOOKS LIKE ITS WAY BETTER */
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
-    // 1) Grab the wide‐char argv list from Windows
-    int argc_w;
-    LPWSTR* argv_w = CommandLineToArgvW(GetCommandLineW(), &argc_w);
-    if (!argv_w) {
-        // If for some reason this fails, bail out.
-        return -1;
-    }
-
-    // 2) Convert each wide‐string to UTF-8 std::string exactly once
-    std::vector<std::string> utf8Args;
-    utf8Args.reserve(argc_w);
-
-    for (int i = 0; i < argc_w; ++i) {
-        // Determine how many bytes are needed
-        int bytesNeeded = WideCharToMultiByte(
-            CP_UTF8,
-            0,
-            argv_w[i],
-            -1,
-            nullptr,
-            0,
-            nullptr,
-            nullptr
-        );
-        if (bytesNeeded <= 0) {
-            // Conversion failure—fallback to empty string
-            utf8Args.push_back(std::string());
-            continue;
-        }
-
-        // Do the actual conversion into a std::string
-        std::string s;
-        s.resize(bytesNeeded - 1); // WideCharToMultiByte writes a trailing '\0'
-        WideCharToMultiByte(
-            CP_UTF8,
-            0,
-            argv_w[i],
-            -1,
-            &s[0],
-            bytesNeeded,
-            nullptr,
-            nullptr
-        );
-        // At this point, 's' contains a null-terminated UTF-8 string.
-        utf8Args.push_back(std::move(s));
-    }
-
-    // We no longer need the wide‐char array
-    LocalFree(argv_w);
-
-    // 3) Check for "--console" among utf8Args
+    // 1) Simple console check from command line
     bool hideConsole = true;
-    for (int i = 1; i < argc_w; ++i) {
-        if (utf8Args[i] == "--console") {
-            hideConsole = false;
-            break;
-        }
+    std::wstring cmdLine = GetCommandLineW();
+    if (cmdLine.find(L"--console") != std::wstring::npos) {
+        hideConsole = false;
     }
 
-    // 4) Build the char* array that Qt wants, pointing at each std::string's internal buffer
-    std::vector<char*> qt_argv;
-    qt_argv.reserve(argc_w);
-    for (int i = 0; i < argc_w; ++i) {
-        qt_argv.push_back( const_cast<char*>(utf8Args[i].c_str()) );
-    }
-    int qt_argc = argc_w;
-    char** qt_argv_ptr = qt_argv.data();
+    // 2) Simple Qt arguments - just pass the program name
+    int qt_argc = 1;
+    char programName[] = "ATOMIC";
+    char* qt_argv[] = { programName };
+    char** qt_argv_ptr = qt_argv;
 
-    // 5) Optionally allocate a console
+    // 3) Optionally allocate a console
     if (!hideConsole) {
-        AllocConsole();
-        FILE* fp;
-        freopen_s(&fp, "CONOUT$", "w", stdout);
-        freopen_s(&fp, "CONOUT$", "w", stderr);
-        freopen_s(&fp, "CONIN$",  "r", stdin);
+        if (AllocConsole()) {
+            // Redirect standard streams safely
+            FILE* fp = nullptr;
+            if (freopen_s(&fp, "CONOUT$", "w", stdout) == 0) {
+                setvbuf(stdout, nullptr, _IONBF, 0);
+            }
+            if (freopen_s(&fp, "CONOUT$", "w", stderr) == 0) {
+                setvbuf(stderr, nullptr, _IONBF, 0);
+            }
+            if (freopen_s(&fp, "CONIN$", "r", stdin) == 0) {
+                // Input stream setup successful
+            }
 
-        std::cout << "Console attached!\n";
-        std::cout << "Application running with console support.\n";
-        std::cout << R"(
+            // Use safer output methods
+            std::cout << "Console attached!\n";
+            std::cout << "Application running with console support.\n";
+            
+            // ASCII art
+            const char* asciiArt = R"(
       ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: 
      :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   
     :+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     
@@ -1937,39 +1905,78 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
   +#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       
  #+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       
 ###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###  
-        )" << "\n";
+            )";
+            std::cout << asciiArt << std::endl;
+            std::cout.flush();
+        }
     }
 
-    // 6) Initialize Winsock
-    std::cout << "Initializing Winsock\n";
+    // 4) Initialize Winsock
     WSADATA wsaData;
-    int wsResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+    int wsResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (wsResult != 0) {
-        std::cout << "WSAStartup failed: " << wsResult << "\n";
-        QMessageBox::critical(
-            nullptr,
-            "Lỗi mở WINSOCK",
-            "Đã gặp lỗi thiết lập WINSOCK. Thiết bị của bạn có thể không tương thích với phần mềm này",
-            QMessageBox::StandardButton::Ok
-        );
+        if (!hideConsole) {
+            std::cout << "WSAStartup failed: " << wsResult << std::endl;
+        }
+        
+        // Create a temporary QApplication just for the message box if needed
+        if (hideConsole) {
+            QApplication tempApp(qt_argc, qt_argv_ptr);
+            QMessageBox::critical(
+                nullptr,
+                "Lỗi mở WINSOCK",
+                "Đã gặp lỗi thiết lập WINSOCK. Thiết bị của bạn có thể không tương thích với phần mềm này",
+                QMessageBox::StandardButton::Ok
+            );
+        }
         return 1;
     }
 
-    // 7) Launch Qt application
-    QApplication app(qt_argc, qt_argv_ptr);
-    Q_INIT_RESOURCE(qres);
+    int ret = 1; // Default error return
+    
+    try {
+        // 5) Launch Qt application
+        QApplication app(qt_argc, qt_argv_ptr);
+        app.setApplicationDisplayName("ATOMIC");
+        app.setApplicationName("ATOMIC");
+        app.setApplicationVersion("v0.1");
+        Q_INIT_RESOURCE(qres);
 
-    PanelWindow panel;
-    panel.initialize();
+        PanelWindow panel;
+        panel.initialize();
 
-    if (!hideConsole) {
-        QMessageBox::warning(nullptr, "Hiện bảng lịch sử hoạt động chương trình (logging)", "Bạn đang bắt đầu ATOMIC bằng tham số --console, điều này không được khuyến nghị bởi vì sẽ có thể xảy ra các lỗi liên quan đến bộ nhớ khi I/O chưa hoàn thiện. Nếu bạn không có ý định gỡ rối chương trình, hãy tránh sử dụng tham số --console khi khởi động chương trình", QMessageBox::Ok);
+        if (!hideConsole) {
+            QMessageBox::warning(
+                nullptr, 
+                "Hiện bảng lịch sử hoạt động chương trình (logging)", 
+                "Bạn đang bắt đầu ATOMIC bằng tham số --console, điều này không được khuyến nghị bởi vì sẽ có thể xảy ra các lỗi liên quan đến bộ nhớ khi I/O chưa hoàn thiện. Nếu bạn không có ý định gỡ rối chương trình, hãy tránh sử dụng tham số --console khi khởi động chương trình", 
+                QMessageBox::Ok
+            );
+        }
+
+        panel.show();
+        ret = app.exec();
+        
+    } catch (const std::exception& e) {
+        if (!hideConsole) {
+            std::cout << "Exception caught: " << e.what() << std::endl;
+        } else {
+            // For GUI-only mode, show message box for critical errors
+            QMessageBox::critical(nullptr, "Error", 
+                QString("An unexpected error occurred: %1").arg(e.what()), 
+                QMessageBox::Ok);
+        }
+        ret = -1;
+    } catch (...) {
+        if (!hideConsole) {
+            std::cout << "Unknown exception caught" << std::endl;
+        } else {
+            QMessageBox::critical(nullptr, "Error", "An unknown error occurred", QMessageBox::Ok);
+        }
+        ret = -1;
     }
 
-    panel.show();
-    int ret = app.exec();
-
-    // 8) Cleanup Winsock (optional, since process is exiting)
+    // 6) Cleanup Winsock
     WSACleanup();
 
     return ret;

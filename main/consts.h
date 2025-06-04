@@ -1,3 +1,6 @@
+#ifndef CONSTS_H
+#define CONSTS_H
+
 #include <string>
 #include <vector>
 #include <QtCore/QString>
@@ -34,6 +37,10 @@ static const std::string LOG_PATH = "/central/valkyrie.log";
 static const std::string ICON_PATH = "/icon.ico";
 static const QString EXITICON_PATH = ":/images/exit.png";
 static const QString CONTESTSICON_PATH = ":/images/contests.png";
+static const QString DELETEICON_PATH = ":/images/delete.png";
+static const QString EDITICON_PATH = ":/images/edit.png";
+
+static const char* DEBUGLOG_PATH = "/debug.log";
 
 // Paths
 static const std::string dirPath = std::filesystem::current_path().string();
@@ -55,3 +62,5 @@ static const std::string ERROR_COL = "\x1b[31m";
 static const std::string WARN_COL = "\x1b[33m";
 static const std::string OK_COL = "\x1b[32m";
 static const std::string RESET_COL = "\x1b[0m";
+
+#endif

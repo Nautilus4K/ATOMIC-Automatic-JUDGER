@@ -11,8 +11,9 @@
 #include <QtCore/QEvent>
 #include <QtGui/QKeyEvent>
 
-CST_RichTextEdit::CST_RichTextEdit(QWidget *parent) {
+CST_RichTextEdit::CST_RichTextEdit(QWidget *parent) : QWidget(parent) {
     setStyleSheet(parent->styleSheet());
+    setAttribute(Qt::WA_DeleteOnClose); // Cleaning
 
     QVBoxLayout *layout = new QVBoxLayout(this);
     setLayout(layout);

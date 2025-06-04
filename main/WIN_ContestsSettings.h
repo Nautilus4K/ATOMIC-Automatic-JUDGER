@@ -25,14 +25,18 @@ class WIN_ContestsSettings: public QWidget {
     QListWidget *listView = new QListWidget(this);
     CST_RichTextEdit *descEdit = new CST_RichTextEdit(this);
     CST_Listing *classList = new CST_Listing(this);
-    QLabel *contestNameLabel = new QLabel(); // Give it nullptr since I am a lazy bitch
-    QPushButton *saveBtn = new QPushButton();
-    QTableWidget *testTable = new QTableWidget(this);
+    QLabel *contestNameLabel = new QLabel(this);
+    QPushButton *saveBtn = new QPushButton(this);
+    QListWidget *testCasesList = new QListWidget(this);
 
     json contests; // Contest data in JSON. Would allow for faster reading since the whole thing is already based around JSON
     std::string currentCnts = "";
 
     private:
+    std::vector<int> indexesToBeRemoved; // List of indexes that will be removed
+    std::vector<std::pair<int, std::pair<std::string, std::string>>> indexesToBeModified; // List of indexes that will be modified
+    std::vector<std::pair<std::string, std::string>> indexesToBeAdded; // List of indexes to be added
+
     // --------------------------
     // Purpose: Look at the name
     // --------------------------
@@ -48,6 +52,13 @@ class WIN_ContestsSettings: public QWidget {
     //          variable but the FILE ITSELF. Kinda like syncing
     // --------------------------------------------------------------------
     void saveInfo();
+
+    // -----------------------------------------------------------------------
+    // Purpose: Add test cases. Just that. Yes. I am not lying. This function
+    //          will show up a dialog to enter the case's data and then
+    //          add it.
+    // -----------------------------------------------------------------------
+    void addCase();
 
     // --------------------------------------------------------
     // Purpose: To refresh currently clicked on contest with a

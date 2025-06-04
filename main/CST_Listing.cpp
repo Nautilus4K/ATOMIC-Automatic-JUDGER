@@ -6,8 +6,9 @@
 #include <QtWidgets/QLineEdit>
 #include <QtWidgets/QInputDialog>
 
-CST_Listing::CST_Listing(QWidget *parent) {
+CST_Listing::CST_Listing(QWidget *parent) : QWidget(parent) {
     setStyleSheet(parent->styleSheet());
+    setAttribute(Qt::WA_DeleteOnClose); // Cleaning
 
     QVBoxLayout *layout = new QVBoxLayout(this);
     setLayout(layout);

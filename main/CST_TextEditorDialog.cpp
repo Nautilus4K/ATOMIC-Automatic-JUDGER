@@ -2,12 +2,14 @@
 
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QTextEdit>
+#include <QtWidgets/QWidget>
 #include <fstream>
 #include <sstream>
 
-CST_TextEditorDialog::CST_TextEditorDialog(QWidget *parent, QString title, std::string filePath, bool readOnly) {
+CST_TextEditorDialog::CST_TextEditorDialog(QWidget *parent, QString title, std::string filePath, bool readOnly) : QWidget(parent) {
     setObjectName("dialog");
     setWindowTitle(title);
+    setAttribute(Qt::WA_DeleteOnClose); // Cleaning
     if (parent) {
         setWindowIcon(parent->windowIcon());
         setStyleSheet(parent->styleSheet());

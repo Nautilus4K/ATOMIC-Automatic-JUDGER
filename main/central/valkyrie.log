@@ -256,3 +256,97 @@ WARNING:waitress.queue:Task queue depth is 1
 WARNING:waitress.queue:Task queue depth is 1
 WARNING:waitress.queue:Task queue depth is 1
 WARNING:waitress.queue:Task queue depth is 1
+
+
+
+------------------------------
+EXEC DATE: 2025-05-27 14:17:36.953972
+
+Opened Socket at 127.0.0.1:28473
+Now opened socket with capacity of 1 concurrent connection.
+Connected with a target. Awaiting instructions...
+Stopped by communication interface. Shutting down waitress...
+Successful.
+
+
+
+------------------------------
+EXEC DATE: 2025-05-29 17:15:12.847525
+
+
+
+
+------------------------------
+EXEC DATE: 2025-06-03 09:51:24.429700
+
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+
+
+
+------------------------------
+EXEC DATE: 2025-06-03 09:51:24.184428
+
+Opened Socket at 127.0.0.1:28473
+Now opened socket with capacity of 1 concurrent connection.
+Connected with a target. Awaiting instructions...
+Stopped by communication interface. Shutting down waitress...
+Successful.
+
+
+
+------------------------------
+EXEC DATE: 2025-06-03 09:51:59.633446
+
+WARNING:waitress.queue:Task queue depth is 1
+Error in getbroadinfo: Expecting value: line 1 column 1 (char 0)
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 2
+[Errno 13] Permission denied: 'C:\\Users\\Nautilus\\Documents\\GitHub\\ATOMIC-Automatic-JUDGER\\main/www/styles/fonts'
+Unidentified Error: [Errno 13] Permission denied: 'C:\\Users\\Nautilus\\Documents\\GitHub\\ATOMIC-Automatic-JUDGER\\main/www/styles/fonts'
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+
+
+
+------------------------------
+EXEC DATE: 2025-06-03 09:51:59.483150
+
+Opened Socket at 127.0.0.1:28473
+Now opened socket with capacity of 1 concurrent connection.
+Connected with a target. Awaiting instructions...
+Stopped by communication interface. Shutting down waitress...
+Successful.
+
+
+
+------------------------------
+EXEC DATE: 2025-06-03 09:55:54.069407
+
+Opened Socket at 127.0.0.1:28473
+Now opened socket with capacity of 1 concurrent connection.
+Connected with a target. Awaiting instructions...
+Stopped by communication interface. Shutting down waitress...
+Successful.

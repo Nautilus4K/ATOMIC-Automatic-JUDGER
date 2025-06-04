@@ -1,9 +1,14 @@
+#ifndef UTILITIES_H
+#define UTILITIES_H
+
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <iostream>
+#include <mutex>
 
 // Custom functions as tools
-std::string intToString(int n) {
+inline std::string intToString(int n) {
     // Conversion from INTEGER to STRING
     if (n == 0) return "0";
     
@@ -17,14 +22,14 @@ std::string intToString(int n) {
     return value;
 }
 
-std::string doubleToString(double d) {
+inline std::string doubleToString(double d) {
     // Conversion from DOUBLE to STRING
     std::ostringstream oss;
     oss << d; // Yeah this is the true magic
     return oss.str();
 }
 
-double stringToDouble(const std::string &str) {
+inline double stringToDouble(const std::string &str) {
     try {
         return std::stod(str); // Built-in function
     } catch (const std::invalid_argument &e) {
@@ -35,7 +40,7 @@ double stringToDouble(const std::string &str) {
 }
 
 
-int stringToInt(const std::string &s) {
+inline int stringToInt(const std::string &s) {
     int result = 0;
     bool negative = false;
     std::size_t i = 0;
@@ -55,3 +60,5 @@ int stringToInt(const std::string &s) {
 
     return negative ? -result : result;
 }
+
+#endif
