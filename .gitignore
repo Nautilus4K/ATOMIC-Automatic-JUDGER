@@ -22,11 +22,3 @@ python.js
 
 # Qt related
 *.dll
-generic/
-iconengines/
-imageformats/
-networkinformation/
-styles/
-tls/
-platforms/
-translations/

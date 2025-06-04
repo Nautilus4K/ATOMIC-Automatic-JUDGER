@@ -350,3 +350,21 @@ Now opened socket with capacity of 1 concurrent connection.
 Connected with a target. Awaiting instructions...
 Stopped by communication interface. Shutting down waitress...
 Successful.
+
+
+
+------------------------------
+EXEC DATE: 2025-06-04 14:53:24.185905
+
+WARNING:waitress.queue:Task queue depth is 1
+
+
+
+------------------------------
+EXEC DATE: 2025-06-04 14:53:23.981170
+
+Opened Socket at 127.0.0.1:28473
+Now opened socket with capacity of 1 concurrent connection.
+Connected with a target. Awaiting instructions...
+Stopped by communication interface. Shutting down waitress...
+Successful.
