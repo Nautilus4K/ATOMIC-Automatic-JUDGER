@@ -8,6 +8,8 @@
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QLineEdit>
 
+#include <QtGui/QDoubleValidator>
+
 #include "CST_RichTextEdit.h"
 #include "CST_Listing.h"
 
@@ -36,6 +38,7 @@ class WIN_ContestsSettings: public QWidget {
     QCheckBox *fileOutputCheck = new QCheckBox(this);
     QLineEdit *fileInputName = new QLineEdit(this);
     QLineEdit *fileOutputName = new QLineEdit(this);
+    QLineEdit *timeLimit = new QLineEdit(this);
 
     json contests; // Contest data in JSON. Would allow for faster reading since the whole thing is already based around JSON
     std::string currentCnts = "";

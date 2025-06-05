@@ -149,6 +149,13 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
         onTestCaseCheckBoxToggled("out");
     });
 
+    // Time limit
+    QLabel *timeLimitLabel = new QLabel(this);
+    timeLimitLabel->setText("Thời gian thực hiện chương trình tối đa (giây)");
+
+    QDoubleValidator *timeLimitValidator = new QDoubleValidator(0, 100, 2, this);
+    timeLimit->setValidator(timeLimitValidator);
+
     // Adding in the widgets in order (for the looks actually.).
     contestDetailsLayout->addWidget(descLabel);
     contestDetailsLayout->addWidget(descEdit);
@@ -165,6 +172,9 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
     contestDetailsLayout->addWidget(fileOutputCheckArea);
     contestDetailsLayout->addWidget(fileOutputNameLabel);
     contestDetailsLayout->addWidget(fileOutputName);
+
+    contestDetailsLayout->addWidget(timeLimitLabel);
+    contestDetailsLayout->addWidget(timeLimit);
     
     contestDetailsLayout->addWidget(cnTestLabel);
     contestDetailsLayout->addWidget(testCasesList);
@@ -400,6 +410,11 @@ void WIN_ContestsSettings::saveInfo() {
 
     contests[currentCnts]["InputType"] = ((fileInputCheck->checkState() == Qt::CheckState::Checked) ? "file" : "raw");
     contests[currentCnts]["OutputType"] = ((fileOutputCheck->checkState() == Qt::CheckState::Checked) ? "file" : "raw");
+
+    // --------------------------
+    // Setting time limit values
+    // --------------------------
+    contests[currentCnts]["TimeLimit"] = stringToDouble(timeLimit->text().toStdString());
 
     // Now some I/O trickery because to be honest, Idk how it works either
     bool successfullyOpenFile = false;
@@ -735,6 +750,9 @@ void WIN_ContestsSettings::toCnts(std::string contestName) {
 
     // Let's refresh file/raw I/O of test
     onTestCaseCheckBoxToggled("both");
+
+    // Now, let's refresh time limit of these tests
+    timeLimit->setText(QString::fromStdString(doubleToString(contests[currentCnts]["TimeLimit"])));
     
     std::cout << "[*ContestsSettings] Refreshed Information (details) panel.\n";
 }
