@@ -101,20 +101,113 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
     addTestCaseBtn->setText("Thêm bộ test");
     connect(addTestCaseBtn, &QPushButton::clicked, this, WIN_ContestsSettings::addCase);
 
+    QLabel *testCaseSectionLabel = new QLabel(this);
+    testCaseSectionLabel->setObjectName("con_lab");
+    testCaseSectionLabel->setStyleSheet(STYLE_BOLDLABEL);
+    testCaseSectionLabel->setText("CÀI ĐẶT KIỂM TRA BÀI THI");
+
+    // Input to file? (As a fucking QWidget for the better looks)
+    QWidget *fileInputCheckArea = new QWidget(this);
+    QHBoxLayout *fileInputCheckAreaLayout = new QHBoxLayout(fileInputCheckArea);
+    fileInputCheckArea->setLayout(fileInputCheckAreaLayout);
+    fileInputCheckAreaLayout->setContentsMargins(0, 0, 0, 4);
+    fileInputCheckAreaLayout->setAlignment(Qt::AlignLeft);
+
+    QLabel *fileInputLabel = new QLabel(this);
+    fileInputLabel->setText("Đầu vào đọc từ tệp?");
+
+    fileInputCheckAreaLayout->addWidget(fileInputCheck);
+    fileInputCheckAreaLayout->addWidget(fileInputLabel);
+
+    QLabel *fileInputNameLabel = new QLabel(this);
+    fileInputNameLabel->setText("Tên tệp đầu vào");
+
+    // Connect stuffs in
+    connect(fileInputCheck, &QCheckBox::stateChanged, this, [this] {
+        onTestCaseCheckBoxToggled("in");
+    });
+
+    // Output to file?
+    QWidget *fileOutputCheckArea = new QWidget(this);
+    QHBoxLayout *fileOutputCheckAreaLayout = new QHBoxLayout(fileOutputCheckArea);
+    fileOutputCheckArea->setLayout(fileOutputCheckAreaLayout);
+    fileOutputCheckAreaLayout->setContentsMargins(0, 0, 0, 4);
+    fileOutputCheckAreaLayout->setAlignment(Qt::AlignLeft);
+
+    QLabel *fileOutputLabel = new QLabel(this);
+    // fileOutputLabel->setStyleSheet(STYLE_BOLDLABEL);
+    fileOutputLabel->setText("Đầu vào đọc từ tệp?");
+
+    fileOutputCheckAreaLayout->addWidget(fileOutputCheck);
+    fileOutputCheckAreaLayout->addWidget(fileOutputLabel);
+
+    QLabel *fileOutputNameLabel = new QLabel(this);
+    fileOutputNameLabel->setText("Tên tệp đầu ra");
+
+    // Connect stuffs out
+    connect(fileOutputCheck, &QCheckBox::stateChanged, this, [this] {
+        onTestCaseCheckBoxToggled("out");
+    });
+
     // Adding in the widgets in order (for the looks actually.).
     contestDetailsLayout->addWidget(descLabel);
     contestDetailsLayout->addWidget(descEdit);
+
     contestDetailsLayout->addWidget(classLabel);
     contestDetailsLayout->addWidget(classList);
+
+    contestDetailsLayout->addWidget(testCaseSectionLabel);
+
+    contestDetailsLayout->addWidget(fileInputCheckArea);
+    contestDetailsLayout->addWidget(fileInputNameLabel);
+    contestDetailsLayout->addWidget(fileInputName);
+
+    contestDetailsLayout->addWidget(fileOutputCheckArea);
+    contestDetailsLayout->addWidget(fileOutputNameLabel);
+    contestDetailsLayout->addWidget(fileOutputName);
+    
     contestDetailsLayout->addWidget(cnTestLabel);
     contestDetailsLayout->addWidget(testCasesList);
     contestDetailsLayout->addWidget(addTestCaseBtn);
+
     contestDetailsLayout->addWidget(saveBtn);
     
     contestDetailsScrollable->setWidget(contestDetails);
     
     splitter->addWidget(listView);
     splitter->addWidget(contestDetailsScrollable);
+}
+
+void WIN_ContestsSettings::onTestCaseCheckBoxToggled(std::string which) {
+    if (which == "in" || which == "both") {
+        bool checked = (fileInputCheck->checkState() == Qt::CheckState::Checked);
+        std::cout << "[INPUT] Current state: " << (checked ? "FILE" : "RAW") << '\n';
+
+        // If this is not checked, it means we are not outputing to a file. AND SO WE WILL
+        // DISABLE THE input field of the input file name and also default it to NAME + INP
+
+        if (!checked) {
+            // Disable
+            fileInputName->setEnabled(false);
+            
+            // Now let's extract the contest's name and turn it uppercase
+            fileInputName->setText(QString::fromStdString(turnStringUppercaseA(currentCnts) + ".INP"));
+
+        } else fileInputName->setEnabled(true);
+    } 
+    
+    if (which == "out" || which == "both") {
+        bool checked = (fileOutputCheck->checkState() == Qt::CheckState::Checked);
+        std::cout << "[OUTPUT] Current state: " << (checked ? "FILE" : "RAW") << '\n';
+
+        if (!checked) {
+            fileOutputName->setEnabled(false);
+
+            fileOutputName->setText(QString::fromStdString(turnStringUppercaseA(currentCnts) + ".OUT"));
+
+        } else fileOutputName->setEnabled(true);
+    }
+    // Not any? IGNORE
 }
 
 // --------------------------
@@ -298,6 +391,15 @@ void WIN_ContestsSettings::saveInfo() {
     
     // Also, because we are in fact, modifying the tests amount too, so we also need to update that.
     contests[currentCnts]["TestAmount"] = contests[currentCnts]["Tests"].size();
+
+    // ---------------------------------------
+    // Setting file/raw I/O status and values
+    // ---------------------------------------
+    contests[currentCnts]["InputFile"] = fileInputName->text().toStdString();
+    contests[currentCnts]["OutputFile"] = fileOutputName->text().toStdString();
+
+    contests[currentCnts]["InputType"] = ((fileInputCheck->checkState() == Qt::CheckState::Checked) ? "file" : "raw");
+    contests[currentCnts]["OutputType"] = ((fileOutputCheck->checkState() == Qt::CheckState::Checked) ? "file" : "raw");
 
     // Now some I/O trickery because to be honest, Idk how it works either
     bool successfullyOpenFile = false;
@@ -618,6 +720,21 @@ void WIN_ContestsSettings::toCnts(std::string contestName) {
         // ever again.
         index++;
     }
+
+    // Also, apply the value in the contests json file too.
+    // In case the checkbox was in fact, checked means that it will always be fine
+    // and won't become obsolete
+    fileInputName->setText(QString::fromStdString(contests[contestName]["InputFile"]));
+    fileOutputName->setText(QString::fromStdString(contests[contestName]["OutputFile"]));
+
+    bool inputCheck = (contests[contestName]["InputType"] == "file");
+    bool outputCheck = (contests[contestName]["OutputType"] == "file");
+
+    fileInputCheck->setCheckState(inputCheck ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+    fileOutputCheck->setCheckState(outputCheck ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+
+    // Let's refresh file/raw I/O of test
+    onTestCaseCheckBoxToggled("both");
     
     std::cout << "[*ContestsSettings] Refreshed Information (details) panel.\n";
 }

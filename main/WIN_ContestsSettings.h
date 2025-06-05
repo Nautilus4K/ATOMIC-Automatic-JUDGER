@@ -5,6 +5,8 @@
 #include <QtWidgets/QListWidget>
 #include <QtWidgets/QLabel>
 #include <QtWidgets/QTableWidget>
+#include <QtWidgets/QCheckBox>
+#include <QtWidgets/QLineEdit>
 
 #include "CST_RichTextEdit.h"
 #include "CST_Listing.h"
@@ -23,11 +25,17 @@ class WIN_ContestsSettings: public QWidget {
 
     // Sidebar widget
     QListWidget *listView = new QListWidget(this);
+
+    // The rest of the widget
     CST_RichTextEdit *descEdit = new CST_RichTextEdit(this);
     CST_Listing *classList = new CST_Listing(this);
     QLabel *contestNameLabel = new QLabel(this);
     QPushButton *saveBtn = new QPushButton(this);
     QListWidget *testCasesList = new QListWidget(this);
+    QCheckBox *fileInputCheck = new QCheckBox(this);
+    QCheckBox *fileOutputCheck = new QCheckBox(this);
+    QLineEdit *fileInputName = new QLineEdit(this);
+    QLineEdit *fileOutputName = new QLineEdit(this);
 
     json contests; // Contest data in JSON. Would allow for faster reading since the whole thing is already based around JSON
     std::string currentCnts = "";
@@ -36,6 +44,16 @@ class WIN_ContestsSettings: public QWidget {
     std::vector<int> indexesToBeRemoved; // List of indexes that will be removed
     std::vector<std::pair<int, std::pair<std::string, std::string>>> indexesToBeModified; // List of indexes that will be modified
     std::vector<std::pair<std::string, std::string>> indexesToBeAdded; // List of indexes to be added
+
+    // --------------------------------------------------------------------
+    // Purpose: To do actions when checkbox of the test case functionality
+    //          was toggled
+    // --------------------------------------------------------------------
+    // Note: the `which` parameter have 3 possible values:
+    // - `in`
+    // - `out`
+    // - `both`
+    void onTestCaseCheckBoxToggled(std::string which);
 
     // --------------------------
     // Purpose: Look at the name

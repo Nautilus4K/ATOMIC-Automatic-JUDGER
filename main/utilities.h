@@ -61,4 +61,18 @@ inline int stringToInt(const std::string &s) {
     return negative ? -result : result;
 }
 
+inline std::string turnStringUppercaseA(const std::string& s) {
+    std::string result = "";
+
+    for (char x: s) {
+        if (islower(x)) {
+            x -= 32;
+        }
+
+        result.push_back(x);
+    }
+
+    return result;
+}
+
 #endif

@@ -234,6 +234,7 @@ QListView {
 #con_lab {
     /* Label in settings */
     margin-top: 4px;
+    margin-bottom: 4px;
 }
 
 #formatBtn {

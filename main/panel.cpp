@@ -685,6 +685,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         // Apparently, it doesn't work. And will never work.
         // I am just gonna leave it there
+
+        // Attaching event filter
+        manageTab->installEventFilter(this);
     }
 
     void about() {
@@ -742,7 +745,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                 // This text is like this because of some shit.
                 // It's just cause of C's poor strings...
-                QString licensingText = "====== Giấy phép ======\n\nPhần mềm này được phát hành dưới Giấy phép Mã nguồn mở MIT (MIT License) đã qua sửa đổi. Thông tin chi tiết truy cập trang dự án GitHub.\n\n====== Ghi nhận ======\n\nPhần mềm được phát triển dựa trên hoặc sử dụng các dự án mã nguồn mở sau:\n\n- Qt GUI Framework (https://qt.io)  \n- Python Interpreter (https://python.org)  \n- waitress (https://github.com/Pylons/waitress)  \n- Docker (https://docker.com)  \n- nlohmann/json - JSON for Modern C++ (https://github.com/nlohmann/json)  \n- boppreh/keyboard - Python keyboard library (https://github.com/boppreh/keyboard)";
+                QString licensingText = "====== Giấy phép ======\n\nPhần mềm này được phát hành dưới Giấy phép Mã nguồn mở MIT (MIT License) đã qua sửa đổi. Thông tin chi tiết truy cập trang dự án GitHub.\n\n====== Ghi nhận ======\n\nPhần mềm được phát triển dựa trên hoặc sử dụng các dự án mã nguồn mở sau:\n\n- Qt GUI Framework (https://qt.io)  \n- Python Interpreter (https://python.org)  \n- waitress (https://github.com/Pylons/waitress)  \n- Docker (https://docker.com)  \n- nlohmann/json - JSON for Modern C++ (https://github.com/nlohmann/json)  \n- boppreh/keyboard - Python keyboard library (https://github.com/boppreh/keyboard)\n- Cascadia Code Font (https://github.com/microsoft/cascadia-code)";
 
                 QSplitter *licensingSplitter = new QSplitter();
                 licensingSplitter->setOrientation(Qt::Orientation::Vertical);
@@ -1859,6 +1862,23 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 event->ignore();  // Prevent closing
             }
         }
+    }
+
+    bool eventFilter(QObject* obj, QEvent* event) override {
+        // std::cout << "Caught event on tab " << tabs->currentIndex() << "\n";
+
+        if (tabs->currentIndex() == 0 && event->type() == QEvent::KeyPress) {
+            QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+
+            switch (keyEvent->key()) {
+                case Qt::Key_F5:
+                    // std::cout << "Refreshing table called\n";
+                    refreshClassDropdown();
+                    return true;
+            }
+        }
+
+        return QObject::eventFilter(obj, event);
     }
 };
 
