@@ -14,6 +14,8 @@
 using nlohmann::json;
 
 // Custom functions as tools
+
+// A conversion fron int to std::string
 inline std::string intToString(int n) {
     // Conversion from INTEGER to STRING
     if (n == 0) return "0";
@@ -28,6 +30,7 @@ inline std::string intToString(int n) {
     return value;
 }
 
+// A conversion from double to std::string
 inline std::string doubleToString(double d) {
     // Conversion from DOUBLE to STRING
     std::ostringstream oss;
@@ -35,6 +38,7 @@ inline std::string doubleToString(double d) {
     return oss.str();
 }
 
+// A conversion from std::string to double
 inline double stringToDouble(const std::string &str) {
     try {
         return std::stod(str); // Built-in function
@@ -45,7 +49,7 @@ inline double stringToDouble(const std::string &str) {
     }
 }
 
-
+// A conversion from std::string to int
 inline int stringToInt(const std::string &s) {
     int result = 0;
     bool negative = false;
@@ -67,6 +71,7 @@ inline int stringToInt(const std::string &s) {
     return negative ? -result : result;
 }
 
+// Returns the input string as uppercase
 inline std::string turnStringUppercaseA(const std::string& s) {
     std::string result = "";
 
@@ -81,6 +86,7 @@ inline std::string turnStringUppercaseA(const std::string& s) {
     return result;
 }
 
+// Save the designated value to `CONTESTS_PATH`
 inline bool saveContestsInfo(const json& val) {
     bool successfullyOpenFile = false;
     std::fstream contestsFile(dirPath + CONTESTS_PATH, std::ios::out);
@@ -95,6 +101,248 @@ inline bool saveContestsInfo(const json& val) {
     contestsFile.close();
 
     return successfullyOpenFile;
+}
+
+// Get json value from `CONTESTS_PATH`
+inline json getContestsInfo() {
+    json ret;
+
+    std::fstream contestsFile(dirPath + CONTESTS_PATH, std::ios::in);
+    if (contestsFile.is_open()) {
+        try {
+            ret = json::parse(contestsFile);
+
+            // Successfully parsed. Prints logging
+            std::cout << "[JSON: contests] " << ret << '\n';
+
+            contestsFile.close();
+        } catch (const json::parse_error& e) {
+            std::fstream file(dirPath + CONTESTS_PATH, std::ios::out | std::ios::trunc);
+            file << "{}";
+            std::cout << "Repair successful\n";
+            file.close();
+
+            ret = getContestsInfo();
+        }
+    } else {
+        // Creating file in case the file CAN'T BE ACCESSED???
+        std::fstream file(dirPath + CONTESTS_PATH, std::ios::out | std::ios::trunc);
+        file << "{}";
+        std::cout << "Repair successful\n";
+        file.close();
+
+        ret = getContestsInfo();
+    }
+
+    return ret;
+}
+
+// Save the designated value to `USERDATA_PATH`
+inline bool saveUsersInfo(const json& val) {
+    bool successfullyOpenFile = false;
+    std::fstream userdataFile(dirPath + USERDATA_PATH, std::ios::out);
+    if (userdataFile.is_open()) {
+        userdataFile << val;
+
+        // Tbh I am just gonna refresh the entire thing to make sure its safe and
+        // up to date. WELP. IT DOESN'T WORK THAT WAY. Let's set a variable after we closed this fully.
+        // toCnts(currentCnts); // SOUNDS GOOD
+        successfullyOpenFile = true;
+    }
+    userdataFile.close();
+
+    return successfullyOpenFile;
+}
+
+// Get json value from `USERDATA_PATH`
+inline json getUsersInfo() {
+    json ret;
+
+    std::fstream userdataFile(dirPath + USERDATA_PATH, std::ios::in);
+    if (userdataFile.is_open()) {
+        try {
+            ret = json::parse(userdataFile);
+
+            // Successfully parsed. Prints logging
+            std::cout << "[JSON: users] " << ret << '\n';
+
+            userdataFile.close();
+        } catch (const json::parse_error& e) {
+            // Same shit. Different day
+            std::fstream file(dirPath + USERDATA_PATH, std::ios::out | std::ios::trunc);
+            file << "{}";
+            std::cout << "Repair successful\n";
+            file.close();
+
+            ret = getUsersInfo();
+        }
+    } else {
+        // Creating file in case the file CAN'T BE ACCESSED??? Maybe.
+        std::fstream file(dirPath + USERDATA_PATH, std::ios::out | std::ios::trunc);
+        file << "{}";
+        std::cout << "Repair successful\n";
+        file.close();
+
+        ret = getUsersInfo();
+    }
+
+    return ret;
+}
+
+// Save the designated value to `CLASSES_PATH`
+inline bool saveClassesInfo(const json& val) {
+    bool successfullyOpenFile = false;
+    std::fstream classesFile(dirPath + CLASSES_PATH, std::ios::out);
+    if (classesFile.is_open()) {
+        classesFile << val;
+
+        // Tbh I am just gonna refresh the entire thing to make sure its safe and
+        // up to date. WELP. IT DOESN'T WORK THAT WAY. Let's set a variable after we closed this fully.
+        // toCnts(currentCnts); // SOUNDS GOOD
+        successfullyOpenFile = true;
+    }
+    classesFile.close();
+
+    return successfullyOpenFile;
+}
+
+// Get json value from `CLASSES_PATH`
+inline json getClassesInfo() {
+    json ret;
+
+    std::fstream classesFile(dirPath + CLASSES_PATH, std::ios::in);
+    if (classesFile.is_open()) {
+        try {
+            ret = json::parse(classesFile);
+
+            // Successfully parsed. Prints logging
+            std::cout << "[JSON: classes] " << ret << '\n';
+
+            classesFile.close();
+        } catch (const json::parse_error& e) {
+            // Same shit. Different day
+            std::fstream file(dirPath + CLASSES_PATH, std::ios::out | std::ios::trunc);
+            file << "{}";
+            std::cout << "Repair successful\n";
+            file.close();
+
+            ret = getClassesInfo();
+        }
+    } else {
+        // Creating file in case the file CAN'T BE ACCESSED??? Maybe.
+        std::fstream file(dirPath + CLASSES_PATH, std::ios::out | std::ios::trunc);
+        file << "{}";
+        std::cout << "Repair successful\n";
+        file.close();
+
+        ret = getClassesInfo();
+    }
+
+    return ret;
+}
+
+// Save the designated value to `ALIAS_PATH`
+inline bool saveAliasesInfo(const json& val) {
+    bool successfullyOpenFile = false;
+    std::fstream aliasesFile(dirPath + ALIAS_PATH, std::ios::out);
+    if (aliasesFile.is_open()) {
+        aliasesFile << val;
+
+        // Tbh I am just gonna refresh the entire thing to make sure its safe and
+        // up to date. WELP. IT DOESN'T WORK THAT WAY. Let's set a variable after we closed this fully.
+        // toCnts(currentCnts); // SOUNDS GOOD
+        successfullyOpenFile = true;
+    }
+    aliasesFile.close();
+
+    return successfullyOpenFile;
+}
+
+// Get json value from `ALIAS_PATH`
+inline json getAliasesInfo() {
+    json ret;
+
+    std::fstream aliasesFile(dirPath + ALIAS_PATH, std::ios::in);
+    if (aliasesFile.is_open()) {
+        try {
+            ret = json::parse(aliasesFile);
+
+            // Successfully parsed. Prints logging
+            std::cout << "[JSON: aliases] " << ret << '\n';
+
+            aliasesFile.close();
+        } catch (const json::parse_error& e) {
+            // Same shit. Different day
+            std::fstream file(dirPath + ALIAS_PATH, std::ios::out | std::ios::trunc);
+            file << "{}";
+            std::cout << "Repair successful\n";
+            file.close();
+
+            ret = getAliasesInfo();
+        }
+    } else {
+        // Creating file in case the file CAN'T BE ACCESSED??? Maybe.
+        std::fstream file(dirPath + ALIAS_PATH, std::ios::out | std::ios::trunc);
+        file << "{}";
+        std::cout << "Repair successful\n";
+        file.close();
+
+        ret = getAliasesInfo();
+    }
+
+    return ret;
+}
+
+// Save the designated value to `SETTINGS_PATH`
+inline bool saveSettingsInfo(const json& val) {
+    bool successfullyOpenFile = false;
+    std::fstream settingsFile(dirPath + SETTINGS_PATH, std::ios::out);
+    if (settingsFile.is_open()) {
+        settingsFile << val;
+
+        // Tbh I am just gonna refresh the entire thing to make sure its safe and
+        // up to date. WELP. IT DOESN'T WORK THAT WAY. Let's set a variable after we closed this fully.
+        // toCnts(currentCnts); // SOUNDS GOOD
+        successfullyOpenFile = true;
+    }
+    settingsFile.close();
+
+    return successfullyOpenFile;
+}
+
+// Get json value from `SETTINGS_PATH`
+inline json getSettingsInfo() {
+    json ret;
+
+    std::fstream settingsFile(dirPath + SETTINGS_PATH, std::ios::in);
+    if (settingsFile.is_open()) {
+        try {
+            ret = json::parse(settingsFile);
+
+            // Successfully parsed. Prints logging
+            std::cout << "[JSON: settings] " << ret << '\n';
+
+            settingsFile.close();
+        } catch (const json::parse_error& e) {
+            // Same shit. Different day
+            std::fstream file(dirPath + SETTINGS_PATH, std::ios::out | std::ios::trunc);
+            file << "{}";
+            std::cout << "Repair successful\n";
+            file.close();
+
+            ret = getSettingsInfo();
+        }
+    } else {
+        // Creating file in case the file CAN'T BE ACCESSED??? Maybe.
+        std::fstream file(dirPath + SETTINGS_PATH, std::ios::out | std::ios::trunc);
+        file << "{}";
+        std::cout << "Repair successful\n";
+        file.close();
+
+        ret = getSettingsInfo();
+    }
+
+    return ret;
 }
 
 #endif

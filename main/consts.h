@@ -24,6 +24,7 @@ static const std::string ALIAS_PATH = "/source/aliases.json";
 static const std::string CLASSES_PATH = "/source/classes.json";
 static const std::string CONTESTS_PATH = "/source/contests.json";
 static const std::string USERDATA_PATH = "/source/users.json";
+
 static const std::string USERSTATS_DIR = "/workspace/result/";
 static const std::string USERQUEUE_DIR = "/workspace/queue/";
 static const std::string USERSUBHISTORY_DIR = "/userdata/";

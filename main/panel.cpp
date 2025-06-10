@@ -92,7 +92,7 @@ using json = nlohmann::json;
 #endif
 
 #include <filesystem>
-#include <Windows.h>
+#include "Windows.h"
 #include "winsock2.h" // Socket programming
 #include "shellapi.h" // ShellExecuteA, etc...
 #include "ws2tcpip.h"
@@ -1631,162 +1631,26 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         std::cout << "onTabSwitches(): Called. currentSwitched.\n";
 
         // Reading data into variables related to them
-        std::fstream settingsFile(dirPath + SETTINGS_PATH, std::ios::in);
-        if (settingsFile.is_open()) {
-            // If file is open-able (Works as intended)
-            try {
-                settings = json::parse(settingsFile);
+        settings = getSettingsInfo();
+        aliases = getAliasesInfo();
+        classes = getClassesInfo();
+        contests = getContestsInfo();
+        users = getUsersInfo();
 
-                // If file has successfully been parsed
-                // std::cout << "settings[\"wait_time\"] = " << settings["wait_time"] << '\n';
-                std::cout << "[JSON: settings] " << settings << '\n';
+        judgingWaitTimeInput->setText(QString::fromStdString(doubleToString(settings["wait_time"])));
+        judgingReloadTimeInput->setText(QString::fromStdString(doubleToString(settings["reload_time"])));
+        judgingShowTestCheckbox->setCheckState(settings["show_test"] ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
 
-                // Applying current settings from fcking JSON into Qt Line Input elements
-                judgingWaitTimeInput->setText(QString::fromStdString(doubleToString(settings["wait_time"])));
-                judgingReloadTimeInput->setText(QString::fromStdString(doubleToString(settings["reload_time"])));
-                judgingShowTestCheckbox->setCheckState(settings["show_test"] ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+        webserverLogInSecsInput->setText(QString::fromStdString(intToString(settings["max_not_logged_in_session_seconds"])));
 
-                webserverLogInSecsInput->setText(QString::fromStdString(intToString(settings["max_not_logged_in_session_seconds"])));
+        std::string webname = aliases["website_name"];
+        webserverAliasWebnameInput->setText(QString::fromUtf8(webname.c_str()));
 
-            } catch (const json::parse_error& e) { 
-                // If error got and it is JSON parsing error
-                errorDialog("Tệp cài đặt đã bị hỏng. Hãy cài đặt lại ứng dụng để sửa lỗi.");
-                close();
-                exit(0);
-            }
-            settingsFile.close();
-        } else {
-            errorDialog("Tệp cài đặt không tồn tại. Hãy cài đặt lại ứng dụng để sửa lỗi.");
-            close();
-            exit(0);
-        }
+        std::string slogan = aliases["slogan"];
+        webserverAliasSloganInput->setText(QString::fromUtf8(slogan.c_str()));
 
-        std::fstream aliasFile(dirPath + ALIAS_PATH, std::ios::in);
-        if (aliasFile.is_open()) {
-            try {
-                aliases = json::parse(aliasFile);
-
-                // If sucessfully parsed
-                std::cout << "[JSON: aliases] " <<  aliases << '\n';
-
-                std::string webname = aliases["website_name"];
-                webserverAliasWebnameInput->setText(QString::fromUtf8(webname.c_str()));
-
-                std::string slogan = aliases["slogan"];
-                webserverAliasSloganInput->setText(QString::fromUtf8(slogan.c_str()));
-
-                std::string hostname = aliases["hostname"];
-                webserverAliasHostnameInput->setText(QString::fromUtf8(hostname.c_str()));
-
-                aliasFile.close();
-            } catch (const json::parse_error& e) { 
-                // If error got and it is JSON parsing error
-                errorDialog("Tệp dữ liệu hiển thị đã bị hỏng. Hãy cài đặt lại ứng dụng để sửa lỗi.");
-                close();
-                exit(0);
-            }
-        } else {
-            errorDialog("Tệp dữ liệu hiển thị không tồn tại. Hãy cài đặt lại ứng dụng để sửa lỗi.");
-            close();
-            exit(0);
-        }
-
-        std::fstream classesFile(dirPath + CLASSES_PATH, std::ios::in);
-        if (classesFile.is_open()) {
-            try {
-                classes = json::parse(classesFile);
-
-                // Sucessfully parsed?
-                std::cout << "[JSON: classes] " <<  classes << '\n';
-            } catch (const json::parse_error& e) {
-                // If parsing the JSON returned to be a failure
-                errorDialog("Tệp dữ liệu lớp học đã bị hỏng. Vui lòng cài đặt lại ứng dụng để sửa lỗi.");
-                close();
-                exit(0);
-            }
-
-            classesFile.close();
-        } else {
-            errorDialog("Tệp dữ liệu lớp học không tồn tại.");
-            
-            // Creating file
-            std::fstream file(dirPath + CLASSES_PATH, std::ios::out | std::ios::trunc);
-
-            if (!file.is_open()) {
-                errorDialog("Tệp dữ liệu lớp học không thể được tạo. Sửa chữa không thành công. Vui lòng cài đặt lại ứng dụng để sửa lỗi.");
-                close();
-                exit(0);
-            }
-            file << "{}";
-            std::cout << "Repair successful\n";
-            file.close();
-
-            onTabSwitches(0); // Call it up!!! BRING IT ONN
-        }
-
-        std::fstream contestsFile(dirPath + CONTESTS_PATH, std::ios::in);
-        if (contestsFile.is_open()) {
-            try {
-                contests = json::parse(contestsFile);
-
-                // Successfully parsed. Prints logging
-                std::cout << "[JSON: contests] " <<  contests << '\n';
-
-                contestsFile.close();
-            } catch (const json::parse_error& e) {
-                errorDialog("Tệp dữ liệu bài thi đã bị hỏng. Vui lòng cài đặt lại ứng dụng để sửa lỗi");
-                close();
-                exit(0);
-            }
-        } else {
-            errorDialog("Tệp dữ liệu bài thi không tồn tại");
-
-            // Creating file
-            std::fstream file(dirPath + CONTESTS_PATH, std::ios::out | std::ios::trunc);
-
-            if (!file.is_open()) {
-                errorDialog("Tệp dữ liệu bài thi không thể được tạo. Sửa chữa không thành công. Vui lòng cài đặt lại ứng dụng để sửa lỗi.");
-                close();
-                exit(0);
-            }
-            file << "{}";
-            std::cout << "Repair successful\n";
-            file.close();
-
-            onTabSwitches(0); // Call it up!!! BRING IT ONN
-        }
-
-        std::fstream usersFile(dirPath + USERDATA_PATH, std::ios::in);
-        if (usersFile.is_open()) {
-            try {
-                users = json::parse(usersFile);
-
-                // Successfully parsed w/o any error whatsoever
-                std::cout << "[JSON: users] " << users << '\n';
-
-                usersFile.close();
-            } catch (const json::parse_error& e) {
-                errorDialog("Tệp dữ liệu người dùng đã bị hỏng. Vui lòng cài đặt lại ứng dụng để sửa lỗi");
-                close();
-                exit(0);
-            }
-        } else {
-            errorDialog("Tệp dữ liệu người dùng không tồn tại");
-
-            // Creating file
-            std::fstream file(dirPath + USERDATA_PATH, std::ios::out | std::ios::trunc);
-
-            if (!file.is_open()) {
-                errorDialog("Tệp dữ liệu người dùng không thể được tạo. Sửa chữa không thành công. Vui lòng cài đặt lại ứng dụng để sửa lỗi.");
-                close();
-                exit(0);
-            }
-            file << "{}";
-            std::cout << "Repair successful\n";
-            file.close();
-
-            onTabSwitches(0); // Call it up!!! BRING IT ONN
-        }
+        std::string hostname = aliases["hostname"];
+        webserverAliasHostnameInput->setText(QString::fromUtf8(hostname.c_str()));
 
         refreshClassDropdown();
         refreshTable();
@@ -1816,9 +1680,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         std::cout << "onInputChanges(std::string type, std::string value): " << type << ": -> " << value.toStdString() << '\n';
 
         // Checking which type the input belongs to
-        if (type == "wait_time" || type == "reload_time" || type == "show_test" || type == "maximum_login_seconds") {
-            std::fstream settingsFile(dirPath + SETTINGS_PATH, std::ios::out);
-
+        if (type == "wait_time" || type == "reload_time" || type == "show_test" || type == "maximum_login_seconds") {            
             // Checking which value does the input correspond to
             if (type == "wait_time") {
                 // Applying changes
@@ -1835,21 +1697,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 // NOTICE: the key is not the same as type this time. Might happen in the future tho
                 settings["max_not_logged_in_session_seconds"] = stringToInt(value.toStdString());
             }
-
-            if (settingsFile.is_open()) {
-                // Write the result
-                settingsFile << settings;
-
-                // Flush I/O
-                settingsFile.close();
-            } else {
-                errorDialog("Tệp cài đặt không tồn tại hoặc bị lỗi. Hãy cài đặt lại ứng dụng để sửa lỗi.");
-                close();
-                exit(0);
-            }
+            
+            saveSettingsInfo(settings);
         } else if (type == "website_name" || type == "slogan" || type == "hostname") {
-            std::fstream aliasFile(dirPath + ALIAS_PATH, std::ios::out);
-
             // Checking which type?
             if (type == "website_name") {
                 aliases["website_name"] = value.toUtf8().toStdString();
@@ -1858,15 +1708,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             } else if (type == "hostname") {
                 aliases["hostname"] = value.toUtf8().toStdString();
             }
-
-            if (aliasFile.is_open()) {
-                aliasFile << aliases;
-                aliasFile.close();
-            } else {
-                errorDialog("Tệp thông tin hiển thị không tồn tại hoặc bị lỗi. Hãy cài đặt lại ứng dụng để sửa lỗi.");
-                close();
-                exit(0);
-            }
+            
+            saveAliasesInfo(aliases);
         }
     }
 

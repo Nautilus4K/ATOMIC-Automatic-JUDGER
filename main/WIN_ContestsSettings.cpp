@@ -345,20 +345,8 @@ void WIN_ContestsSettings::onTestCaseCheckBoxToggled(std::string which) {
 // Purpose: Look at the name
 // --------------------------
 void WIN_ContestsSettings::reloadContestsVar() {
-    // Clear existing data first
-    contests.clear(); 
-    
-    std::fstream contestsFile(dirPath + CONTESTS_PATH, std::ios::in);
-    if (contestsFile.is_open()) {
-        try {
-            contests = json::parse(contestsFile);
-        } catch (const json::parse_error& e) {
-            contests.clear(); // Ensure clean state on error
-            errorDialog("Không thể đọc dữ liệu bài thi (Tệp bị hỏng?).");
-            close();
-        }
-    }
-    contestsFile.close();
+    // Refresh. As they say
+    contests = getContestsInfo();
 }
 
 // ---------------------------------------------------------------
