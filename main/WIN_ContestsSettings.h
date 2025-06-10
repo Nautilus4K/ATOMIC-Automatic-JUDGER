@@ -48,6 +48,25 @@ class WIN_ContestsSettings: public QWidget {
     std::vector<std::pair<int, std::pair<std::string, std::string>>> indexesToBeModified; // List of indexes that will be modified
     std::vector<std::pair<std::string, std::string>> indexesToBeAdded; // List of indexes to be added
 
+    // -----------------------------------------------------------------
+    // Purpose: To remove a contest from its ROW. Which originates from
+    //          the fetchContests() functionality
+    // -----------------------------------------------------------------
+    // This will manage the removal of contests, clearing out caches related to the old contest
+    // call refresh functions and also change selection of these dudes to the closest one.
+    void remContest(QListWidgetItem *item);
+    
+    // ---------------------------------------------
+    // Purpose: To select a new contest in the list
+    // ---------------------------------------------
+    void selectNewContest(std::string contestName);
+
+    // --------------------------------------------------------------------
+    // Purpose: To do a set of actions when the user clicks on adding new
+    //          contest button
+    // --------------------------------------------------------------------
+    void newContest();
+
     // --------------------------------------------------------------------
     // Purpose: To do actions when checkbox of the test case functionality
     //          was toggled

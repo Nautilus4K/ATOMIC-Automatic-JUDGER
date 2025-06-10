@@ -6,6 +6,12 @@
 #include <algorithm>
 #include <iostream>
 #include <mutex>
+#include <fstream>
+#include <nlohmann/json.hpp>
+
+#include "consts.h"
+
+using nlohmann::json;
 
 // Custom functions as tools
 inline std::string intToString(int n) {
@@ -73,6 +79,22 @@ inline std::string turnStringUppercaseA(const std::string& s) {
     }
 
     return result;
+}
+
+inline bool saveContestsInfo(const json& val) {
+    bool successfullyOpenFile = false;
+    std::fstream contestsFile(dirPath + CONTESTS_PATH, std::ios::out);
+    if (contestsFile.is_open()) {
+        contestsFile << val;
+
+        // Tbh I am just gonna refresh the entire thing to make sure its safe and
+        // up to date. WELP. IT DOESN'T WORK THAT WAY. Let's set a variable after we closed this fully.
+        // toCnts(currentCnts); // SOUNDS GOOD
+        successfullyOpenFile = true;
+    }
+    contestsFile.close();
+
+    return successfullyOpenFile;
 }
 
 #endif

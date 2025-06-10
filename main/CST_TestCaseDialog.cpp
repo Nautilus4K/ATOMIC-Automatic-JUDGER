@@ -18,7 +18,7 @@ CST_TestCaseDialog::CST_TestCaseDialog(QWidget *parent, QString currentInput, QS
     setObjectName("dialog");
     setStyleSheet(parent->styleSheet());
     setWindowIcon(parent->windowIcon());
-    setAttribute(Qt::WA_DeleteOnClose); // Cleaning
+    // setAttribute(Qt::WA_DeleteOnClose); // Cleaning
 
     // Setting up some certainly required variables.
     QVBoxLayout *layout = new QVBoxLayout(this);

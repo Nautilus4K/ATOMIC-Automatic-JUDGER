@@ -173,8 +173,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
     // Settings bars
     QPushButton *contestsSettings = new QPushButton(this);
+    QPushButton *usersSettings = new QPushButton(this);
 
-    PanelWindow() { // Extremely powerful? Extremely complex.
+    PanelWindow(QWidget *parent) : QMainWindow(parent) { // Extremely powerful? Extremely complex.
         // This is the configuration part of panelWindow.
         // Initialization will be another one
 
@@ -184,6 +185,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         setWindowTitle("Bảng điều khiển ATOMIC");
         resize(QSize(950, 550));
         setMinimumSize(QSize(600, 400));
+        setAttribute(Qt::WA_DeleteOnClose);
 
         iconPixmap = QPixmap(QString::fromStdString(dirPath + ICON_PATH), "ICO", Qt::AutoColor);
         setWindowIcon(QIcon(iconPixmap));
@@ -437,6 +439,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         const int btnWidth = 55, btnHeight = 55;  // Perfect square
 
         contestsSettings->setObjectName("genericBtn");
+        contestsSettings->setToolTip("Cài đặt bài thi");
         contestsSettings->setFixedHeight(btnHeight); contestsSettings->setFixedWidth(btnWidth);
         // Applying icon
         QPixmap contestsPXMP(CONTESTSICON_PATH);
@@ -446,8 +449,22 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         connect(contestsSettings, &QPushButton::clicked, this, [this] {
             showButtonInfoFromBarType("contests");
         });
+
+        // Now for user settings
+        usersSettings->setObjectName("genericBtn");
+        usersSettings->setToolTip("Cài đặt người dùng");
+        usersSettings->setFixedHeight(btnHeight); usersSettings->setFixedWidth(btnWidth);
+        QPixmap usersPXMP(USERSICON_PATH);
+        QIcon usersIcon(usersPXMP);
+        usersSettings->setIcon(usersIcon);
+        usersSettings->setIconSize(QSize(btnWidth, btnHeight));
+        connect(usersSettings, &QPushButton::clicked, this, [this] {
+            showButtonInfoFromBarType("users");
+        });
+
         // Adding in
         settingsLayout->addWidget(contestsSettings);
+        settingsLayout->addWidget(usersSettings);
         settingsLayout->setContentsMargins(0, 0, 0, 0);
 
         settingsLine->setLayout(settingsLayout);
@@ -1588,6 +1605,17 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 contestOpened = false;
                 contestsSettings->setEnabled(true);
             });
+        } else if (type == "users") {
+            // Alright. So the user want to modify students settings and webserver is NOT RUNNING
+            if (webserverProcess->state() == QProcess::Running) {
+                QMessageBox::critical(this, 
+                    "Không thể chỉnh sửa cài đặt người dùng", 
+                    "Không thể chỉnh sửa cài đặt người dùng khi trang web chấm bài đang hoạt động!", 
+                    QMessageBox::Ok
+                );
+
+                return; // HALT
+            }
         }
     }
 
@@ -1857,7 +1885,6 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                                         QMessageBox::Yes | QMessageBox::No);
             if (reply == QMessageBox::Yes) {
                 event->accept();  // Allow closing
-                exit(0);
             } else {
                 event->ignore();  // Prevent closing
             }
@@ -1962,7 +1989,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
         app.setApplicationVersion("v0.1");
         Q_INIT_RESOURCE(qres);
 
-        PanelWindow panel;
+        PanelWindow panel(nullptr);
         panel.initialize();
 
         if (!hideConsole) {
@@ -1999,5 +2026,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // 6) Cleanup Winsock
     WSACleanup();
 
+    if (!hideConsole) {
+        std::cin.get();
+    }
     return ret;
 }

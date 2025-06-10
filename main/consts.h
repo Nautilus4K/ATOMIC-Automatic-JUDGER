@@ -39,6 +39,7 @@ static const QString EXITICON_PATH = ":/images/exit.png";
 static const QString CONTESTSICON_PATH = ":/images/contests.png";
 static const QString DELETEICON_PATH = ":/images/delete.png";
 static const QString EDITICON_PATH = ":/images/edit.png";
+static const QString USERSICON_PATH = ":/images/users.png";
 
 static const char* DEBUGLOG_PATH = "/debug.log";
 

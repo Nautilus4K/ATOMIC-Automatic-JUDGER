@@ -1,5 +1,6 @@
 #include "WIN_ContestsSettings.h" // The main shyt
 #include "CST_TestCaseDialog.h"   // For the dialog of the test cases
+#include "CST_PlainTextDialog.h"  // Plain text dialog (for new contests)
 #include "consts.h"               // Constants
 #include "utilities.h"            // Utilities (custom conversion functions)
 
@@ -10,6 +11,7 @@
 #include <QtWidgets/QTableWidget>
 
 #include <QtGui/QCloseEvent>
+#include <QtCore/QTimer>
 
 #include <fstream>
 #include <iostream>
@@ -52,8 +54,21 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
     fetchContests(true);
     
     // SIDEBAR
+    QWidget *sidebar = new QWidget(this);
+    QVBoxLayout *sidebarLayout = new QVBoxLayout(sidebar);
+    sidebar->setLayout(sidebarLayout);
+    sidebar->setMaximumWidth(280);
+    sidebarLayout->setContentsMargins(0, 0, 0, 0);
+
     listView->setObjectName("con_sec");
-    listView->setMaximumWidth(280);
+    sidebarLayout->addWidget(listView);
+
+    QPushButton *addContestBtn = new QPushButton(sidebar);
+    addContestBtn->setObjectName("genericBtn");
+    addContestBtn->setText("+ Bài thi mới");
+    sidebarLayout->addWidget(addContestBtn);
+
+    connect(addContestBtn, &QPushButton::clicked, this, &WIN_ContestsSettings::newContest);
     
     // CONTEST DETAILS (A normal containable widget)
     QScrollArea *contestDetailsScrollable = new QScrollArea();
@@ -95,7 +110,7 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
     testCasesList->setMinimumHeight(150);
 
     // Adding test cases functionality
-    QPushButton *addTestCaseBtn = new QPushButton(this);
+    QPushButton *addTestCaseBtn = new QPushButton(sidebar);
     addTestCaseBtn->setObjectName("genericBtn");
     addTestCaseBtn->setFixedWidth(110);
     addTestCaseBtn->setText("Thêm bộ test");
@@ -184,8 +199,114 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
     
     contestDetailsScrollable->setWidget(contestDetails);
     
-    splitter->addWidget(listView);
+    splitter->addWidget(sidebar);
     splitter->addWidget(contestDetailsScrollable);
+}
+
+void WIN_ContestsSettings::remContest(QListWidgetItem *item) {
+    QMessageBox::StandardButton reply = QMessageBox::warning(this, 
+        "Hành động nguy hiểm", "Bạn có chắc muốn tiếp tục xoá bài thi này?", 
+        QMessageBox::Yes | QMessageBox::No
+    );
+
+    if (reply == QMessageBox::No) {
+        return;
+    }
+
+    std::cout << "[*] Gathering required informations\n";
+    // Get the row
+    int row = listView->row(item);
+    int selectedRow = listView->currentRow();
+
+    // Logging and gather neccessary informations
+    std::string contestName = contestByRowOrder[row]; // Will desync if not refreshed properly
+    std::cout << "Removes contest on row " << row << " which corresponds to contest with the name \"" << contestName << "\"\n";
+
+    // We remove... the contest.
+    if (contests.contains(contestName)) {
+        contests.erase(contestName);
+    }
+
+    // Save it in...
+    saveContestsInfo(contests);
+
+    std::cout << "[*] Refreshing window...\n";
+    // We refresh the entire thing
+    fetchContests(false);
+
+    // We need to check if the new row has to change much
+    std::cout << "[*] Switching SELECTED ROW\n";
+    if (row == selectedRow) {
+        // Okay. Then change the now selected row to something else. NEWER. Yes
+        QTimer::singleShot(0, this, [this] {
+            selectNewContest(contestByRowOrder[0]);
+        });
+    } else if (selectedRow > row) // Account for offsets
+        QTimer::singleShot(0, this, [this, selectedRow] {
+            selectNewContest(contestByRowOrder[selectedRow - 1]);
+        });
+    else
+        QTimer::singleShot(0, this, [this, selectedRow] {
+            selectNewContest(contestByRowOrder[selectedRow]);
+        });
+}
+
+void WIN_ContestsSettings::selectNewContest(std::string contestName) {
+    std::cout << "[selectNewContest()] Locating contest index...\n";
+    int i = 0;
+    for (i; i < contestByRowOrder.size(); i++) {
+        if (contestByRowOrder[i] == contestName) {
+            break;
+        }
+    }
+
+    std::cout << "[selectNewContest()] Setting row...\n";
+    listView->setCurrentRow(i);
+    contestNameLabel->setText(QString::fromStdString(contestByRowOrder[i]));
+    saveBtn->setEnabled(true);
+    currentCnts = contestByRowOrder[i];
+    
+    // Call toCnts() AFTER the UI is fully set up
+    std::cout << "[selectNewContest()] AWAITING signal with QTimer for refreshing with toCnts()\n";
+    QTimer::singleShot(0, this, [this]() {
+        toCnts(currentCnts);
+    });
+}
+
+void WIN_ContestsSettings::newContest() {
+    // Do the set of actions
+    std::cout << "[newContest()] Called up!\n"; // Logging
+
+    // We need an input box, you know, that kinda thing. Weird shit
+    CST_PlainTextDialog dialog(this, "Nhập tên bài thi", "Hãy nhập tên bài thi mới");
+    dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowCloseButtonHint);
+
+    if (dialog.exec() == QDialog::Accepted) {
+        std::cout << "DIALOG Accepted\n";
+        std::string newContestName = dialog.editor->text().toStdString();
+        std::cout << newContestName << '\n';
+
+        // Let's do a quick one!
+        // We add a sorta template-y json entry for the new contest
+        // and the rest will be supplemented by the existing functionalities
+        contests[newContestName] = json::parse(R"(
+            {
+                "Classes": [],
+                "Desc": "",
+                "InputFile": "",
+                "InputType": "raw",
+                "OutputFile": "",
+                "OutputType": "raw",
+                "TestAmount": 0,
+                "Tests": [],
+                "TimeLimit": 1.0
+            }
+        )");
+
+        saveContestsInfo(contests);
+        fetchContests(false);
+        selectNewContest(newContestName);
+    }
 }
 
 void WIN_ContestsSettings::onTestCaseCheckBoxToggled(std::string which) {
@@ -224,23 +345,18 @@ void WIN_ContestsSettings::onTestCaseCheckBoxToggled(std::string which) {
 // Purpose: Look at the name
 // --------------------------
 void WIN_ContestsSettings::reloadContestsVar() {
+    // Clear existing data first
+    contests.clear(); 
+    
     std::fstream contestsFile(dirPath + CONTESTS_PATH, std::ios::in);
     if (contestsFile.is_open()) {
-        // No errors
         try {
-            // Apply the neccessary data
             contests = json::parse(contestsFile);
-
-            std::cout << contests << '\n';
         } catch (const json::parse_error& e) {
-            // Yes errors
+            contests.clear(); // Ensure clean state on error
             errorDialog("Không thể đọc dữ liệu bài thi (Tệp bị hỏng?).");
             close();
         }
-    } else {
-        std::cout << "Unable to open contestsFile\n";
-        errorDialog("Không thể truy cập dữ liệu bài thi.");
-        close();
     }
     contestsFile.close();
 }
@@ -248,8 +364,16 @@ void WIN_ContestsSettings::reloadContestsVar() {
 // ---------------------------------------------------------------
 // Purpose: A way to fetch new contests when I just opened it up.
 // ---------------------------------------------------------------
-void WIN_ContestsSettings::fetchContests(bool selectEntryAutomatically) {
+void WIN_ContestsSettings::fetchContests(bool selectFirstEntry) {
     reloadContestsVar();
+
+    std::cout << "Contest amounts: " << contests.size();
+
+    if (contests.size() == 0)
+        QTimer::singleShot(0, this, &WIN_ContestsSettings::newContest);
+
+    contestByRowOrder.clear();
+    contestByRowOrder.reserve(contests.size()); // Reserve memory alloc
     listView->clear();
 
     if (!contests.is_object() || contests.empty()) {
@@ -265,62 +389,112 @@ void WIN_ContestsSettings::fetchContests(bool selectEntryAutomatically) {
     // After we've got the required data to secure the ticket to showing whats needed
     // A.K.A showing the contests in a LIST VIEW. Which is pretty much obsolete at this
     // point but I dont have any other alternative that is much easier to use.
+    int row = 0;
     for (const auto& item : contests.items()) {
         // std::cout << "[*ContestsSettings] Now processing: " << item.key() << '\n';
         contestByRowOrder.push_back(item.key());
         const QString contestName = QString::fromStdString(item.key());
 
-        QListWidgetItem *listItem = new QListWidgetItem(listView);
+        try {
+            std::cout << "Processing " << item.key() << '\n';
+            QListWidgetItem *listItem = new QListWidgetItem(listView);
 
-        // Actually. Even though it will be kinda a memory hog, I still wants to make it looks BEAUTIFUL
-        // So. What's the looks?
-        // +-----------------------+
-        // | BIG LABEL FOR CONTEST |
-        // | smaller for classes   |
-        // +-----------------------+
-        // This will be achievable with a QWidget
-        QWidget *listItemWidget = new QWidget(this);
-        QVBoxLayout *listItemWidgetLayout = new QVBoxLayout(listItemWidget); // Actually, I don't like the names to be too
-                                                                             // fucking long. But I have no other choices
+            // Actually. Even though it will be kinda a memory hog, I still wants to make it looks BEAUTIFUL
+            // So. What's the looks?
+            // +-----------------------+
+            // | BIG LABEL FOR CONTEST |
+            // | smaller for classes   |
+            // +-----------------------+
+            // This will be achievable with a QWidget
+            QWidget *listItemWidget = new QWidget(this);
+            QHBoxLayout *listItemWidgetLayout = new QHBoxLayout(listItemWidget); // Actually, I don't like the names to be too
+                                                                                // fucking long. But I have no other choices
 
-        listItemWidget->setLayout(listItemWidgetLayout); // Setting the layout. Now we just need to make all these work by
-                                                         // Adding QLabels
-        
-        QLabel *contestHeader = new QLabel(listItemWidget);
-        contestHeader->setStyleSheet(STYLE_BIGLABEL);
-        contestHeader->setText(contestName);
+            listItemWidget->setLayout(listItemWidgetLayout); // Setting the layout. Now we just need to make all these work by
+                                                            // Adding QLabels
 
-        QLabel *contestInf = new QLabel(listItemWidget); // The smaller information label
+            // std::cout << item.key() << ": " << item.value() << '\n';
 
-        // Setting text
-        contestInf->setText(QString::fromStdString(contests[item.key()]["Desc"]));
-        contestInf->setTextFormat(Qt::RichText);
-        contestInf->setWordWrap(false); // No automatic wrapping
-        contestInf->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed); // No expanding.
-        contestInf->setFixedHeight(contestInf->fontMetrics().height() + 4); // Housing ONE LINE only
-        // std::cout << item.key() << ": " << item.value() << '\n';
+            // QWidget for labels part
+            QWidget *labelArea = new QWidget(listItemWidget);
+            QVBoxLayout *labelAreaLayout = new QVBoxLayout(labelArea);
+            labelArea->setLayout(labelAreaLayout);
+            labelArea->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+            labelAreaLayout->setContentsMargins(0, 0, 0, 0);
 
-        // Adding the newly made headers and inf elements
-        listItemWidgetLayout->addWidget(contestHeader);
-        listItemWidgetLayout->addWidget(contestInf);
+            // Labels
+            QLabel *contestHeader = new QLabel(listItemWidget);
+            contestHeader->setStyleSheet(STYLE_BIGLABEL);
+            contestHeader->setText(contestName);
 
-        // Now we apply the QWidget in
-        listItem->setSizeHint(listItemWidget->sizeHint());
-        listView->setItemWidget(listItem, listItemWidget);
+            QLabel *contestInf = new QLabel(listItemWidget); // The smaller information label
+            
+            // Setting text
+            QString contestDescription = QString::fromStdString(contests[item.key()]["Desc"]);
+            if (contestDescription == "") contestDescription = "<Không có mô tả>";
+            contestInf->setText(contestDescription);
+            contestInf->setTextFormat(Qt::RichText);
+            contestInf->setWordWrap(false); // No automatic wrapping
+            contestInf->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Fixed); // No expanding.
+            contestInf->setFixedHeight(contestInf->fontMetrics().height() + 4); // Housing ONE LINE only
 
-        if (contestByRowOrder.size() == 1 && selectEntryAutomatically) { // If this is a first
-            // This is created so that it will execute only if there is at least one contest
-            // available.
-            // Else then nothing will show and it should be disabled (by default).
-            listView->setCurrentItem(listItem);
-            contestNameLabel->setText(contestName);
-            saveBtn->setEnabled(true);
-            currentCnts = contestName.toStdString();
+            // Adding the newly made headers and inf elements
+            labelAreaLayout->addWidget(contestHeader);
+            labelAreaLayout->addWidget(contestInf);
 
-            toCnts(contestName.toStdString());
-            std::cout << "Performed special move on contestByRowOrder. Guess what it is :)\n";
+            listItemWidgetLayout->addWidget(labelArea);
+
+            // Removal button
+            QPushButton *delBtn = new QPushButton(listItemWidget);
+            delBtn->setObjectName("genericBtn");
+            QPixmap delBtnPixmap(DELETEICON_PATH);
+            QIcon delBtnIcon(delBtnPixmap);
+            delBtn->setIcon(delBtnIcon);
+            delBtn->setFixedHeight(30);
+            delBtn->setFixedWidth(30);
+            delBtn->setToolTip("Xoá bài thi này");
+
+            connect(delBtn, &QPushButton::clicked, this, [listItem, this] {
+                remContest(listItem); // FUCK THIS IS THE ONLY WAYYYY???? UGHHH
+            });
+            
+            // listItemWidgetLayout->addStretch(1);
+            listItemWidgetLayout->addWidget(delBtn);
+            listItemWidgetLayout->setAlignment(Qt::AlignCenter);
+            
+            // Now we apply the QWidget in
+            listItem->setSizeHint(listItemWidget->sizeHint());
+            listView->setItemWidget(listItem, listItemWidget);
+            
+            row++;
+
+            if (contestByRowOrder.size() == 1 && selectFirstEntry) { // If this is a first
+                // This is created so that it will execute only if there is at least one contest
+                // available.
+                // Else then nothing will show and it should be disabled (by default).
+                listView->setCurrentItem(listItem);
+                contestNameLabel->setText(contestName);
+                saveBtn->setEnabled(true);
+                currentCnts = contestName.toStdString();
+                
+                // Don't call toCnts() here, just set the selection
+                if (selectFirstEntry && !contestByRowOrder.empty()) {
+                    selectNewContest(contestName.toStdString());
+                }
+                std::cout << "Performed special move on contestByRowOrder. Guess what it is :)\n";
+            }   
+        } catch (const std::bad_alloc& e) {
+            errorDialog("Không đủ bộ nhớ để tạo giao diện");
+            close();
         }
     }
+
+    // if (!selectFirstEntry) {
+    //     listView->setCurrentRow(contestByRowOrder.size() - 1);
+    //     contestNameLabel->setText(QString::fromStdString(contestByRowOrder[contestByRowOrder.size() - 1]));
+    //     saveBtn->setEnabled(true);
+    //     currentCnts = contestByRowOrder[contestByRowOrder.size() - 1];
+    // }
 
     // Styling to make the list view works like a navigation pane
     listView->setSelectionMode(QAbstractItemView::SingleSelection);
@@ -334,6 +508,7 @@ void WIN_ContestsSettings::fetchContests(bool selectEntryAutomatically) {
         currentCnts = contestByRowOrder[index];
         toCnts(contestByRowOrder[index]);
     });
+
 }
 
 // --------------------------------------------------------------------
@@ -417,19 +592,7 @@ void WIN_ContestsSettings::saveInfo() {
     contests[currentCnts]["TimeLimit"] = stringToDouble(timeLimit->text().toStdString());
 
     // Now some I/O trickery because to be honest, Idk how it works either
-    bool successfullyOpenFile = false;
-    std::fstream contestsFile(dirPath + CONTESTS_PATH, std::ios::out);
-    if (contestsFile.is_open()) {
-        contestsFile << contests;
-
-        // Tbh I am just gonna refresh the entire thing to make sure its safe and
-        // up to date. WELP. IT DOESN'T WORK THAT WAY. Let's set a variable after we closed this fully.
-        // toCnts(currentCnts); // SOUNDS GOOD
-        successfullyOpenFile = true;
-    } else {
-        errorDialog("Mở tệp bài làm không thành công. Đã có lỗi xảy ra.");
-    }
-    contestsFile.close();
+    bool successfullyOpenFile = saveContestsInfo(contests);
 
     if (successfullyOpenFile) {
         toCnts(currentCnts);
@@ -440,12 +603,12 @@ void WIN_ContestsSettings::addCase() {
     // Let's do this
     std::cout << "WIN_ContestsSettings::addCase() called\n";
 
-    CST_TestCaseDialog *dialog = new CST_TestCaseDialog(this, 
+    CST_TestCaseDialog dialog(this, 
         "", ""
     );
 
-    if (dialog->exec() == QDialog::Accepted) {
-        QStringList result = dialog->getResult();
+    if (dialog.exec() == QDialog::Accepted) {
+        QStringList result = dialog.getResult();
 
         QString inputValue = result[0];
         QString outputValue = result[1];
@@ -506,15 +669,15 @@ void WIN_ContestsSettings::addCase() {
             // Yeah now let's make sure the data is read dynamically. We have the indexes required now too
             modifiedValue = indexesToBeAdded[currentIndex];
 
-            CST_TestCaseDialog *dialog = new CST_TestCaseDialog(this, 
+            CST_TestCaseDialog dialog(this, 
                 QString::fromStdString(modifiedValue.first), 
                 QString::fromStdString(modifiedValue.second)
             );
 
-            if (dialog->exec() == QDialog::Accepted) {
+            if (dialog.exec() == QDialog::Accepted) {
                 // If the user actually finished the damn thing normally
                 // Get the result of their choices
-                QStringList result = dialog->getResult();
+                QStringList result = dialog.getResult();
 
                 QString inputValue = result[0];
                 QString outputValue = result[1];
@@ -552,8 +715,11 @@ void WIN_ContestsSettings::addCase() {
 void WIN_ContestsSettings::toCnts(std::string contestName) {
     reloadContestsVar();
     indexesToBeRemoved.clear(); // Not a pointer, so its gonna be fine
+    indexesToBeRemoved.reserve(contests[contestName]["Tests"].size());
     indexesToBeModified.clear();
+    indexesToBeModified.reserve(contests[contestName]["Tests"].size());
     indexesToBeAdded.clear();
+    indexesToBeAdded.reserve(contests[contestName]["Tests"].size());
     currentCnts = contestName;
 
     if (!contests.is_object() || contests.empty()) { // Save lives of thousands
@@ -640,7 +806,7 @@ void WIN_ContestsSettings::toCnts(std::string contestName) {
             QListWidgetItem *removedItem = testCasesList->takeItem(row);
             
             // Safely removes the item
-            delete widgetToDelete;
+            widgetToDelete->deleteLater();
             delete removedItem;
             
             // Mark index as to be removed
@@ -677,15 +843,15 @@ void WIN_ContestsSettings::toCnts(std::string contestName) {
                 modifiedValue = {contests[contestName]["Tests"][index][0], contests[contestName]["Tests"][index][1]};
             }
 
-            CST_TestCaseDialog *dialog = new CST_TestCaseDialog(this, 
+            CST_TestCaseDialog dialog(this, 
                 QString::fromStdString(modifiedValue.first), 
                 QString::fromStdString(modifiedValue.second)
             );
 
-            if (dialog->exec() == QDialog::Accepted) {
+            if (dialog.exec() == QDialog::Accepted) {
                 // If the user actually finished the damn thing normally
                 // Get the result of their choices
-                QStringList result = dialog->getResult();
+                QStringList result = dialog.getResult();
 
                 QString inputValue = result[0];
                 QString outputValue = result[1];
@@ -781,6 +947,12 @@ void WIN_ContestsSettings::closeEvent(QCloseEvent *event) {
     // is already absurd enough. And now we have this.
     // Nice.
     emit closed();
+    contests.clear();
+    contestByRowOrder.clear();
+    indexesToBeRemoved.clear();
+    indexesToBeModified.clear();
+    indexesToBeAdded.clear();
     event->accept();
     this->deleteLater(); // Cleaning.
 }
+    

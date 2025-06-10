@@ -1,0 +1,4 @@
+#ifndef WIN_USERSSETTINGS_H
+#define WIN_USERSSETTINGS_H
+
+#endif

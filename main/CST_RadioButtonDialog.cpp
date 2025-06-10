@@ -3,7 +3,7 @@
 CST_RadioButtonDialog::CST_RadioButtonDialog(QWidget *parent, QString title, QString question, QStringList entries) : QDialog(parent) {
     setObjectName("dialog");
     setWindowTitle(title);
-    setAttribute(Qt::WA_DeleteOnClose); // Cleaning
+    // setAttribute(Qt::WA_DeleteOnClose); // Cleaning
     if (parent) {
         setStyleSheet(parent->styleSheet());
         setWindowIcon(parent->windowIcon());

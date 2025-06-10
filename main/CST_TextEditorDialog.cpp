@@ -6,7 +6,7 @@
 #include <fstream>
 #include <sstream>
 
-CST_TextEditorDialog::CST_TextEditorDialog(QWidget *parent, QString title, std::string filePath, bool readOnly) : QWidget(parent) {
+CST_TextEditorDialog::CST_TextEditorDialog(QWidget *parent, QString title, std::string filePath, bool readOnly) {
     setObjectName("dialog");
     setWindowTitle(title);
     setAttribute(Qt::WA_DeleteOnClose); // Cleaning
