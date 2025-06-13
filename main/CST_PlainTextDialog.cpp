@@ -13,12 +13,13 @@ CST_PlainTextDialog::CST_PlainTextDialog(QWidget *parent, QString title, QString
     // setAttribute(Qt::WA_DeleteOnClose);
 
     setWindowTitle(title);
-    setFixedSize(250, 120);
+    setMinimumSize(250, 120);
     
     QVBoxLayout *layout = new QVBoxLayout(this);
     setLayout(layout);
 
     QLabel *labelW = new QLabel(this);
+    labelW->setWordWrap(true);
     labelW->setText(label);
     layout->addWidget(labelW);
 

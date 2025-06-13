@@ -65,7 +65,7 @@ class WIN_ContestsSettings: public QWidget {
     // Purpose: To do a set of actions when the user clicks on adding new
     //          contest button
     // --------------------------------------------------------------------
-    void newContest();
+    void newContest(bool forced);
 
     // --------------------------------------------------------------------
     // Purpose: To do actions when checkbox of the test case functionality

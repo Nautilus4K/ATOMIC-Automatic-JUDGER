@@ -1,4 +1,5 @@
 #include "CST_Listing.h"
+#include "CST_PlainTextDialog.h"
 
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QHBoxLayout>
@@ -41,6 +42,11 @@ CST_Listing::CST_Listing(QWidget *parent) : QWidget(parent) {
     btnPlane->setLayout(btnPlaneLayout);
 
     layout->addWidget(btnPlane);
+
+    // Initialize the thing by creating a GHOST model. This will fix the crash that happens when CST_Listing is
+    // initialized but hasn't been set any entries, which would just go away when the user adds a singular fucking entry
+    QStringList emptyStrList = {};
+    setEntries(emptyStrList);
 }
 
 // Setting entries of list
@@ -59,10 +65,13 @@ void CST_Listing::setReadOnly(bool b) {
 }
 
 void CST_Listing::addEntry() {
-    bool ok; // This is NOT a pointer
+    // bool ok; // This is NOT a pointer
     // Using a pointer pointing to the ok variable (which is not a pointer) to get the value.
     // Very fun
-    QString name = QInputDialog::getText(this, "Nhập tên của mục mới", "Hãy nhập tên cho mục mới bạn cần thêm:", QLineEdit::Normal, "", &ok);
+    // QString name = QInputDialog::getText(this, "Nhập tên của mục mới", "Hãy nhập tên cho mục mới bạn cần thêm:", QLineEdit::Normal, "", &ok);
+    CST_PlainTextDialog dialog(this, "Nhập tên của mục mới", "Hãy nhập tên cho mục mới bạn cần thêm:");
+    bool ok = (dialog.exec() == QDialog::Accepted);
+    QString name = dialog.getResult();
 
     if (ok && !name.isEmpty()) { // User clicked OK and did not leave name blank
         QStringList curEnt = getEntries(); // Get current entries so that I can add more

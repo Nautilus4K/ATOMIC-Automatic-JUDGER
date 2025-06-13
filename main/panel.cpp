@@ -116,6 +116,7 @@ using json = nlohmann::json;
 #include "CST_RichTextEdit.h"
 #include "CST_Listing.h"
 #include "WIN_ContestsSettings.h"
+#include "WIN_UsersSettings.h"
 
 // -> Color values
 QColor COLOR_CONSOLE_ERROR;
@@ -691,6 +692,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         // Settings boxes info
         contestOpened = false;
+        userOpened = false;
 
         // Make sure segfault doesn't happen for no fucking reason, like, dude. Idk man
         // It only happens when I click on the contest page immediately after I opened
@@ -883,6 +885,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
     private: // PRIVATE FUNCTIONS. These cannot be connected to outside of whatever this object is.
     bool contestOpened; // A variable for showing the information of if the contest settings is opened or not
+    bool userOpened;
     // -------------------------------------------------
     // Purpose: [GROUPED] (onSidebarFeatureButtonPushed, 
     //          readyJudgingOutput, stoppedJudging)
@@ -1127,7 +1130,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             }
 
             // Showing the error
-            QMessageBox *msgBox = new QMessageBox();
+            QMessageBox *msgBox = new QMessageBox(this);
             msgBox->setText(message);
             msgBox->setWindowTitle(windowTitle);
             msgBox->setIcon(QMessageBox::Critical);
@@ -1140,7 +1143,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         } else {
             // If the software exitted gracefully, we do a little bit of windowin'
             // by simply showing a response to assure the user nothing is BAD
-            QMessageBox *msgBox = new QMessageBox();
+            QMessageBox *msgBox = new QMessageBox(this);
             msgBox->setText("Dừng hệ thống chấm bài thành công!");
             msgBox->setWindowTitle("Thành công");
             msgBox->setIcon(QMessageBox::Information);
@@ -1595,6 +1598,10 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     // -----------------------------------------------------------------
     void showButtonInfoFromBarType(std::string type) {
         if (type == "contests" && !contestOpened) {
+            // Sadly, stack allocation can only be used with QDialogs since they will pause
+            // all current operations to focus on only the QDialog.
+            // This will instantly close on open with stack allocation, so heap allocation (pointers)
+            // is the only way (for now)
             WIN_ContestsSettings *cstWin = new WIN_ContestsSettings(this);
             cstWin->show();
 
@@ -1605,7 +1612,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 contestOpened = false;
                 contestsSettings->setEnabled(true);
             });
-        } else if (type == "users") {
+        } else if (type == "users" && !userOpened) {
             // Alright. So the user want to modify students settings and webserver is NOT RUNNING
             if (webserverProcess->state() == QProcess::Running) {
                 QMessageBox::critical(this, 
@@ -1616,6 +1623,17 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                 return; // HALT
             }
+
+            WIN_UsersSettings *usrWin = new WIN_UsersSettings(this);
+            usrWin->show();
+
+            userOpened = true;
+            usersSettings->setEnabled(false);
+
+            connect(usrWin, &WIN_UsersSettings::closed, this, [this] {
+                userOpened = false;
+                usersSettings->setEnabled(true);
+            });
         }
     }
 
@@ -1660,7 +1678,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     // Purpose: Showing errors faster than having to type an actual long command
     // -------------------------------------------------------------------------
     void errorDialog(std::string error) {
-        QMessageBox *msgBox = new QMessageBox();
+        QMessageBox *msgBox = new QMessageBox(this);
         msgBox->setText(QString::fromStdString("Đã có lỗi xảy ra: " + error));
         msgBox->setWindowTitle("Lỗi");
         msgBox->setIcon(QMessageBox::Critical);

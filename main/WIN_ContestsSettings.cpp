@@ -15,8 +15,11 @@
 
 #include <fstream>
 #include <iostream>
+#include <filesystem>
 
-WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
+namespace fs = std::filesystem;
+
+WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) : QWidget(parent, Qt::Window) {
     setObjectName("container");
     setWindowIcon(parent->windowIcon());
     setStyleSheet(parent->styleSheet());
@@ -63,12 +66,23 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
     listView->setObjectName("con_sec");
     sidebarLayout->addWidget(listView);
 
+    // Connecting the signal of selection.
+    connect(listView, &QListWidget::itemClicked, this, [this](const QListWidgetItem *item) {
+        const int index = listView->row(item);
+
+        std::cout << "Clicked on " << contestByRowOrder[index] << '\n';
+        currentCnts = contestByRowOrder[index];
+        toCnts(contestByRowOrder[index]);
+    });
+
     QPushButton *addContestBtn = new QPushButton(sidebar);
     addContestBtn->setObjectName("genericBtn");
     addContestBtn->setText("+ Bài thi mới");
     sidebarLayout->addWidget(addContestBtn);
 
-    connect(addContestBtn, &QPushButton::clicked, this, &WIN_ContestsSettings::newContest);
+    connect(addContestBtn, &QPushButton::clicked, this, [this] {
+        newContest(false);
+    });
     
     // CONTEST DETAILS (A normal containable widget)
     QScrollArea *contestDetailsScrollable = new QScrollArea();
@@ -205,7 +219,7 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) {
 
 void WIN_ContestsSettings::remContest(QListWidgetItem *item) {
     QMessageBox::StandardButton reply = QMessageBox::warning(this, 
-        "Hành động nguy hiểm", "Bạn có chắc muốn tiếp tục xoá bài thi này?", 
+        "Hành động nguy hiểm", "Bạn có chắc muốn tiếp tục xoá bài thi này? Hành động này cũng sẽ xoá tất cả các bài làm học sinh thuộc về bài thi này.", 
         QMessageBox::Yes | QMessageBox::No
     );
 
@@ -229,6 +243,32 @@ void WIN_ContestsSettings::remContest(QListWidgetItem *item) {
 
     // Save it in...
     saveContestsInfo(contests);
+
+    std::cout << "[*] Performing clean up sequence...\n";
+    // Tie up loose ends
+    // To do this, we need to list all items in the user data directory
+    for (const auto& entry : fs::directory_iterator(dirPath + USERSUBHISTORY_DIR)) {
+        if (fs::is_directory(entry)) {
+            // Now that this entry is valid, we can proceed to find even more things inside.
+            // Let's first get the directory name first.
+            const std::string subDirName = entry.path().filename().string();
+
+            std::cout << "[*] - Checking " << dirPath + USERSUBHISTORY_DIR + subDirName + "/" + contestName + ".cpp" << '\n';
+            if (fs::exists(dirPath + USERSUBHISTORY_DIR + subDirName + "/" + contestName + ".cpp")) {
+                fs::remove(dirPath + USERSUBHISTORY_DIR + subDirName + "/" + contestName + ".cpp");
+            }
+
+            std::cout << "[*] - Checking " << dirPath + USERSUBHISTORY_DIR + subDirName + "/" + contestName + ".pas" << '\n';
+            if (fs::exists(dirPath + USERSUBHISTORY_DIR + subDirName + "/" + contestName + ".pas")) {
+                fs::remove(dirPath + USERSUBHISTORY_DIR + subDirName + "/" + contestName + ".pas");
+            }
+
+            std::cout << "[*] - Checking " << dirPath + USERSUBHISTORY_DIR + subDirName + "/" + contestName + ".py" << '\n';
+            if (fs::exists(dirPath + USERSUBHISTORY_DIR + subDirName + "/" + contestName + ".py")) {
+                fs::remove(dirPath + USERSUBHISTORY_DIR + subDirName + "/" + contestName + ".py");
+            }
+        }
+    }
 
     std::cout << "[*] Refreshing window...\n";
     // We refresh the entire thing
@@ -273,17 +313,17 @@ void WIN_ContestsSettings::selectNewContest(std::string contestName) {
     });
 }
 
-void WIN_ContestsSettings::newContest() {
+void WIN_ContestsSettings::newContest(bool forced) {
     // Do the set of actions
     std::cout << "[newContest()] Called up!\n"; // Logging
 
     // We need an input box, you know, that kinda thing. Weird shit
     CST_PlainTextDialog dialog(this, "Nhập tên bài thi", "Hãy nhập tên bài thi mới");
-    dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowCloseButtonHint);
+    if (forced) dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowCloseButtonHint);
 
-    if (dialog.exec() == QDialog::Accepted) {
+    if (dialog.exec() == QDialog::Accepted && dialog.getResult() != "") {
         std::cout << "DIALOG Accepted\n";
-        std::string newContestName = dialog.editor->text().toStdString();
+        std::string newContestName = dialog.getResult().toStdString();
         std::cout << newContestName << '\n';
 
         // Let's do a quick one!
@@ -306,6 +346,8 @@ void WIN_ContestsSettings::newContest() {
         saveContestsInfo(contests);
         fetchContests(false);
         selectNewContest(newContestName);
+    } else if (forced) {
+        close();
     }
 }
 
@@ -358,7 +400,9 @@ void WIN_ContestsSettings::fetchContests(bool selectFirstEntry) {
     std::cout << "Contest amounts: " << contests.size();
 
     if (contests.size() == 0)
-        QTimer::singleShot(0, this, &WIN_ContestsSettings::newContest);
+        QTimer::singleShot(0, this, [this] {
+            newContest(true);
+        });
 
     contestByRowOrder.clear();
     contestByRowOrder.reserve(contests.size()); // Reserve memory alloc
@@ -487,16 +531,6 @@ void WIN_ContestsSettings::fetchContests(bool selectFirstEntry) {
     // Styling to make the list view works like a navigation pane
     listView->setSelectionMode(QAbstractItemView::SingleSelection);
     listView->setEditTriggers(QAbstractItemView::NoEditTriggers); // Prevent editing
-
-    // Connecting the signal of selection.
-    connect(listView, &QListWidget::itemClicked, this, [this](const QListWidgetItem *item) {
-        const int index = listView->row(item);
-
-        std::cout << "Clicked on " << contestByRowOrder[index] << '\n';
-        currentCnts = contestByRowOrder[index];
-        toCnts(contestByRowOrder[index]);
-    });
-
 }
 
 // --------------------------------------------------------------------
@@ -916,7 +950,7 @@ void WIN_ContestsSettings::toCnts(std::string contestName) {
 //          Can't believe I have to make a duplicate
 // ---------------------------------------------------------------------------
 void WIN_ContestsSettings::errorDialog(std::string error) {
-    QMessageBox *msgBox = new QMessageBox();
+    QMessageBox *msgBox = new QMessageBox(this);
     msgBox->setText(QString::fromStdString("Đã có lỗi xảy ra: " + error));
     msgBox->setWindowTitle("Lỗi");
     msgBox->setIcon(QMessageBox::Critical);

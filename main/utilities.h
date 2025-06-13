@@ -8,6 +8,7 @@
 #include <mutex>
 #include <fstream>
 #include <nlohmann/json.hpp>
+#include <openssl/sha.h>
 
 #include "consts.h"
 
@@ -343,6 +344,30 @@ inline json getSettingsInfo() {
     }
 
     return ret;
+}
+
+inline std::string sha256(const std::string& data) {
+    // Create a char array for the hash to be made. this will be a sequence of characters in which
+    // the SHA256 hash is gonna be created.
+    unsigned char        hash[SHA256_DIGEST_LENGTH];
+    const unsigned char  *dataArray = reinterpret_cast<const unsigned char*>(data.c_str());
+    SHA256(dataArray, data.size(), hash);
+
+    // We cannot use reinterpret_cast AGAIN because it will produce raw binary data
+    // const char *hashUsable = reinterpret_cast<const char*>(hash);
+
+    std::stringstream ss;
+    for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+        ss << std::hex << std::setw(2) << std::setfill('0') << (int)hash[i]; // The equivalent of .hexdigest() in Python
+    }
+
+    return ss.str();
+}
+
+inline std::string privatizesha256(const std::string& hash, int showLength) {
+    std::string halfresult = hash.substr(0, showLength);
+
+    return halfresult + "...";
 }
 
 #endif
