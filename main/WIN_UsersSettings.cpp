@@ -50,6 +50,13 @@ WIN_UsersSettings::WIN_UsersSettings(QWidget *parent) : QWidget(parent, Qt::Wind
         toUser(userByRowOrder[rowIndex]);
     });
 
+    QPushButton *newUserBtn = new QPushButton(sidebar);
+    newUserBtn->setObjectName("genericBtn");
+    newUserBtn->setText("Thêm học sinh");
+    sidebarLayout->addWidget(newUserBtn);
+
+    connect(newUserBtn, &QPushButton::clicked, this, &WIN_UsersSettings::newUser);
+
     // Declare details
     QWidget *details = new QWidget(splitter);
     details->setObjectName("con_sec");
@@ -104,14 +111,57 @@ void WIN_UsersSettings::initAct() {
     selectUserFromRow(0);
 }
 
+void WIN_UsersSettings::newUser(bool forced) {
+    // First, let's create a dialog.
+    CST_PlainTextDialog dialog(this, "Thêm học sinh", "Nhập mã (tên đăng nhập) của học sinh mới (VD: NVQuangVinh, HS_138, ...):");
+    if (forced) dialog.setWindowFlags(dialog.windowFlags() & ~Qt::WindowCloseButtonHint);
+
+    if (dialog.exec() == QDialog::Accepted && !dialog.getResult().isEmpty()) {
+        // Now let's get the result!
+        std::string newUsername = dialog.getResult().toStdString();
+
+        // Must be fine...?
+        std::string constructedJson = "{\"class\": [],\"desc\": \"Xin chào! Tôi là một học sinh!\",\"fullname\": \"" + newUsername + "\",\"password\": \"\",\"picture\": false,\"priv\": 0}";
+
+        users[newUsername] = json::parse(constructedJson);
+        saveUsersInfo(users);
+        loadUsers();
+
+        // Find the row we want to move to
+        int index = 0;
+        for (const auto& item : users.items()) {
+            if (item.key() == newUsername) break;
+            index++;
+        }
+
+        selectUserFromRow(index);
+    } else if (forced) {
+        close();
+    }
+}
+
 void WIN_UsersSettings::loadUsers() {
     // Alright. Let's first open the file.
     reloadVars();
+
+    // Reload some... widgets?
+    for (int i = 0; i < listView->count(); i++) {
+        QListWidgetItem *item = listView->item(i);
+        if (item) { // Not nullptr
+            QWidget *wg = listView->itemWidget(item);
+            if (wg) { // Not nullptr
+                wg->deleteLater();
+            }
+        }
+    }
+    
+    listView->clear();
 
     // Okay. That might looks good on paper, but we also have to validify the fact that
     // there is AT LEAST 1 guy here. Else it doesn't really work and still, adding one like that is a good touch!
     if (users.size() == 0) {
         std::cout << "[*UsersSettings] No users\n";
+        newUser(true);
     }
 
     // Now we will cycle through each user to get a nlohmann/json item object,
@@ -132,11 +182,27 @@ void WIN_UsersSettings::loadUsers() {
             QWidget *itemWidget = new QWidget(listView);
             QHBoxLayout *itemWidgetLayout = new QHBoxLayout(itemWidget);
             itemWidget->setLayout(itemWidgetLayout);
+            itemWidgetLayout->setAlignment(Qt::AlignCenter);
 
             QLabel *userLabel = new QLabel(itemWidget);
-            userLabel->setStyleSheet(STYLE_BIGLABEL);
-            userLabel->setText(QString::fromStdString(item.key()));
+            userLabel->setStyleSheet(STYLE_BIGLABEL); // Big
+            userLabel->setText(QString::fromStdString(item.key())); // Show username
+            userLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding); // Expand to all directions
             itemWidgetLayout->addWidget(userLabel);
+
+            QPushButton *delBtn = new QPushButton(itemWidget);
+            delBtn->setObjectName("genericBtn");
+            QPixmap delPixmap(DELETEICON_PATH);
+            QIcon delIcon(delPixmap);
+            delBtn->setIcon(delIcon);
+            delBtn->setFixedHeight(30);
+            delBtn->setFixedWidth(30);
+            delBtn->setToolTip("Xoá học sinh này");
+            itemWidgetLayout->addWidget(delBtn);
+
+            connect(delBtn, &QPushButton::clicked, this, [this, listItem] {
+                remUser(listItem);
+            });
 
             // Adding the widget and item into the listview
             listItem->setSizeHint(itemWidget->sizeHint());
@@ -155,6 +221,7 @@ void WIN_UsersSettings::reloadVars() {
     // Now, we resync the whole... thing... there...?
     // I mean, the `users` variable, right? I will reload it by
     // simply calling a function. Yessir!!!
+    users.clear();
     users = getUsersInfo();
 }
 
@@ -171,7 +238,11 @@ void WIN_UsersSettings::toUser(std::string username) {
     currentUser = username;
 
     // Updating the classes hash status
-    passwdLabel->setText("Mật khẩu đã mã hoá SHA256 hiện tại: " + QString::fromStdString(privatizesha256(users[username]["password"], 8)));
+    if (users[username]["password"] != "") 
+        passwdLabel->setText("Mật khẩu đã mã hoá SHA256 hiện tại: " + QString::fromStdString(privatizesha256(users[username]["password"], 8)));
+    else
+        passwdLabel->setText("Mật khẩu đã mã hoá SHA256 hiện tại: CHƯA CÓ MẬT KHẨU!");
+    
     currentPasswdHash = users[username]["password"];
 
     // Updating the class listing
@@ -198,6 +269,11 @@ void WIN_UsersSettings::changePassword() {
     );
 
     if (dialog.exec() == QDialog::Accepted) {
+        if (dialog.getResult().isEmpty()) {
+            // errorDialog("Đặt mật khẩu thất bại vì khung mật khẩu bị TRỐNG!");
+            return;
+        }
+
         std::string hashed = sha256(dialog.getResult().toStdString());
         std::cout << "New hashed password: " << hashed << '\n';
 
@@ -216,6 +292,18 @@ void WIN_UsersSettings::saveInfo(std::string username) {
     }
 
     users[username]["class"] = classes;
+
+    if (currentPasswdHash == "") {
+        std::cout << "No password! Requesting user for a password\n";
+        changePassword();
+
+        if (currentPasswdHash == "") {
+            // Still no password?
+            QMessageBox::information(this, "Mật khẩu tự động", "ATOMIC sẽ tự động gán mật khẩu sau: 123", QMessageBox::StandardButton::Ok);
+            currentPasswdHash = SHA256_PASSWD_123;
+        }
+    }
+
     users[username]["password"] = currentPasswdHash;
 
     // Saving the info into the json file.
@@ -235,6 +323,35 @@ void WIN_UsersSettings::closeEvent(QCloseEvent *event) {
     emit closed();
     event->accept();
     this->deleteLater();
+}
+
+void WIN_UsersSettings::remUser(QListWidgetItem *item) {
+    // Alright. Now we find the current selected row.
+    int index = listView->row(item);
+    int currentIndex = listView->currentRow();
+
+    std::string username = userByRowOrder[index];
+
+    std::cout << "Current row: " << currentIndex << '\n';
+    std::cout << "Deletion row: " << index << '\n';
+
+    // Perform the removal action
+    if (users.contains(username)) users.erase(username);
+
+    // Saving
+    std::cout << "[*] Modifying JSON file...\n";
+    saveUsersInfo(users);
+
+    // Reloading window
+    std::cout << "[*] Reloading window...\n";
+    loadUsers();
+
+    // Now let's decide where will we put our current selection at.
+    std::cout << "[*] Reselecting row...\n";
+    if (currentIndex >= index) selectUserFromRow(currentIndex - 1);
+    else selectUserFromRow(currentIndex);
+
+    // Great! Now it works...
 }
 
 void WIN_UsersSettings::errorDialog(std::string error) {

@@ -22,3 +22,6 @@ python.js
 
 # Qt related
 *.dll
+
+# Project only
+panel.exe

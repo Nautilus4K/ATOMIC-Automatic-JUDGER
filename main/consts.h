@@ -57,6 +57,7 @@ static const int JUDGING_EXITPORT = 28472;
 static const std::string JUDGING_EXITADDR = "127.0.0.1";
 static const int WEBSERVER_EXITPORT = 28473;
 static const std::string WEBSERVER_EXITADDR = "127.0.0.1";
+static const std::string SHA256_PASSWD_123 = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
 
 // -> ANSI Color codes
 static const std::string INFO_COL = "\x1b[0m";

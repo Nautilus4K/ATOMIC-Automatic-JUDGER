@@ -246,6 +246,8 @@ void WIN_ContestsSettings::remContest(QListWidgetItem *item) {
 
     std::cout << "[*] Performing clean up sequence...\n";
     // Tie up loose ends
+    listView->itemWidget(item)->deleteLater();
+
     // To do this, we need to list all items in the user data directory
     for (const auto& entry : fs::directory_iterator(dirPath + USERSUBHISTORY_DIR)) {
         if (fs::is_directory(entry)) {

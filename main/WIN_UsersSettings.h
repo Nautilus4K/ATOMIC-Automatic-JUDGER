@@ -38,6 +38,11 @@ class WIN_UsersSettings: public QWidget {
     // a pain in the ass to work with. Like, dude, it's just fcking bad.
     void initAct();
 
+    // ----------------------------
+    // Purpose: To create new user
+    // ----------------------------
+    void newUser(bool forced);
+
     // -------------------------------------------------------------------------
     // Purpose: To load the users on the sidebar, can be used to LOAD or RELOAD.
     // -------------------------------------------------------------------------
@@ -74,6 +79,11 @@ class WIN_UsersSettings: public QWidget {
     // Purpose: To change the current password...? Just the hash actually.
     // --------------------------------------------------------------------
     void changePassword();
+
+    // -------------------------------------------------------
+    // Purpose: To provide a function to remove a user faster
+    // -------------------------------------------------------
+    void remUser(QListWidgetItem *item);
 
     // ---------------------------------------------------------------------------
     // Purpose: Showing errors faster than having to type an actual long command.

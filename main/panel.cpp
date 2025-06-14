@@ -955,6 +955,12 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 }
             }
         } else if (type == "webserver") {
+            // In case user is opening the users settings, which is highly bad for the webserver
+            if (userOpened) {
+                errorDialog("Mở website thất bại. Hãy tắt cài đặt học sinh trước khi tiếp tục!");
+                return;
+            }
+
             webserverEnabled = !webserverEnabled;
             std::cout << "Toggled webserver to: " << (webserverEnabled ? "Enabled" : "Disabled") << '\n';
             if (webserverEnabled) {
