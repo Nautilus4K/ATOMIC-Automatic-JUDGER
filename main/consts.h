@@ -41,6 +41,7 @@ static const QString CONTESTSICON_PATH = ":/images/contests.png";
 static const QString DELETEICON_PATH = ":/images/delete.png";
 static const QString EDITICON_PATH = ":/images/edit.png";
 static const QString USERSICON_PATH = ":/images/users.png";
+static const QString CLASSESICON_PATH = ":/images/classes.png";
 
 static const char* DEBUGLOG_PATH = "/debug.log";
 
@@ -50,6 +51,7 @@ static const std::string dirPath = std::filesystem::current_path().string();
 // -> Qt Style Sheet
 static const QString STYLE_BIGLABEL = "font-size: 16px; font-weight: bold;";
 static const QString STYLE_BOLDLABEL = "font-weight: bold;";
+static const QString STYLE_SMALLALEL = "font-size: 11px; font-style: italic;";
 
 // -> Others
 static const std::string GITHUB_PAGE = "\"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER\"";

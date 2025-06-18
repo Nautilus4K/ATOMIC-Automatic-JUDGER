@@ -370,4 +370,38 @@ inline std::string privatizesha256(const std::string& hash, int showLength) {
     return halfresult + "...";
 }
 
+// Get the contests of EACH user (in JSON format)
+inline json getSubmissionInfo(const std::string& user) {
+    std::fstream userSubmitResultFile(dirPath + USERSTATS_DIR + user + std::string(".json"), std::ios::in);
+    
+    bool failed = false;
+    json submissions;
+    if (userSubmitResultFile.is_open()) {
+        try {
+            submissions = json::parse(userSubmitResultFile);
+
+            std::cout << "[JSON: submissions]" << submissions << '\n';
+        } catch (const json::parse_error& e) {
+            // If error caught. We just delete that file.
+            remove((dirPath + USERSTATS_DIR + user + std::string(".json")).c_str());
+            failed = true;
+        }
+    } else {
+        failed = true;
+    }
+
+    if (failed) return json{}; // Null json value
+    return submissions;
+}
+
+inline void saveSubmissionInfo(const std::string& user, const json& val) {
+    std::fstream userSubmitResultFile(dirPath + USERSTATS_DIR + user + std::string(".json"), std::ios::out);
+    
+    json ret;
+    if (userSubmitResultFile.is_open()) {
+        userSubmitResultFile << val;
+    }
+    userSubmitResultFile.close();
+}
+
 #endif

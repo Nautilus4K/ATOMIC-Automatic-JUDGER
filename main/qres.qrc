@@ -6,5 +6,6 @@
         <file alias="delete.png">source/images/delete.png</file>
         <file alias="edit.png">source/images/edit.png</file>
         <file alias="users.png">source/images/users.png</file>
+        <file alias="classes.png">source/images/classes.png</file>
     </qresource>
 </RCC>

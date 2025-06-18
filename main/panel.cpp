@@ -117,6 +117,7 @@ using json = nlohmann::json;
 #include "CST_Listing.h"
 #include "WIN_ContestsSettings.h"
 #include "WIN_UsersSettings.h"
+#include "WIN_ClassesSettings.h"
 
 // -> Color values
 QColor COLOR_CONSOLE_ERROR;
@@ -175,6 +176,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     // Settings bars
     QPushButton *contestsSettings = new QPushButton(this);
     QPushButton *usersSettings = new QPushButton(this);
+    QPushButton *classesSettings = new QPushButton(this);
 
     PanelWindow(QWidget *parent) : QMainWindow(parent) { // Extremely powerful? Extremely complex.
         // This is the configuration part of panelWindow.
@@ -430,7 +432,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // +------------+
         // | Manage tab |
         // +------------+
-        QVBoxLayout *manageTabLayout = new QVBoxLayout();
+        QVBoxLayout *manageTabLayout = new QVBoxLayout(manageTab);
 
         // Adding the neccessary settings as buttons on a horizontal grid.
         // To achieve this, we need a QScrollArea, QWidget and a QHBoxLayout for that QWidget
@@ -463,9 +465,22 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             showButtonInfoFromBarType("users");
         });
 
+        // Now with classes settings
+        classesSettings->setObjectName("genericBtn");
+        classesSettings->setToolTip("Cài đặt lớp học");
+        classesSettings->setFixedHeight(btnHeight); classesSettings->setFixedWidth(btnWidth);
+        QPixmap classesPXMP(CLASSESICON_PATH);
+        QIcon classesIcon(classesPXMP);
+        classesSettings->setIcon(classesIcon);
+        classesSettings->setIconSize(QSize(btnWidth, btnHeight));
+        connect(classesSettings, &QPushButton::clicked, this, [this] {
+            showButtonInfoFromBarType("classes");
+        });
+
         // Adding in
         settingsLayout->addWidget(contestsSettings);
         settingsLayout->addWidget(usersSettings);
+        settingsLayout->addWidget(classesSettings);
         settingsLayout->setContentsMargins(0, 0, 0, 0);
 
         settingsLine->setLayout(settingsLayout);
@@ -506,6 +521,13 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         currentTable->setContextMenuPolicy(Qt::CustomContextMenu); // Uses custom context menu
         connect(currentTable, &QTableWidget::customContextMenuRequested, this, &PanelWindow::showScoreContextMenu);
         manageTabLayout->addWidget(currentTable);
+
+        QLabel *noteLabel = new QLabel(manageTab);
+        noteLabel->setStyleSheet(STYLE_SMALLALEL);
+        noteLabel->setText("* Bấm chuột phải các ô trong bảng để xem các cài đặt hoặc thông tin cho từng bài nộp.");
+        noteLabel->setWordWrap(true);
+        noteLabel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+        manageTabLayout->addWidget(noteLabel);
 
         // Settings
         manageTab->setLayout(manageTabLayout);
@@ -693,6 +715,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // Settings boxes info
         contestOpened = false;
         userOpened = false;
+        classOpened = false;
 
         // Make sure segfault doesn't happen for no fucking reason, like, dude. Idk man
         // It only happens when I click on the contest page immediately after I opened
@@ -886,6 +909,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     private: // PRIVATE FUNCTIONS. These cannot be connected to outside of whatever this object is.
     bool contestOpened; // A variable for showing the information of if the contest settings is opened or not
     bool userOpened;
+    bool classOpened;
     // -------------------------------------------------
     // Purpose: [GROUPED] (onSidebarFeatureButtonPushed, 
     //          readyJudgingOutput, stoppedJudging)
@@ -1391,6 +1415,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             }
         } else {
             QAction *showInfo = contextMenu.addAction("Thông tin bài làm");
+            QAction *removeDataInfo = contextMenu.addAction("Xoá kết quả bài làm");
             QAction *selectedAction = contextMenu.exec(currentTable->viewport()->mapToGlobal(pos));
             
             QString contestName = currentTable->horizontalHeaderItem(item->column())->text();
@@ -1404,6 +1429,17 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 refreshClassDropdown();  // No need for refreshTable as this already generates a signal that will call
                                          // refreshTable
                 // refreshTable();
+            } else if (selectedAction == removeDataInfo) {
+                // This is hard
+                // To do the job, we need to get the current json value
+                json subVal = getSubmissionInfo(username.toStdString());
+                // Then removes the submission thing...
+                subVal.erase(contestName.toStdString());
+                // Finally save it in
+                saveSubmissionInfo(username.toStdString(), subVal);
+
+                // Reloading
+                refreshTable();
             }
         }
     }
@@ -1500,41 +1536,28 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // We go through EACH user
         for (const std::string user : usersList) {
             // Get the contests of EACH user (in JSON format)
-            std::fstream userSubmitResultFile(dirPath + USERSTATS_DIR + user + std::string(".json"), std::ios::in);
-            if (userSubmitResultFile.is_open()) {
-                try {
-                    const json submissions = json::parse(userSubmitResultFile);
+            const json submissions = getSubmissionInfo(user);
+            if (!submissions.is_null()) { // Not null
+                // Success? Nice. Now we just need to do some checking through.
+                // Now we read the submissions relative to the contests
+                int sum = 0;
+                for (std::string contest : currentContests) {
+                    // Okay. Maybe also calculate the sums along the way?
+                    if (submissions.contains(contest)) {
+                        const int relativePoints = submissions[contest];
+                        sum += relativePoints;
 
-                    // Success? Nice. Now we just need to do some checking through.
-                    // Now we read the submissions relative to the contests
-                    int sum = 0;
-                    for (std::string contest : currentContests) {
-                        // Okay. Maybe also calculate the sums along the way?
-                        if (submissions.contains(contest)) {
-                            const int relativePoints = submissions[contest];
-                            sum += relativePoints;
-
-                            // Now, we add the constest points
-                            contestsPointsByOrder[user].push_back(relativePoints);
-                        } else {
-                            contestsPointsByOrder[user].push_back(NONE_PLACEHOLDER);
-                        }
+                        // Now, we add the constest points
+                        contestsPointsByOrder[user].push_back(relativePoints);
+                    } else {
+                        contestsPointsByOrder[user].push_back(NONE_PLACEHOLDER);
                     }
-
-                    // Adding the user's sum into the destination vector
-                    // to prepare for the sorting later on
-                    usersSums.push_back({sum, user});
-                    // std::cout << "[refreshTable() / DEBUGGING #412] " << user << " -> " << sum << "\n";  // Another I/O waste
-                } catch (const json::parse_error& e) {
-                    // If error caught. We just delete that file.
-                    remove((dirPath + USERSTATS_DIR + user + std::string(".json")).c_str());
-
-                    // Fill the value with NOTHING? Let's just put LOWEST INT VALUE as a placeholder
-                    contestsPointsByOrder[user].push_back(NONE_PLACEHOLDER);
-
-                    // Adding user's sum in for sorting
-                    usersSums.push_back({0, user});
                 }
+
+                // Adding the user's sum into the destination vector
+                // to prepare for the sorting later on
+                usersSums.push_back({sum, user});
+                // std::cout << "[refreshTable() / DEBUGGING #412] " << user << " -> " << sum << "\n";  // Another I/O waste
             } else {
                 // Fill the value with NOTHING? Let's just put LOWEST INT VALUE as a placeholder
                 contestsPointsByOrder[user].push_back(NONE_PLACEHOLDER);
@@ -1603,6 +1626,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     //          weird bar above the table in the management tab
     // -----------------------------------------------------------------
     void showButtonInfoFromBarType(std::string type) {
+        std::cout << "[showButtonInfoFromBarType(std::string type)] arg: " << type << '\n';
+
         if (type == "contests" && !contestOpened) {
             // Sadly, stack allocation can only be used with QDialogs since they will pause
             // all current operations to focus on only the QDialog.
@@ -1639,6 +1664,17 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             connect(usrWin, &WIN_UsersSettings::closed, this, [this] {
                 userOpened = false;
                 usersSettings->setEnabled(true);
+            });
+        } else if (type == "classes" && !classOpened) {
+            WIN_ClassesSettings *clsWin = new WIN_ClassesSettings(this);
+            clsWin->show();
+
+            classOpened = true;
+            classesSettings->setEnabled(false);
+
+            connect (clsWin, &WIN_ClassesSettings::closed, this, [this] {
+                classOpened = false;
+                classesSettings->setEnabled(true);
             });
         }
     }

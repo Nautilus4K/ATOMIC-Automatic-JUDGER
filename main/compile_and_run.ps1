@@ -70,6 +70,13 @@ moc WIN_UsersSettings.h -o $env:TEMP\moc_WIN_UsersSettings.cpp
 echo "> moc_WIN_UsersSettings.cpp -> moc_WIN_UsersSettings.o"
 g++ -fdiagnostics-color=always -I. -I"C:\Qt\6.5.3\mingw_64\include" -I"C:\Qt\Tools\mingw1120_64\include" -c $env:TEMP\moc_WIN_UsersSettings.cpp -o $env:TEMP\moc_WIN_UsersSettings.o
 
+echo "> WIN_ClassesSettings.cpp -> WIN_ClassesSettings.o"
+g++ -fdiagnostics-color=always -I. -I"C:\Qt\6.5.3\mingw_64\include" -I"C:\Qt\Tools\mingw1120_64\include" -c WIN_ClassesSettings.cpp -o $env:TEMP\WIN_ClassesSettings.o
+echo "> WIN_ClassesSettings.h -> moc_WIN_ClassesSettings.cpp"
+moc WIN_ClassesSettings.h -o $env:TEMP\moc_WIN_ClassesSettings.cpp
+echo "> moc_WIN_ClassesSettings.cpp -> moc_WIN_ClassesSettings.o"
+g++ -fdiagnostics-color=always -I. -I"C:\Qt\6.5.3\mingw_64\include" -I"C:\Qt\Tools\mingw1120_64\include" -c $env:TEMP\moc_WIN_ClassesSettings.cpp -o $env:TEMP\moc_WIN_ClassesSettings.o
+
 echo "> panel.cpp -> panel.o"
 g++ -fdiagnostics-color=always -I. -I"C:\Qt\6.5.3\mingw_64\include" -I"C:\Qt\Tools\mingw1120_64\include" -c panel.cpp -o $env:TEMP\panel.o;
 
@@ -77,7 +84,7 @@ echo "> timezone_stub.c -> timezone_stub.o"
 gcc -c timezone_stub.c -o $env:TEMP\timezone_stub.o
 
 echo "Linking PANEL";
-g++ $env:TEMP\timezone_stub.o $env:TEMP\panel.o $env:TEMP\CST_PlainTextDialog.o $env:TEMP\moc_CST_PlainTextDialog.o $env:TEMP\WIN_UsersSettings.o $env:TEMP\moc_WIN_UsersSettings.o $env:TEMP\CST_TestCaseDialog.o $env:TEMP\moc_CST_TestCaseDialog.o $env:TEMP\WIN_ContestsSettings.o $env:TEMP\moc_WIN_ContestsSettings.o $env:TEMP\CST_Listing.o $env:TEMP\moc_CST_Listing.o $env:TEMP\CST_RichTextEdit.o $env:TEMP\moc_CST_RichTextEdit.o $env:TEMP\CST_RadioButtonDialog.o $env:TEMP\moc_CST_RadioButtonDialog.o $env:TEMP\CST_TextEditorDialog.o $env:TEMP\moc_CST_TextEditorDialog.o $env:TEMP\panel_res.o $env:TEMP\qres.o -L"C:\Qt\6.5.3\mingw_64\lib" -L"C:\Qt\Tools\mingw1120_64\lib" -lQt6Widgets -lQt6Core -lQt6Gui -lssl -lcrypto -lcrypt32 -lgdi32 -luser32 -lws2_32 -lmingwex -lmsvcrt -lmingw32 -O2 -o panel.exe -mwindows;
+g++ $env:TEMP\timezone_stub.o $env:TEMP\panel.o $env:TEMP\moc_WIN_ClassesSettings.o $env:TEMP\WIN_ClassesSettings.o $env:TEMP\CST_PlainTextDialog.o $env:TEMP\moc_CST_PlainTextDialog.o $env:TEMP\WIN_UsersSettings.o $env:TEMP\moc_WIN_UsersSettings.o $env:TEMP\CST_TestCaseDialog.o $env:TEMP\moc_CST_TestCaseDialog.o $env:TEMP\WIN_ContestsSettings.o $env:TEMP\moc_WIN_ContestsSettings.o $env:TEMP\CST_Listing.o $env:TEMP\moc_CST_Listing.o $env:TEMP\CST_RichTextEdit.o $env:TEMP\moc_CST_RichTextEdit.o $env:TEMP\CST_RadioButtonDialog.o $env:TEMP\moc_CST_RadioButtonDialog.o $env:TEMP\CST_TextEditorDialog.o $env:TEMP\moc_CST_TextEditorDialog.o $env:TEMP\panel_res.o $env:TEMP\qres.o -L"C:\Qt\6.5.3\mingw_64\lib" -L"C:\Qt\Tools\mingw1120_64\lib" -lQt6Widgets -lQt6Core -lQt6Gui -lssl -lcrypto -lcrypt32 -lgdi32 -luser32 -lws2_32 -lmingwex -lmsvcrt -lmingw32 -O2 -o panel.exe -mwindows;
 
 echo "Cleaning...";
 Remove-Item -Path $env:TEMP\qres.cpp
@@ -107,6 +114,9 @@ Remove-Item -Path $env:TEMP\moc_WIN_UsersSettings.o
 Remove-Item -Path $env:TEMP\CST_PlainTextDialog.o
 Remove-Item -Path $env:TEMP\moc_CST_PlainTextDialog.o
 Remove-Item -Path $env:TEMP\moc_CST_PlainTextDialog.cpp
+Remove-Item -Path $env:TEMP\WIN_ClassesSettings.o
+Remove-Item -Path $env:TEMP\moc_WIN_ClassesSettings.cpp
+Remove-Item -Path $env:TEMP\moc_WIN_ClassesSettings.o
 Remove-Item -Path $env:TEMP\panel.o
 
 echo "Executing...";

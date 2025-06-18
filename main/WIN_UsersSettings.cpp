@@ -326,6 +326,15 @@ void WIN_UsersSettings::closeEvent(QCloseEvent *event) {
 }
 
 void WIN_UsersSettings::remUser(QListWidgetItem *item) {
+    QMessageBox::StandardButton reply = QMessageBox::warning(this, 
+        "Hành động nguy hiểm", "Bạn có chắc muốn tiếp tục xoá học sinh này? Hành động này cũng sẽ xoá tất cả các bài làm của học sinh này.", 
+        QMessageBox::Yes | QMessageBox::No
+    );
+
+    if (reply == QMessageBox::No) {
+        return;
+    }
+
     // Alright. Now we find the current selected row.
     int index = listView->row(item);
     int currentIndex = listView->currentRow();
@@ -341,6 +350,21 @@ void WIN_UsersSettings::remUser(QListWidgetItem *item) {
     // Saving
     std::cout << "[*] Modifying JSON file...\n";
     saveUsersInfo(users);
+
+    // Cleaning up
+    std::cout << "[*] Cleaning up files...\n";
+    if (std::filesystem::exists(dirPath + USERSUBHISTORY_DIR + username)) {
+        try {
+            std::filesystem::remove_all(dirPath + USERSUBHISTORY_DIR + username);
+        } catch (const std::filesystem::filesystem_error& e) {
+            std::cerr << "Error removing directory " << e.what() << '\n';
+        }
+    }
+
+    // Also clear user submission grading data. Its located in the results folder
+    if (std::filesystem::exists(dirPath + USERSTATS_DIR + username + ".json")) {
+        std::filesystem::remove(dirPath + USERSTATS_DIR + username + ".json");
+    };
 
     // Reloading window
     std::cout << "[*] Reloading window...\n";

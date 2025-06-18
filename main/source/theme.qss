@@ -116,6 +116,9 @@ QTableWidget {
     border: 1px solid #e0e0e0;
 }
 
+/* Fix QTableWidget overlapping? */
+QTableWidget::item {}
+
 /* MessageBox styling */
 QMessageBox {
     background: #ffffff;
