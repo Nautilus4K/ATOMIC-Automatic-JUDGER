@@ -36,6 +36,11 @@ Also, credits to:
 - Qt for making such an awesome GUI framework. I'm in love with it.
 - nlomann for making a JSON manipulation API. https://github.com/nlohmann/json
 
+NOTE:
+THIS IS THE WORST OF SPAGHETTI CODES
+LIKE, DUDE
+NEVER SEEN ANYTHING THIS BAD
+
 **********************************/
 
 // Importing Qt stuffs
@@ -64,7 +69,8 @@ Also, credits to:
 #include <QtWidgets/QButtonGroup>      // Grouping multiple buttons
 #include <QtWidgets/QListWidget>       // List view BUT able to put multiple elements into this
 #include <QtWidgets/QListView>         // QListWidget but worse. However, much more lightweight (Also not as simple).
-#include <qtWidgets/QInputDialog>      // INPUT.IN.A.DIALOG. Yessssirrrr
+#include <QtWidgets/QInputDialog>      // INPUT.IN.A.DIALOG. Yessssirrrr
+#include <QtWidgets/QFileDialog>       // Let's go fetch some files
 #include <QtGui/QAction>               // Action for menus. Wonder what fucker thought to put it in QtGui
 #include <QtGui/QCloseEvent>           // Close event. The action of 'X' button
 #include <QtGui/QDoubleValidator>      // Validator for edits.
@@ -108,6 +114,9 @@ using json = nlohmann::json;
 // Debug console
 #include <iostream>
 
+// Excel manipulation
+#include <xlnt/xlnt.hpp>
+
 // Custom shits
 #include "utilities.h"
 #include "consts.h"
@@ -115,6 +124,7 @@ using json = nlohmann::json;
 #include "CST_TextEditorDialog.h"
 #include "CST_RichTextEdit.h"
 #include "CST_Listing.h"
+#include "CST_Separator.h"
 #include "WIN_ContestsSettings.h"
 #include "WIN_UsersSettings.h"
 #include "WIN_ClassesSettings.h"
@@ -177,6 +187,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QPushButton *contestsSettings = new QPushButton(this);
     QPushButton *usersSettings = new QPushButton(this);
     QPushButton *classesSettings = new QPushButton(this);
+    QPushButton *userSubmitDir = new QPushButton(this);
+    QPushButton *convertToExcel = new QPushButton(this);
+    QPushButton *loadFromExcel = new QPushButton(this);
 
     PanelWindow(QWidget *parent) : QMainWindow(parent) { // Extremely powerful? Extremely complex.
         // This is the configuration part of panelWindow.
@@ -441,6 +454,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         const int btnWidth = 55, btnHeight = 55;  // Perfect square
 
+        // Set the height to account for the scroll bar too
+        settingsLine->setFixedHeight(btnHeight + 5);
+
         contestsSettings->setObjectName("genericBtn");
         contestsSettings->setToolTip("Cài đặt bài thi");
         contestsSettings->setFixedHeight(btnHeight); contestsSettings->setFixedWidth(btnWidth);
@@ -477,10 +493,48 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             showButtonInfoFromBarType("classes");
         });
 
+        // Add a separator
+        CST_Separator *separator1 = new CST_Separator(this, 10);
+
+        // Add a button so that it will open to the user submissions directory
+        userSubmitDir->setObjectName("genericBtn");
+        userSubmitDir->setToolTip("Mở thư mục chứa các bài làm học sinh");
+        userSubmitDir->setFixedHeight(btnHeight); userSubmitDir->setFixedWidth(btnWidth);
+        QPixmap userSubmitPXMP(SUBMITDIRICON_PATH);
+        QIcon userSubmitIcon(userSubmitPXMP);
+        userSubmitDir->setIcon(userSubmitIcon);
+        userSubmitDir->setIconSize(QSize(btnWidth, btnHeight));
+        connect(userSubmitDir, &QPushButton::clicked, this, &PanelWindow::submitDir);
+
+        // A button that convert the whole thing as excel
+        convertToExcel->setObjectName("genericBtn");
+        convertToExcel->setToolTip("Xuất file Excel");
+        convertToExcel->setFixedHeight(btnHeight); convertToExcel->setFixedWidth(btnWidth);
+        QPixmap toExcelPXMP(TOEXCELICON_PATH);
+        QIcon toExcelIcon(toExcelPXMP);
+        convertToExcel->setIcon(toExcelIcon);
+        convertToExcel->setIconSize(QSize(btnWidth, btnHeight));
+        connect(convertToExcel, &QPushButton::clicked, this, &PanelWindow::toExcel);
+
+        // A button that reads from excel
+        // A button that convert the whole thing as excel
+        loadFromExcel->setObjectName("genericBtn");
+        loadFromExcel->setToolTip("Tải môi trường từ file Excel");
+        loadFromExcel->setFixedHeight(btnHeight); loadFromExcel->setFixedWidth(btnWidth);
+        QPixmap fromExcelPXMP(FROMEXCELICON_PATH);
+        QIcon fromExcelIcon(fromExcelPXMP);
+        loadFromExcel->setIcon(fromExcelIcon);
+        loadFromExcel->setIconSize(QSize(btnWidth, btnHeight));
+        connect(loadFromExcel, &QPushButton::clicked, this, &PanelWindow::fromExcel);
+
         // Adding in
         settingsLayout->addWidget(contestsSettings);
         settingsLayout->addWidget(usersSettings);
         settingsLayout->addWidget(classesSettings);
+        settingsLayout->addWidget(separator1);
+        settingsLayout->addWidget(userSubmitDir);
+        settingsLayout->addWidget(convertToExcel);
+        settingsLayout->addWidget(loadFromExcel);
         settingsLayout->setContentsMargins(0, 0, 0, 0);
 
         settingsLine->setLayout(settingsLayout);
@@ -488,12 +542,15 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // Managing scrollablity
         QScrollArea *settingsLineScrollable = new QScrollArea(this);
         settingsLineScrollable->setWidget(settingsLine);
+        settingsLineScrollable->setWidgetResizable(false); // Let widget keep its natural size
+        settingsLineScrollable->setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+        settingsLineScrollable->setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
         
         // Calculating height
         int stLeft, stTop, stRight, stBottom;
         settingsLayout->getContentsMargins(&stLeft, &stTop, &stRight, &stBottom);
 
-        int totalHeight = btnHeight + stTop + stBottom;
+        int totalHeight = btnHeight + stTop + stBottom + 10 ; // A lil bit of padding too
         settingsLineScrollable->setFixedHeight(totalHeight);
 
         // Overriding mouse events
@@ -732,6 +789,412 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         manageTab->installEventFilter(this);
     }
 
+    void toExcel() {
+        refreshClassDropdown(); // Do some refreshing first
+
+        std::cout << "Convert/map to XLSX. Asking user...\n";
+        std::string userdocPath = getenv("USERPROFILE") + std::string("/Documents");
+
+        // Fetching file name
+        std::string filename = QFileDialog::getSaveFileName(this, "Lưu tệp Excel", QString::fromStdString(userdocPath), "Tệp Excel (*.xlsx)").toStdString();
+
+        if (filename.empty()) return;
+
+        // Now we ball
+        xlnt::workbook wb; // First we need to create a workbook obj cause its the start of everything
+
+        // Now removes the default "Sheet1"
+        wb.remove_sheet(wb.active_sheet());
+
+        // Modifying the font
+        xlnt::font headerFont;
+        headerFont.color(xlnt::rgb_color(XLSX_HEADERTEXTHEXCOL.r, XLSX_HEADERTEXTHEXCOL.g, XLSX_HEADERTEXTHEXCOL.b));
+        headerFont.name("Arial");
+        headerFont.bold(true);
+
+        xlnt::font cellFont;
+        cellFont.name("Arial");
+        headerFont.bold(false);
+
+        // For each classes
+        for (const auto& classItem : classes.items()) {
+            std::string className = classItem.key();
+
+            xlnt::worksheet ws = wb.create_sheet(); // Get current worksheet
+        
+            // Customization of worksheet -> Rename it
+            // Specifications:
+            // - Multiple worksheets, each for each classes
+            // Houses only scoreboard
+            // fromExcel will automatically generate the values later.
+            ws.title(className);
+
+            // Now we configure the looks of the main headers
+            // To do this, we have to get all the values.
+
+            // First we need to set a blank color for the intersection
+            ws.cell("A1").value("");
+            ws.cell("A1").fill(xlnt::fill::solid(xlnt::rgb_color(XLSX_HEADERHEXCOL.r, XLSX_HEADERHEXCOL.g, XLSX_HEADERHEXCOL.b)));
+
+            // Also let's modify some spaces
+            xlnt::column_properties col1props;
+            col1props.width = 20.0;
+            col1props.custom_width = true;
+            ws.add_column_properties(1, col1props);
+
+            // Now let's do the more normal things like configuring the contest columns
+            xlnt::column_properties cntsColProps;
+            cntsColProps.width = 12.5;
+            cntsColProps.custom_width = true;
+
+            // A column dedicated to sum of contests
+            // Draw the header position in the worksheet
+            ws.cell(2, 1).fill(xlnt::fill::solid(xlnt::rgb_color(XLSX_HEADERHEXCOL.r, XLSX_HEADERHEXCOL.g, XLSX_HEADERHEXCOL.b)));
+            ws.cell(2, 1).value("Tổng");
+
+            // Applying the font
+            ws.cell(2, 1).font(headerFont);
+
+            // Applying properties
+            ws.add_column_properties(2, cntsColProps);
+
+            // Now we find the contests and while we're at it,
+            // let's also apply the labels too
+            std::vector<std::string> currentContests; // The variable containing the order of contests
+            int index = 3; // The index for the Column it will be working with (starts with 3 because of the intersection and sum)
+            for (const auto& contestItem : contests.items()) {
+                // Check if the contestItem have the same, like, class yk
+                bool classExists = false;
+                for (const std::string& classVal : contestItem.value()["Classes"]) {
+                    if (classVal == className) {
+                        classExists = true;
+                        break;
+                    }
+                }
+
+                if (classExists) {
+                    // Add it in if it worked
+                    currentContests.push_back(contestItem.key());
+
+                    // Draw the header position in the worksheet
+                    ws.cell(index, 1).fill(xlnt::fill::solid(xlnt::rgb_color(XLSX_HEADERHEXCOL.r, XLSX_HEADERHEXCOL.g, XLSX_HEADERHEXCOL.b)));
+                    ws.cell(index, 1).value(contestItem.key());
+
+                    // Applying the font
+                    ws.cell(index, 1).font(headerFont);
+
+                    // Applying properties
+                    ws.add_column_properties(index, cntsColProps);
+
+                    index++; // Only increments if the contest is actually in the list and is shown
+                }
+            }
+
+            std::vector<std::pair<double, std::string>> sumOfStudents;
+            sumOfStudents.reserve(users.size()); // Probably too big but whatever
+            // On the wayoh
+            // Now we get each students' values (or sums) to construct the vector sumOfStudents
+            for (const auto& studentItem : users.items()) {
+                std::cout << "XLSX Processing user " << studentItem.key() << '\n';
+                // Validify if the student is in the class
+                bool classExists = false;
+                for (const std::string& classVal : studentItem.value()["class"]) {
+                    if (classVal == className) {
+                        classExists = true;
+                        break;
+                    }
+                }
+
+                if (!classExists) continue;
+
+                std::string name = studentItem.key();
+                std::cout << "USER " << name << " EXISTS\n";
+
+                // Wadawa
+                json sub = getSubmissionInfo(name);
+
+                // Now we calculate the sum of all the contest we had
+                double sum = 0;
+                for (const std::string& contestName : currentContests) {
+                    if (sub.contains(contestName)) {
+                        sum += sub[contestName].get<double>(); // Get double value from this shit
+                    }
+                }
+
+                sumOfStudents.push_back({sum, name});
+            }
+
+            // Process the sums (which means sorting them out)
+            sort(sumOfStudents.begin(), sumOfStudents.end(), [](const auto &a, const auto &b) { // Descending
+                return a.first > b.first;
+            });
+
+            // With the whole thing there done, we can finally browse through EACH AND EVERY user with the order
+            // done prematurely
+            int rindex = 2; // Starts at 2 cuz 1 is the header bruh
+
+            // Cuz we start at 2, the offset is gonna be -2 to get 0, which is the root of all things
+            const int rvaloffset = -rindex;
+            for (const auto& p : sumOfStudents) { // Now let's create another header, this time on the left side
+                std::cout << "Placing user " << p.second << " on row " << rindex << '\n';
+                // Draw the header position in the worksheet
+                ws.cell(mapToExcelCell(rindex, 1)).fill(xlnt::fill::solid(xlnt::rgb_color(XLSX_HEADERHEXCOL.r, XLSX_HEADERHEXCOL.g, XLSX_HEADERHEXCOL.b)));
+                ws.cell(mapToExcelCell(rindex, 1)).value(p.second);
+                
+                // Applying the font
+                ws.cell(mapToExcelCell(rindex, 1)).font(headerFont);
+                
+                // Setting sums too
+                // We need to place the sum on col 2
+                xlnt::alignment valCellAlignment;
+                valCellAlignment.horizontal(xlnt::horizontal_alignment::center);
+                    
+                // Formatting
+                ws.cell(mapToExcelCell(rindex, 2)).alignment(valCellAlignment);
+                ws.cell(mapToExcelCell(rindex, 2)).font(cellFont);
+
+                // LIGHTING UP THE SKYYYY
+                ws.cell(mapToExcelCell(rindex, 2)).fill(xlnt::fill::solid(xlnt::rgb_color(XLSX_USERSUMCELL.r, XLSX_USERSUMCELL.g, XLSX_USERSUMCELL.b)));
+                
+                // Set the sum value
+                ws.cell(mapToExcelCell(rindex, 2)).value(p.first);
+
+                // While we are at it, let's fill in the remaining datas too (each contests values)
+                int cindex = 3; // 1 is users headers, 2 is sums, 3 is the beginning
+                for (const std::string contestName : currentContests) {
+                    // Let's work with this
+                    // We fetch the submissions info
+                    json sub = getSubmissionInfo(p.second);
+
+                    if (sub.contains(contestName)) {
+                        ws.cell(mapToExcelCell(rindex, cindex)).value(sub[contestName].get<double>());
+                        ws.cell(mapToExcelCell(rindex, cindex)).alignment(valCellAlignment);
+                        ws.cell(mapToExcelCell(rindex, cindex)).font(cellFont);
+                    }
+
+                    ws.cell(mapToExcelCell(rindex, cindex)).fill(xlnt::fill::solid(
+                        // If this shit is on an odd or even row
+                        (rindex % 2 == 0) ?
+                        xlnt::rgb_color(XLSX_USERROWEVENFILL.r, XLSX_USERROWEVENFILL.g, XLSX_USERROWEVENFILL.b) :
+                        xlnt::rgb_color(XLSX_USERROWODDFILL.r, XLSX_USERROWODDFILL.g, XLSX_USERROWODDFILL.b)
+                    ));
+
+                    cindex++;
+                }
+
+                // Increment index by 1. It needs to be consistent at all times
+                rindex++;
+            }
+        }
+
+        wb.save(filename);
+        // Logging
+        std::cout << "Saved as " << filename << '\n';
+    }
+
+    void fromExcel() {
+        // Give a warning first, cuz the user might just not give a fuck about the destructive
+        // consequences of their actions
+        QMessageBox::StandardButton rep = QMessageBox::warning(this, "Tiếp tục?", "Bạn có chắc muốn tiếp tục tải từ tệp Excel? Việc này sẽ xoá tất cả dữ liệu hiện tại bạn có.", QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No);
+
+        if (rep == QMessageBox::StandardButton::No) return;
+
+        std::cout << "Convert/map from XLSX. Asking user...\n";
+        std::string userdocPath = getenv("USERPROFILE") + std::string("/Documents");
+
+        std::string filename = QFileDialog::getOpenFileName(this, "Tải tệp EXCEL", QString::fromStdString(userdocPath), "Tệp Excel (*.xlsx)").toStdString();
+
+        if (filename.empty()) return;
+
+        // Let's get the workbook
+        xlnt::workbook wb;
+        wb.load(filename);
+
+        // Now we get the data of classes and each classes while also constructing up the values of unique
+        // users and contests
+        std::vector<std::string>                        classNames;
+        std::map<std::string, std::vector<std::string>> uniqueUsersList; // .first is name, .second is classlist
+        std::map<std::string, std::vector<std::string>> uniqueContestsList; // Same as usersList
+
+        // Now onto the scores listing
+        // I will use map so that i can get something like this
+        // userResult[<username>][<contestname>] = double
+        std::unordered_map<std::string, std::unordered_map<std::string, double>> results;
+
+        // Now we fetch the classes (worksheets)
+        std::size_t classAmount = wb.sheet_count();
+        for (std::size_t i = 0; i < classAmount; i++) {
+            // With this, i guess its fine cuz now its safe.
+            // Let's work with the names
+            xlnt::worksheet ws = wb.sheet_by_index(i);
+
+            std::string singular_className = ws.title(); // Get the title babyyy
+            std::cout << "XLSX Operation discovered class entry " << singular_className << '\n';
+            classNames.push_back(singular_className);
+
+            // With the classes fetching done, now we needs to find the users list to add them in
+            std::vector<std::string> userOrder;    // ROW OFFSET REBALANCE VALUE: -2
+            std::vector<std::string> contestOrder; // COLLUMN OFFSET REBALANCE VALUE: -3
+
+            // Now let's move onto actually finding the order
+            // We are gonna be finding the user order first
+            // Cuz the user values' row offset rebalance value is -2 so the opposite of
+            // it is gonna be 2, therefore setting the index to 2
+            int index = 2;
+            while (true) {
+                std::string value = ws.cell(mapToExcelCell(index, 1)).value<std::string>(); // Get the value in the form of a string
+
+                if (value.empty()) {
+                    std::cout << "End of user list at row " << index << " and column 1\n";
+                    break;
+                }
+
+                std::cout << "> XLSX Operation // " << singular_className << " // Discovered student entry " << value << '\n';
+                userOrder.push_back(value);
+                index++;
+            }
+
+            // Now we will have to find the contests order
+            // Like the user order, the contest order has its own collumn offset rebalance value, in this case -3
+            // so the opposite in 3 and index is gonna be set to 3
+            index = 3;
+            while (true) {
+                std::string value = ws.cell(mapToExcelCell(1, index)).value<std::string>(); // Get the value in form of std::string ofc
+
+                if (value.empty()) {
+                    std::cout << "End of contest list at row 1 and column " << index << "\n";
+                    break;
+                }
+
+                std::cout << "> XLSX Operation // " << singular_className << " // Discovered contest entry " << value << '\n';
+                contestOrder.push_back(value);
+                // Announcing the operation
+                index++;
+            }
+
+            // With a good enough list of these things, let's just construct them into the vector we made first
+            // To avoid for repetition, for each thing we want to add in, we need to make sure they dont exist already
+            // Luckily, map<> helps us with this, so now we can just add them in
+            for (const std::string& v : userOrder) {
+                uniqueUsersList[v].push_back(singular_className);
+            }
+
+            for (const std::string& v : contestOrder) {
+                uniqueContestsList[v].push_back(singular_className);
+            }
+
+            // After doing the adding and working like that, i will now face off with a lot more thing
+            // Which is adding in the points
+
+            int rindex = 2;
+            int cindex;
+
+            for (const std::string& u : userOrder) {
+                // For each user we got
+
+                // Let's process each user's contests. In this case its on column so we set the variable
+                // This variable is premade so that the memory placement does not have to be repeated multiple times over
+                cindex = 3;
+                for (const std::string& c : contestOrder) {
+                    std::string stringVal = ws.cell(mapToExcelCell(rindex, cindex)).to_string();
+                    std::cout << u << "'s score on " << c << " is " << (stringVal.empty() ? "NONE" : stringVal) << '\n';
+
+                    if (!stringVal.empty()) {
+                        // If this is a valid number, I shall grant the wish of the people
+                        // sub[c] = ws.cell(mapToExcelCell(rindex, cindex)).value<double>(); // It's best that its like this
+
+                        // Now we have to save it into a temporary variable, this case its results
+                        results[u][c] = ws.cell(mapToExcelCell(rindex, cindex)).value<double>();
+                    }
+
+                    // Increment the columns by 1
+                    cindex++;
+                }
+
+                // Increment the row by 1
+                rindex++;
+            }
+
+            // Clean up after them
+            userOrder.clear();
+            contestOrder.clear();
+        }
+        
+        std::cout << "XLSX OPERATION COMPLETED. RESULT: \n";
+        std::cout << "Contests: ";
+
+        json gen_contestData = {};
+        json gen_userData = {};
+
+        for (const auto& ent : uniqueContestsList) {
+            std::cout << ent.first << ", ";
+
+            // Now we will have to in turn, generate the contests json
+            gen_contestData[ent.first] = json::parse(R"(
+                {
+                    "Desc": "",
+                    "InputFile": "",
+                    "InputType": "raw",
+                    "OutputFile": "",
+                    "OutputType": "raw",
+                    "TestAmount": 0,
+                    "Tests": [],
+                    "TimeLimit": 1.0
+                }
+            )");
+
+            // Also now modify the classes
+            gen_contestData[ent.first]["Classes"] = ent.second;
+        }
+        saveContestsInfo(gen_contestData);
+
+        std::cout << "\nStudents: ";
+        for (const auto& ent : uniqueUsersList) {
+            std::cout << ent.first << ", ";
+
+            // Do the same for students
+            std::string constructedJson = "{\"desc\": \"Xin chào! Tôi là một học sinh!\",\"fullname\": \"" + ent.first + "\",\"password\": \"\",\"picture\": false,\"priv\": 0}";
+
+            gen_userData[ent.first] = json::parse(constructedJson);
+
+            // Lets now sprinkle some modification for the classes
+            gen_userData[ent.first]["class"] = ent.second;
+        }
+        saveUsersInfo(gen_userData);
+
+        std::cout << '\n';
+
+        // With that being said, we still need to apply the submissions
+        // To do this, we browse through the std::map of the submissions
+        for (const auto& p : results) {
+            json sub = {};
+            for (const auto& e : p.second) {
+                sub[e.first] = e.second;
+            }
+
+            // Now we have to works towards more thing
+            // in this case we save this info
+            saveSubmissionInfo(p.first, sub);
+        }
+        
+        // Announcing the operation has been completed
+        std::cout << "Loaded from " << filename << '\n';
+
+        // Clean up
+        classNames.clear();
+        uniqueUsersList.clear();
+        uniqueContestsList.clear();
+        results.clear();
+
+        // Refresh a little bit of things
+        refreshClassDropdown();
+        refreshTable();
+    }
+
+    void submitDir() {
+        ShellExecuteA(0, "open", (dirPath + USERSUBHISTORY_DIR).c_str(), 0, 0, SW_SHOWNORMAL);
+    }
+
     void about() {
         QWidget *aboutFrame = new QWidget();
         aboutFrame->setFixedSize(500, 250);
@@ -787,7 +1250,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                 // This text is like this because of some shit.
                 // It's just cause of C's poor strings...
-                QString licensingText = "====== Giấy phép ======\n\nPhần mềm này được phát hành dưới Giấy phép Mã nguồn mở MIT (MIT License) đã qua sửa đổi. Thông tin chi tiết truy cập trang dự án GitHub.\n\n====== Ghi nhận ======\n\nPhần mềm được phát triển dựa trên hoặc sử dụng các dự án mã nguồn mở sau:\n\n- Qt GUI Framework (https://qt.io)  \n- Python Interpreter (https://python.org)  \n- waitress (https://github.com/Pylons/waitress)  \n- Docker (https://docker.com)  \n- nlohmann/json - JSON for Modern C++ (https://github.com/nlohmann/json)  \n- boppreh/keyboard - Python keyboard library (https://github.com/boppreh/keyboard)\n- Cascadia Code Font (https://github.com/microsoft/cascadia-code)";
+                QString licensingText = "====== Giấy phép ======\n\nPhần mềm này được phát hành dưới Giấy phép Mã nguồn mở MIT (MIT License) đã qua sửa đổi. Thông tin chi tiết truy cập trang dự án GitHub.\n\n====== Ghi nhận ======\n\nPhần mềm được phát triển dựa trên hoặc sử dụng các dự án mã nguồn mở sau:\n\n- Qt GUI Framework (https://qt.io)\n- Python Interpreter (https://python.org)\n- waitress (https://github.com/Pylons/waitress)\n- Docker (https://docker.com)\n- nlohmann/json - JSON for Modern C++ (https://github.com/nlohmann/json)\n- boppreh/keyboard - Python keyboard library (https://github.com/boppreh/keyboard)\n- Cascadia Code Font (https://github.com/microsoft/cascadia-code)\n- tfussell/xlnt: Cross-platform user-friendly xlsx library for C++11+ (https://github.com/tfussell/xlnt)";
 
                 QSplitter *licensingSplitter = new QSplitter();
                 licensingSplitter->setOrientation(Qt::Orientation::Vertical);
@@ -1530,8 +1993,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // Variable for contests' points
         // contestsPointsByOrder[username] -> {int contest1Point, int contest2Point...}
         // Order will go with the order of currentContests (std::vector<>)
-        std::unordered_map<std::string, std::vector<int>> contestsPointsByOrder;
-        std::vector<std::pair<int, std::string>> usersSums; // More sorting friendly
+        std::unordered_map<std::string, std::vector<double>> contestsPointsByOrder;
+        std::vector<std::pair<double, std::string>> usersSums; // More sorting friendly
 
         // We go through EACH user
         for (const std::string user : usersList) {
@@ -1540,11 +2003,11 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             if (!submissions.is_null()) { // Not null
                 // Success? Nice. Now we just need to do some checking through.
                 // Now we read the submissions relative to the contests
-                int sum = 0;
+                double sum = 0;
                 for (std::string contest : currentContests) {
                     // Okay. Maybe also calculate the sums along the way?
                     if (submissions.contains(contest)) {
-                        const int relativePoints = submissions[contest];
+                        const double relativePoints = submissions[contest];
                         sum += relativePoints;
 
                         // Now, we add the constest points
@@ -1587,12 +2050,14 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             // Set the sum amount of points (0 is hardcoded cus of the position of the sum column)
             QTableWidgetItem *pointsItem = new QTableWidgetItem();
             pointsItem->setFlags(pointsItem->flags() & ~Qt::ItemFlag::ItemIsEditable);
-            pointsItem->setText(QString::fromStdString(intToString(userSorterValue.first)));  // First is the actual index value
+            pointsItem->setText(QString::fromStdString(doubleToString(userSorterValue.first)));  // First is the actual index value
             currentTable->setItem(index, 0, pointsItem);
 
             // With this done, let's move onto the final nail - the contest points
-            if (contestsPointsByOrder[userSorterValue.second].size() == 1 && contestsPointsByOrder[userSorterValue.second][0] == NONE_PLACEHOLDER) {
+            std::cout << contestsPointsByOrder[userSorterValue.second].size() << " " << (int)contestsPointsByOrder[userSorterValue.second][0] << '\n';
+            if (contestsPointsByOrder[userSorterValue.second].size() == 1 && (int)contestsPointsByOrder[userSorterValue.second][0] == NONE_PLACEHOLDER) {
                 // In case this contest does NOT exist (the user never done the contest)
+                std::cout << "DOES NOT EXIST\n";
                 const int& amountOfDestBlankCells = currentTable->columnCount();
 
                 for (int i = 0; i < amountOfDestBlankCells; i++) {
@@ -1602,11 +2067,23 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 }
             } else {
                 int cindex = 1; // Index of column
-                for (const int &point : contestsPointsByOrder[userSorterValue.second]) {
+                for (const double &point : contestsPointsByOrder[userSorterValue.second]) {
+                    // If point is not something the user have done
+                    if (point == NONE_PLACEHOLDER) {
+                        // Yeah it looks like I cant reuse any QTableWidgetItem, actually.
+                        QTableWidgetItem *contestPointsItem = new QTableWidgetItem();
+                        contestPointsItem->setFlags(contestPointsItem->flags() & ~Qt::ItemFlag::ItemIsEditable);
+                        contestPointsItem->setText("");
+                        currentTable->setItem(index, cindex, contestPointsItem);
+
+                        cindex++;
+                        continue;
+                    }
+
                     // Yeah it looks like I cant reuse any QTableWidgetItem, actually.
                     QTableWidgetItem *contestPointsItem = new QTableWidgetItem();
                     contestPointsItem->setFlags(contestPointsItem->flags() & ~Qt::ItemFlag::ItemIsEditable);
-                    contestPointsItem->setText(QString::fromStdString(intToString(point)));
+                    contestPointsItem->setText(QString::fromStdString(doubleToString(point)));
                     currentTable->setItem(index, cindex, contestPointsItem);
 
                     // Prepare for next loop
@@ -1854,7 +2331,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
    +#+ +:+ +#+ +#++:++#++: +#+    +:+     +#+         +#+     +#+       +#+    +:+ +#++:++#++  +#+  +:+   +#++:++       
   +#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       
  #+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       
-###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###  
+###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###
             )";
             std::cout << asciiArt << std::endl;
             std::cout.flush();

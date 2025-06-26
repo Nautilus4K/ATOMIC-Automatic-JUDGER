@@ -2,7 +2,6 @@ echo "2025 Nautilus4K"
 echo "Project: ATOMIC-Automatic-JUDGER"
 echo "Build with: MINGWW64, Qt"
 echo "------------------------------"
-echo ""
 
 echo "Compiling PANEL RESOURCES...";
 echo "> panel.rc -> panel_res.o"
@@ -56,6 +55,13 @@ moc CST_PlainTextDialog.h -o $env:TEMP\moc_CST_PlainTextDialog.cpp
 echo "> moc_CST_PlainTextDialog.cpp -> moc_CST_PlainTextDialog.o"
 g++ -fdiagnostics-color=always -I. -I"C:\Qt\6.5.3\mingw_64\include" -I"C:\Qt\Tools\mingw1120_64\include" -c $env:TEMP\moc_CST_PlainTextDialog.cpp -o $env:TEMP\moc_CST_PlainTextDialog.o
 
+echo "> CST_Separator.cpp -> CST_Separator.o"
+g++ -fdiagnostics-color=always -I. -I"C:\Qt\6.5.3\mingw_64\include" -I"C:\Qt\Tools\mingw1120_64\include" -c CST_Separator.cpp -o $env:TEMP\CST_Separator.o
+echo "> CST_Separator.h -> moc_CST_Separator.cpp"
+moc CST_Separator.h -o $env:TEMP\moc_CST_Separator.cpp
+echo "> moc_CST_Separator.cpp -> moc_CST_Separator.o"
+g++ -fdiagnostics-color=always -I. -I"C:\Qt\6.5.3\mingw_64\include" -I"C:\Qt\Tools\mingw1120_64\include" -c $env:TEMP\moc_CST_Separator.cpp -o $env:TEMP\moc_CST_Separator.o
+
 echo "> WIN_ContestsSettings.cpp -> WIN_ContestsSettings.o"
 g++ -fdiagnostics-color=always -I. -I"C:\Qt\6.5.3\mingw_64\include" -I"C:\Qt\Tools\mingw1120_64\include" -c WIN_ContestsSettings.cpp -o $env:TEMP\WIN_ContestsSettings.o
 echo "> WIN_ContestsSettings.h -> moc_WIN_ContestsSettings.cpp"
@@ -84,7 +90,7 @@ echo "> timezone_stub.c -> timezone_stub.o"
 gcc -c timezone_stub.c -o $env:TEMP\timezone_stub.o
 
 echo "Linking PANEL";
-g++ $env:TEMP\timezone_stub.o $env:TEMP\panel.o $env:TEMP\moc_WIN_ClassesSettings.o $env:TEMP\WIN_ClassesSettings.o $env:TEMP\CST_PlainTextDialog.o $env:TEMP\moc_CST_PlainTextDialog.o $env:TEMP\WIN_UsersSettings.o $env:TEMP\moc_WIN_UsersSettings.o $env:TEMP\CST_TestCaseDialog.o $env:TEMP\moc_CST_TestCaseDialog.o $env:TEMP\WIN_ContestsSettings.o $env:TEMP\moc_WIN_ContestsSettings.o $env:TEMP\CST_Listing.o $env:TEMP\moc_CST_Listing.o $env:TEMP\CST_RichTextEdit.o $env:TEMP\moc_CST_RichTextEdit.o $env:TEMP\CST_RadioButtonDialog.o $env:TEMP\moc_CST_RadioButtonDialog.o $env:TEMP\CST_TextEditorDialog.o $env:TEMP\moc_CST_TextEditorDialog.o $env:TEMP\panel_res.o $env:TEMP\qres.o -L"C:\Qt\6.5.3\mingw_64\lib" -L"C:\Qt\Tools\mingw1120_64\lib" -lQt6Widgets -lQt6Core -lQt6Gui -lssl -lcrypto -lcrypt32 -lgdi32 -luser32 -lws2_32 -lmingwex -lmsvcrt -lmingw32 -O2 -o panel.exe -mwindows;
+g++ $env:TEMP\timezone_stub.o $env:TEMP\panel.o $env:TEMP\moc_CST_Separator.o $env:TEMP\CST_Separator.o $env:TEMP\moc_WIN_ClassesSettings.o $env:TEMP\WIN_ClassesSettings.o $env:TEMP\CST_PlainTextDialog.o $env:TEMP\moc_CST_PlainTextDialog.o $env:TEMP\WIN_UsersSettings.o $env:TEMP\moc_WIN_UsersSettings.o $env:TEMP\CST_TestCaseDialog.o $env:TEMP\moc_CST_TestCaseDialog.o $env:TEMP\WIN_ContestsSettings.o $env:TEMP\moc_WIN_ContestsSettings.o $env:TEMP\CST_Listing.o $env:TEMP\moc_CST_Listing.o $env:TEMP\CST_RichTextEdit.o $env:TEMP\moc_CST_RichTextEdit.o $env:TEMP\CST_RadioButtonDialog.o $env:TEMP\moc_CST_RadioButtonDialog.o $env:TEMP\CST_TextEditorDialog.o $env:TEMP\moc_CST_TextEditorDialog.o $env:TEMP\panel_res.o $env:TEMP\qres.o -L"C:\Qt\6.5.3\mingw_64\lib" -L"C:\Qt\Tools\mingw1120_64\lib" -lxlnt -lQt6Widgets -lQt6Core -lQt6Gui -lssl -lcrypto -lcrypt32 -lgdi32 -luser32 -lws2_32 -lmingwex -lmsvcrt -lmingw32 -O2 -o panel.exe -mwindows;
 
 echo "Cleaning...";
 Remove-Item -Path $env:TEMP\qres.cpp
@@ -117,6 +123,9 @@ Remove-Item -Path $env:TEMP\moc_CST_PlainTextDialog.cpp
 Remove-Item -Path $env:TEMP\WIN_ClassesSettings.o
 Remove-Item -Path $env:TEMP\moc_WIN_ClassesSettings.cpp
 Remove-Item -Path $env:TEMP\moc_WIN_ClassesSettings.o
+Remove-Item -Path $env:TEMP\CST_Separator.o
+Remove-Item -Path $env:TEMP\moc_CST_Separator.o
+Remove-Item -Path $env:TEMP\moc_CST_Separator.cpp
 Remove-Item -Path $env:TEMP\panel.o
 
 echo "Executing...";

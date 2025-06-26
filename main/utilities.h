@@ -380,7 +380,7 @@ inline json getSubmissionInfo(const std::string& user) {
         try {
             submissions = json::parse(userSubmitResultFile);
 
-            std::cout << "[JSON: submissions]" << submissions << '\n';
+            std::cout << "[JSON: submissions] " << submissions << '\n';
         } catch (const json::parse_error& e) {
             // If error caught. We just delete that file.
             remove((dirPath + USERSTATS_DIR + user + std::string(".json")).c_str());
@@ -402,6 +402,30 @@ inline void saveSubmissionInfo(const std::string& user, const json& val) {
         userSubmitResultFile << val;
     }
     userSubmitResultFile.close();
+}
+
+// Converts a 1-based column number to Excel-style column letters
+inline std::string columnToLetters(int col) {
+    std::string result;
+    while (col > 0) {
+        col--; // Excel is 1-based, but we need 0-based for modulo
+        result = char('A' + (col % 26)) + result;
+        col /= 26;
+    }
+    return result;
+}
+
+// Map rows and columns into Excel format (e.g., B3, AA15, etc.)
+inline std::string mapToExcelCell(const int& row, const int& col) {
+    return columnToLetters(col) + intToString(row);
+}
+
+inline std::tuple<int, int, int> hexToRgb(const std::string& hex) {
+    std::string cleanHex = hex.substr(1); // Remove the '#'
+    int r = std::stoi(cleanHex.substr(0, 2), nullptr, 16);
+    int g = std::stoi(cleanHex.substr(2, 2), nullptr, 16);
+    int b = std::stoi(cleanHex.substr(4, 2), nullptr, 16);
+    return {r, g, b};
 }
 
 #endif

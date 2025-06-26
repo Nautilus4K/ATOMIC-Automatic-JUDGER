@@ -8,7 +8,7 @@
 
 // Constants
 // -> Values
-#define NONE_PLACEHOLDER -0x7fffffff
+#define NONE_PLACEHOLDER -1
 
 // -> Extensions
 const std::vector<std::string> supportedExtensions = {".cpp", ".py", ".pas"};
@@ -42,6 +42,9 @@ static const QString DELETEICON_PATH = ":/images/delete.png";
 static const QString EDITICON_PATH = ":/images/edit.png";
 static const QString USERSICON_PATH = ":/images/users.png";
 static const QString CLASSESICON_PATH = ":/images/classes.png";
+static const QString SUBMITDIRICON_PATH = ":/images/submitdir.png";
+static const QString TOEXCELICON_PATH = ":/images/toexcel.png";
+static const QString FROMEXCELICON_PATH = ":/images/fromexcel.png";
 
 static const char* DEBUGLOG_PATH = "/debug.log";
 
@@ -67,5 +70,20 @@ static const std::string ERROR_COL = "\x1b[31m";
 static const std::string WARN_COL = "\x1b[33m";
 static const std::string OK_COL = "\x1b[32m";
 static const std::string RESET_COL = "\x1b[0m";
+
+// -> Excel colors
+
+// Adding a whole ass struct just to deal with colors easier
+// It's me boys
+struct EXCELCOLOR {
+    int r, g, b;
+};
+
+static const EXCELCOLOR XLSX_HEADERHEXCOL = {0, 32, 96};
+static const EXCELCOLOR XLSX_HEADERTEXTHEXCOL = {255, 255, 255};
+
+static const EXCELCOLOR XLSX_USERROWODDFILL = {255, 255, 255}; // Interwoven colors
+static const EXCELCOLOR XLSX_USERROWEVENFILL = {214, 235, 255};
+static const EXCELCOLOR XLSX_USERSUMCELL = {176, 216, 255};
 
 #endif

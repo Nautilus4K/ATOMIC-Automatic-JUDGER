@@ -7,5 +7,8 @@
         <file alias="edit.png">source/images/edit.png</file>
         <file alias="users.png">source/images/users.png</file>
         <file alias="classes.png">source/images/classes.png</file>
+        <file alias="submitdir.png">source/images/submitdir.png</file>
+        <file alias="toexcel.png">source/images/toexcel.png</file>
+        <file alias="fromexcel.png">source/images/fromexcel.png</file>
     </qresource>
 </RCC>

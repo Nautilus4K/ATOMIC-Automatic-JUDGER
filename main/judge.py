@@ -920,7 +920,7 @@ while running:
                     # Now it has this list: [username, submission, extension]
                     filedata = file.replace("][", ".").replace("[", "").replace("]", "").split(".")
                     if not os.path.exists(filePath+"/userdata/"+filedata[0]+"/"):
-                        pwarn("Người dùng không có một thu mục có sẵn, đang tạo một thư mục mới...")
+                        pwarn("Người dùng không có một thư mục có sẵn, đang tạo một thư mục mới...")
                         os.mkdir(filePath+"/userdata/"+filedata[0]+"/")
                     
                     existingFileContent = ""
