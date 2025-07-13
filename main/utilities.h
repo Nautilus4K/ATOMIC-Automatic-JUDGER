@@ -420,12 +420,36 @@ inline std::string mapToExcelCell(const int& row, const int& col) {
     return columnToLetters(col) + intToString(row);
 }
 
-inline std::tuple<int, int, int> hexToRgb(const std::string& hex) {
-    std::string cleanHex = hex.substr(1); // Remove the '#'
-    int r = std::stoi(cleanHex.substr(0, 2), nullptr, 16);
-    int g = std::stoi(cleanHex.substr(2, 2), nullptr, 16);
-    int b = std::stoi(cleanHex.substr(4, 2), nullptr, 16);
-    return {r, g, b};
+// Quick little function to find and replace all instances of a substring to another substring in an `std::string` type object
+inline std::string replaceAll(std::string str, const std::string& from, const std::string& to) {
+    if (from.empty())
+        return str;
+    size_t start_pos = 0;
+    while ((start_pos = str.find(from, start_pos)) != std::string::npos) {
+        str.replace(start_pos, from.length(), to);
+        start_pos += to.length(); // Move past the replacement
+    }
+    return str;
+}
+
+// Sanitize values that is gonna be fed into the BACKUP file. This is to avoid any exploits.
+inline std::string sanitizeValue(std::string val) {
+    // The sanitizer itself
+    val = replaceAll(val, BACKUP_SANITIZATION_PREMARKER, BACKUP_SANITIZATION_PREMARKER + BACKUP_SANITIZATION_PREMARKER);
+
+    // Separator
+    val = replaceAll(val, std::string(1, BACKUP_SEPARATOR), BACKUP_SANITIZATION_PREMARKER + std::string(1, BACKUP_SEPARATOR));
+
+    // Section marker (the *)
+    val = replaceAll(val, std::string(1, BACKUP_SECTIONMARKER), BACKUP_SANITIZATION_PREMARKER + std::string(1, BACKUP_SECTIONMARKER));
+
+    // Each value separator
+    val = replaceAll(val, std::string(1, BACKUP_EACHVALUE_SEPARATOR), BACKUP_SANITIZATION_PREMARKER + std::string(1, BACKUP_EACHVALUE_SEPARATOR));
+
+    // Each group separator
+    val = replaceAll(val, std::string(1, BACKUP_EACHGROUP_SEPARATOR), BACKUP_SANITIZATION_PREMARKER + std::string(1, BACKUP_EACHGROUP_SEPARATOR));
+
+    return val;
 }
 
 #endif

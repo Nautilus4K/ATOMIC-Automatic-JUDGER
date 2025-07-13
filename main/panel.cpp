@@ -190,6 +190,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QPushButton *userSubmitDir = new QPushButton(this);
     QPushButton *convertToExcel = new QPushButton(this);
     QPushButton *loadFromExcel = new QPushButton(this);
+    QPushButton *backUpAction = new QPushButton(this);
+    QPushButton *loadBackUpAction = new QPushButton(this);
 
     PanelWindow(QWidget *parent) : QMainWindow(parent) { // Extremely powerful? Extremely complex.
         // This is the configuration part of panelWindow.
@@ -271,6 +273,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         // Action of backing up files (Currently, well, not worked on yet)
         QAction *fileBackup = new QAction();
+        fileBackup->setIcon(QIcon(QPixmap(BACKUPICON_PATH)));
         fileBackup->setText("Sao lưu...");
         fileMenu->addAction(fileBackup);
         // QAction connected function
@@ -278,6 +281,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         // Action of loading up backup files (WIP)
         QAction *loadBackup = new QAction();
+        loadBackup->setIcon(QIcon(QPixmap(LOADBACKUPICON_PATH)));
         loadBackup->setText("Mở sao lưu...");
         fileMenu->addAction(loadBackup);
         // QAction connected function
@@ -527,6 +531,26 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         loadFromExcel->setIconSize(QSize(btnWidth, btnHeight));
         connect(loadFromExcel, &QPushButton::clicked, this, &PanelWindow::fromExcel);
 
+        CST_Separator *separator2 = new CST_Separator(this, 10);
+
+        backUpAction->setObjectName("genericBtn");
+        backUpAction->setToolTip("Sao lưu dữ liệu vào file");
+        backUpAction->setFixedHeight(btnHeight); backUpAction->setFixedWidth(btnWidth);
+        QPixmap backUpPXMP(BACKUPICON_PATH);
+        QIcon backUpIcon(backUpPXMP);
+        backUpAction->setIcon(backUpIcon);
+        backUpAction->setIconSize(QSize(btnWidth, btnHeight));
+        connect(backUpAction, &QPushButton::clicked, this, &PanelWindow::backUp);
+
+        loadBackUpAction->setObjectName("genericBtn");
+        loadBackUpAction->setToolTip("Tải môi trường từ tệp sao lưu");
+        loadBackUpAction->setFixedHeight(btnHeight); loadBackUpAction->setFixedWidth(btnWidth);
+        QPixmap loadBackUpPXMP(LOADBACKUPICON_PATH);
+        QIcon loadBackUpIcon(loadBackUpPXMP);
+        loadBackUpAction->setIcon(loadBackUpIcon);
+        loadBackUpAction->setIconSize(QSize(btnWidth, btnHeight));
+        connect(loadBackUpAction, &QPushButton::clicked, this, &PanelWindow::loadBackUp);
+
         // Adding in
         settingsLayout->addWidget(contestsSettings);
         settingsLayout->addWidget(usersSettings);
@@ -535,6 +559,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         settingsLayout->addWidget(userSubmitDir);
         settingsLayout->addWidget(convertToExcel);
         settingsLayout->addWidget(loadFromExcel);
+        settingsLayout->addWidget(separator2);
+        settingsLayout->addWidget(backUpAction);
+        settingsLayout->addWidget(loadBackUpAction);
         settingsLayout->setContentsMargins(0, 0, 0, 0);
 
         settingsLine->setLayout(settingsLayout);
@@ -1362,11 +1389,406 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     }
 
     void backUp() {
+        std::cout << "[backUp()] Functionality called! Asking user...\n";
+        // The extension should be something like .abp
+        std::string targetFile = QFileDialog::getSaveFileName(this, "Lưu tệp sao lưu", "", "Tệp sao lưu ATOMIC (*.tbp)").toStdString();
 
+        if (targetFile.empty()) return;
+
+        json usersData    = getUsersInfo();
+        json contestsData = getContestsInfo();
+        json classesData  = getClassesInfo();
+        json settingsData = getSettingsInfo();
+        json aliasesData  = getAliasesInfo();
+
+        // Let's reconstruct the whole thing to a std::string for each one
+        std::string usersReconstructed = "";
+        std::string contestsReconstructed = "";
+        std::string classesReconstructed = "";
+        std::string settingsReconstructed = "";
+        std::string aliasesReconstructed = "";
+        std::string submissionsReconstructed = "";
+        std::string resultsReconstructed = "";
+        std::string queuedSubmissionsReconstructed = "";
+
+        // First we reconstruct the whole users thing...
+        // To do this, we must have a predefined layout for this
+        // So what do we do? Simply watch and learn.
+        // Also note this:
+        // String is treated as string
+        // Boolean is treated as string of T or F (T is true, F is false)
+        // Number is treated as string by converting to its string counterpart
+
+        // The order of the reconstructed strings are:
+        //   1. users
+        //   2. contests
+        //   3. classes
+        //   4. settings
+        //   5. aliases
+        //   6. submissions
+        //   7. submissions results
+        // 7.5. logs (inside submission results)
+        //   8. queued submissions
+        // These files gonna be pretty heavy
+
+        // The bytearray (thats what i'd like to think but its just char) will look something like this:
+        // *                                 |name1|classes separated with & 1|desc1|fullname1|passwd1|pic1|priv1|name2|classes separated with & 2|desc2|fullname2|...
+        // ^                                 ^
+        // Define the section start.     splitting value                               ...     Until the next *, not |* cuz the final priv does not end with a |
+        // each value starts with |, but not end with |
+
+        std::cout << "[backUp()] Reconstructing userData...\n";
+        for (const auto& _u : usersData.items()) {
+            std::cout << "     User: " << _u.key() << '\n';
+
+            std::string classesStr;
+            for (const std::string& v : _u.value()["class"]) {
+                classesStr += (v + "&");
+            }
+
+            std::string t_userSubstr =
+                          BACKUP_SEPARATOR + sanitizeValue(_u.key()) + 
+                BACKUP_EACHVALUE_SEPARATOR + classesStr + 
+                BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(_u.value()["desc"].template get<std::string>()) + 
+                BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(_u.value()["fullname"].template get<std::string>()) + 
+                BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(_u.value()["password"].template get<std::string>()) + 
+                BACKUP_EACHVALUE_SEPARATOR + (_u.value()["picture"].template get<bool>() ? "T" : "F") + 
+                BACKUP_EACHVALUE_SEPARATOR + intToString(_u.value()["priv"].template get<int>())
+            ;
+
+            usersReconstructed += t_userSubstr;
+        }
+
+        // std::cout << usersReconstructed << '\n';
+
+        // Now let's move onto the contests
+        // The same format allows for a easy construction of this whole thing, or FACADE, I don't know...
+        // Anyway, the format of contests will look something like this:
+        // |name|Classes separated by &|Desc|InputFile|InputType|OutputFile|OutputType|TestAmount|Tests|TimeLimit ...
+        std::cout << "[backUp()] Reconstructing contestData...\n";
+        for (const auto& _c : contestsData.items()) {
+            std::cout << "     Contest: " << _c.key() << '\n';
+
+            std::string classesStr;
+            for (const std::string& v : _c.value()["Classes"]) {
+                classesStr += (v + "&");
+            }
+
+            std::string testsStr;
+            for (const std::vector<std::string>& v : _c.value()["Tests"]) {
+                // [ "1 1", "2" ]
+                testsStr += v[0] + BACKUP_EACHVALUE_SEPARATOR + v[1] + BACKUP_EACHGROUP_SEPARATOR;
+            }
+
+            std::string t_contestSubstr =
+                          BACKUP_SEPARATOR + sanitizeValue(_c.key()) + 
+                BACKUP_EACHVALUE_SEPARATOR + classesStr + 
+                BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(_c.value()["Desc"].template get<std::string>()) + 
+                BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(_c.value()["InputFile"].template get<std::string>()) + 
+                BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(_c.value()["InputType"].template get<std::string>()) + 
+                BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(_c.value()["OutputFile"].template get<std::string>()) + 
+                BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(_c.value()["OutputType"].template get<std::string>()) + 
+                BACKUP_EACHVALUE_SEPARATOR + intToString(_c.value()["TestAmount"].template get<int>()) + 
+                BACKUP_EACHVALUE_SEPARATOR + testsStr + 
+                BACKUP_EACHVALUE_SEPARATOR + doubleToString(_c.value()["TimeLimit"].template get<double>())
+            ;
+
+            contestsReconstructed += t_contestSubstr;
+        }
+
+        // std::cout << contestsReconstructed << '\n';
+
+        // With the contests done and things arent bad at all
+        // Let's now move onto the more god forsaken thing of: classes
+        // |name|longname|shortname|scoreboard...
+        std::cout << "[backUp()] Reconstructing classesData...\n";
+        for (const auto& _c : classesData.items()) {
+            std::cout << "     Class: " << _c.key() << '\n';
+            std::string t_classesStr =
+                          BACKUP_SEPARATOR + sanitizeValue(_c.key()) +
+                BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(_c.value()["longname"].template get<std::string>()) +
+                BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(_c.value()["shortname"].template get<std::string>()) + 
+                BACKUP_EACHVALUE_SEPARATOR + (_c.value()["scoreboard"].template get<bool>() ? "T" : "F")
+            ;
+
+            classesReconstructed += t_classesStr;
+        }
+
+        // With the classes done, we move onto our next target
+        // Which is settings
+        // What do we have here?
+        // |max_not_logged_in_session_seconds|reload_time|show_test|wait_time
+        // Also this is universal so i dont think i will need to make it in a loop
+        std::cout << "[backUp()] Reconstructing settingsData...\n";
+        settingsReconstructed =
+                      BACKUP_SEPARATOR + doubleToString(settingsData["max_not_logged_in_session_seconds"].template get<double>()) +
+            BACKUP_EACHVALUE_SEPARATOR + doubleToString(settingsData["reload_time"].template get<double>()) + 
+            BACKUP_EACHVALUE_SEPARATOR + (settingsData["show_test"].template get<bool>() ? "T" : "F") +
+            BACKUP_EACHVALUE_SEPARATOR + doubleToString(settingsData["wait_time"].template get<double>())
+        ;
+
+        // Now after the settings had been done and all that, lets move onto aliases
+        // Aliases is just like settings, also is universal and fixed in size
+        // so we dont need to make a loop either
+        // |footer|hostname|slogan|softwarelink|website_name
+        std::cout << "[backUp()] Reconstructing aliasesData...\n";
+        aliasesReconstructed = 
+                      BACKUP_SEPARATOR + sanitizeValue(aliasesData["footer"].template get<std::string>()) + 
+            BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(aliasesData["hostname"].template get<std::string>()) +
+            BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(aliasesData["slogan"].template get<std::string>()) + 
+            BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(aliasesData["softwarelink"].template get<std::string>()) + 
+            BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(aliasesData["website_name"].template get<std::string>())
+        ;
+
+        // With the aliases done, lets move onto submissions.
+        // This is WAY harder because of the very bad thing called files
+        // AND its something I can say is a fucking shitty thing
+        // Now let's actually browse through the FILES
+        std::cout << "[backUp()] Reconstructing submissions...\n";
+        try {
+            // Let's first browse through each registered users, it will be way easier and
+            // can serve as a clean up for the whole thing when the user reloads this
+            for (const auto& userItem : usersData.items()) {
+                std::cout << "     User: " << userItem.key() << '\n';
+                // Name is item.key()
+                // Now let's browse through each of the SUBMISSIONS by finding the submissions that have the same kind of classes as our userItem!
+                // Like, overlapping yk.
+
+                std::vector<std::string> userClasses = userItem.value()["class"];
+
+                for (const auto& contestItem : contestsData.items()) {
+
+                    bool valid = false;
+                    for (const std::string& _ucl : userClasses) {
+                        for (const std::string& _ccl : contestItem.value()["Classes"]) {
+                            if (_ucl == _ccl) {
+                                valid = true;
+                                break;
+                            }
+                        }
+
+                        if (valid) break;
+                    }
+
+                    if (valid) {
+                        std::cout << "          Contest: " << contestItem.key() << '\n';
+                        // Now we ball.
+                        // First, let's get the submissions by formatting these into a path.
+
+                        std::string subPath = dirPath + USERSUBHISTORY_DIR + userItem.key() + "/";
+
+                        if (!std::filesystem::exists(subPath)) continue;
+
+                        std::filesystem::path latestFile;
+                        std::filesystem::file_time_type latestTime;
+
+                        // If there are multiple items of different languages, ofc
+                        for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::path(subPath))) {
+                            if (!entry.is_regular_file()) continue;
+
+                            std::string filename = entry.path().filename().string();
+
+                            // Check if it starts with the contest key
+                            if (filename.rfind(contestItem.key(), 0) == 0) {
+                                auto ftime = std::filesystem::last_write_time(entry);
+
+                                if (latestFile.empty() || ftime > latestTime) {
+                                    latestTime = ftime;
+                                    latestFile = entry.path();
+                                }
+                            }
+                        }
+
+                        std::fstream latestFileContent(latestFile, std::ios::in);
+                        if (!latestFile.empty() && latestFileContent.is_open()) {
+                            // We now have the most recent submission file starting with contestItem.key()
+                            std::cout << "Most recent submission for contest " << contestItem.key() << ": " << latestFile << '\n';
+                            std::cout << "-------------\n";
+
+                            std::stringstream buffer;
+                            buffer << latestFileContent.rdbuf();
+
+                            // Now we now needs to add the data in
+                            // Data gonna be somthing like
+                            // |username|contest|ext|<VALUE>
+                            std::string t_subStr =
+                                            BACKUP_SEPARATOR + sanitizeValue(userItem.key()) +
+                                BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(contestItem.key()) + 
+                                BACKUP_EACHVALUE_SEPARATOR + latestFile.extension().string();
+                                BACKUP_EACHGROUP_SEPARATOR + sanitizeValue(buffer.str());
+                            ;
+
+                            submissionsReconstructed += t_subStr;
+
+                            buffer.clear();
+                        }
+                    }
+                }
+            }
+
+        } catch (std::filesystem::filesystem_error& e) {
+            std::cerr << "[backUp()] Filesystem error occured in submissions reconstruction process: " << e.what() << "\n";
+            
+            // I hate it when this happens, but if it happens then let's just not have any of the submissions saved
+            // However, we must ask the user for permission
+            QMessageBox::StandardButton rep = QMessageBox::question(this, "Đã có lỗi. Tiếp tục?", "Không thể lấy dữ liệu của bài làm học sinh (Các tệp mã C++, Python hoặc Pascal). Bạn có chắc muốn tiếp tục (Tệp sao lưu sẽ không có dữ liệu bài làm học sinh)?", QMessageBox::Yes | QMessageBox::No);
+
+            if (rep == QMessageBox::No) {
+                return;
+            } else {
+                // If the user agrees to just exclude this shit
+                // We should now make the value back to DEFAULT
+                
+                submissionsReconstructed = "";
+            }
+        }
+
+        // Now we move onto the results.
+        // The submission results.
+        // This will be easy since we already had the necessary functions and now we just need to loop around the users
+        // So it will be something like this
+        std::cout << "[backUp()] Reconstructing submissions results (grading)...\n";
+        for (const auto& userItem : usersData.items()) {
+            std::cout << "     User: " << userItem.key() << '\n';
+            json sub = getSubmissionInfo(userItem.key());
+
+            // Now we just need to actually make it work
+            // This can be achieved by simply just, idk, browse through each of the users.
+            // Anyway, storing the values is gonna be hard so each users will have shit like this:
+            // |username|contestname|grade1|contestname|grade2
+
+            // Following the great success of submission results, I will add in the data of logs.
+            // Its gonna be basically the same as submission results but instead of the grades its gonna be logs.
+            // Also because its the same the data will be put into submission results to reserve precious storage
+
+            std::string t_subStr = BACKUP_SEPARATOR + userItem.key();
+
+            for (const auto& subv : sub.items()) {
+                // Now we have to check io and stuffs ig
+                // Just do the same as above...?
+                // As long as it works.
+                std::string subPath = dirPath + USERSUBHISTORY_DIR + userItem.key() + "/";
+
+                if (!std::filesystem::exists(subPath)) continue;
+
+                std::filesystem::path latestFile;
+                std::filesystem::file_time_type latestTime;
+
+                // If there are multiple items of different languages, ofc
+                for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::path(subPath))) {
+                    if (!entry.is_regular_file()) continue;
+
+                    std::string filename = entry.path().filename().string();
+
+                    // Check if it starts with the contest key
+                    if (filename.rfind(subv.key(), 0) == 0) {
+                        auto ftime = std::filesystem::last_write_time(entry);
+
+                        if (latestFile.empty() || ftime > latestTime) {
+                            latestTime = ftime;
+                            latestFile = entry.path();
+                        }
+                    }
+                }
+
+                if (latestFile.empty()) continue;
+
+                std::cout << "          Contest: " << userItem.key() << '\n';
+
+                std::string logVal;
+
+                // Now we attempt to access the log file
+                std::fstream logFile(latestFile, std::ios::in);
+
+                if (!logFile.is_open()) logVal = "";
+                else {
+                    std::stringstream buffer;
+                    buffer << logFile.rdbuf();
+
+                    logVal = buffer.str();
+
+                    buffer.clear();
+                }
+
+                t_subStr +=
+                    BACKUP_EACHVALUE_SEPARATOR + subv.key() + // subv.key() is contest name
+                    BACKUP_EACHVALUE_SEPARATOR + doubleToString(subv.value().template get<double>()) +
+                    BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(logVal);
+                ;
+            }
+
+            resultsReconstructed += t_subStr;
+        }
+
+        // Now we have to do the final thing, which is the queued submissions.
+        // They are especially tiring to do and is certainly not gonna be a good time.
+        // So heres a plan to do it FAST
+        // The layout is gonna be something like this:
+        // |filename|value
+        // so for example:
+        // |[nautilus][test01].cpp|#include <bits/stdc++.h>...
+        std::cout << "[backUp()] Reconstructing queued submissions...\n";
+        for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::path(dirPath + USERQUEUE_DIR))) {
+            if (entry.is_directory()) continue; // Skip this entry if it is a directory because we cannot use directories.
+            
+            std::filesystem::path entryPath = entry.path();
+            std::cout << "     File: " << entry.path() << '\n';
+
+            // Open the file
+            std::fstream entryFile(entryPath, std::ios::in);
+            if (entryFile.is_open()) {
+                // Now we just have to walk it through
+                // Here we will load the value through a buffer
+                std::stringstream buffer;
+
+                buffer << entryFile.rdbuf();
+
+                // With the value of the queued file done, we can just **embed** it into the constructed substring
+                // The layout of the constructed substring will have the layout as stated above and will be added into the reconstructed
+                // string later on
+                std::string t_queuedStr = 
+                              BACKUP_SEPARATOR + sanitizeValue(entryPath.filename().string()) +
+                    BACKUP_EACHVALUE_SEPARATOR + sanitizeValue(buffer.str());
+                ;
+
+                buffer.clear();
+
+                // Now we add the constructed substring to the main (used) reconstructed string
+                // Gonna be easy ig.
+                queuedSubmissionsReconstructed += t_queuedStr;
+            } else continue; // if failure to open file, we skip it off
+        }
+
+        // Now with ALL the little variables and algorithms done, let's do the real thing of actually outputting to a file
+        // Doing this is easy. We just need to create a final, one and only string that represents the file and then output it into the file
+        std::cout << "[backUp()] Finalizing...\n";
+        std::string data = 
+            BACKUP_SECTIONMARKER + usersReconstructed +             // 1.
+            BACKUP_SECTIONMARKER + contestsReconstructed +          // 2.
+            BACKUP_SECTIONMARKER + classesReconstructed +           // 3.
+            BACKUP_SECTIONMARKER + settingsReconstructed +          // 4.
+            BACKUP_SECTIONMARKER + aliasesReconstructed +           // 5.
+            BACKUP_SECTIONMARKER + submissionsReconstructed +       // 6.
+            BACKUP_SECTIONMARKER + resultsReconstructed +           // 7. + 7.5
+            BACKUP_SECTIONMARKER + queuedSubmissionsReconstructed   // 8.
+        ;
+
+        // Let's now save it in
+        std::fstream backupFile(targetFile, std::ios::out | std::ios::trunc);
+        if (!backupFile.is_open()) {
+            errorDialog("Lưu tệp sao lưu không thành công!");
+            backupFile.close();
+            return;
+        }
+
+        backupFile << data;
+        backupFile.close();
     }
 
     void loadBackUp() {
+        std::cout << "[loadBackUp()] Functionality called!\n";
 
+        // This is gonna be hard but its fine. I am just gonna find the file and read it
     }
 
     private: // PRIVATE FUNCTIONS. These cannot be connected to outside of whatever this object is.

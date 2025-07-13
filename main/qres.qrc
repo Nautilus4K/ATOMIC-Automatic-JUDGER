@@ -10,5 +10,7 @@
         <file alias="submitdir.png">source/images/submitdir.png</file>
         <file alias="toexcel.png">source/images/toexcel.png</file>
         <file alias="fromexcel.png">source/images/fromexcel.png</file>
+        <file alias="backup.png">source/images/backup.png</file>
+        <file alias="loadbackup.png">source/images/loadbackup.png</file>
     </qresource>
 </RCC>

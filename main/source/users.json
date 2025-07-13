@@ -1,1 +1,23 @@
-{"Student1":{"class":["A0"],"desc":"Xin chào! Tôi là một học sinh!","fullname":"Student1","password":"","picture":false,"priv":0},"Student2":{"class":["A0","D0"],"desc":"Xin chào! Tôi là một học sinh!","fullname":"Student2","password":"","picture":false,"priv":0}}
+{
+    "Student1": {
+        "class": [
+            "A0"
+        ],
+        "desc": "Xin chào! Tôi là một học sinh!",
+        "fullname": "Student1",
+        "password": "",
+        "picture": false,
+        "priv": 0
+    },
+    "Student2": {
+        "class": [
+            "A0",
+            "D0"
+        ],
+        "desc": "Xin chào! Tôi là một học sinh!",
+        "fullname": "Student2",
+        "password": "",
+        "picture": false,
+        "priv": 0
+    }
+}

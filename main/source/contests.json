@@ -1,1 +1,78 @@
-{"SumOfAB":{"Classes":["A0"],"Desc":"","InputFile":"","InputType":"raw","OutputFile":"","OutputType":"raw","TestAmount":0,"Tests":[],"TimeLimit":1.0},"Test1":{"Classes":["A0","D0"],"Desc":"","InputFile":"","InputType":"raw","OutputFile":"","OutputType":"raw","TestAmount":0,"Tests":[],"TimeLimit":1.0},"Test2":{"Classes":["A0","D0"],"Desc":"","InputFile":"","InputType":"raw","OutputFile":"","OutputType":"raw","TestAmount":0,"Tests":[],"TimeLimit":1.0}}
+{
+    "SumOfAB": {
+        "Classes": [
+            "A0"
+        ],
+        "Desc": "<span style=\" font-weight:700;\">Yêu cầu:</span> Cho hai số a, b. Tính a + b </p>\n<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-weight:700;\">Đầu vào</span>: a, b ≤ 10^9</p>\n<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br />",
+        "InputFile": "SUMOFAB.INP",
+        "InputType": "raw",
+        "OutputFile": "SUMOFAB.OUT",
+        "OutputType": "raw",
+        "TestAmount": 4,
+        "Tests": [
+            [
+                "1 1",
+                "2"
+            ],
+            [
+                "3 3",
+                "6"
+            ],
+            [
+                "4 4",
+                "8"
+            ],
+            [
+                "5 5",
+                "10"
+            ]
+        ],
+        "TimeLimit": 1.03
+    },
+    "Test1": {
+        "Classes": [
+            "D0",
+            "A0"
+        ],
+        "Desc": "Prints out `Test` on execution",
+        "InputFile": "TEST1.INP",
+        "InputType": "raw",
+        "OutputFile": "TEST1.OUT",
+        "OutputType": "raw",
+        "TestAmount": 2,
+        "Tests": [
+            [
+                "",
+                "Test"
+            ],
+            [
+                "",
+                "Test2"
+            ]
+        ],
+        "TimeLimit": 1.0
+    },
+    "Test2": {
+        "Classes": [
+            "D0",
+            "A0"
+        ],
+        "Desc": "What is 1 + 1?",
+        "InputFile": "Test2.INP",
+        "InputType": "file",
+        "OutputFile": "Test2.OUT",
+        "OutputType": "file",
+        "TestAmount": 2,
+        "Tests": [
+            [
+                "",
+                "2"
+            ],
+            [
+                "",
+                "2"
+            ]
+        ],
+        "TimeLimit": 1.0
+    }
+}

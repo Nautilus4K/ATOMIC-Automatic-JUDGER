@@ -45,6 +45,8 @@ static const QString CLASSESICON_PATH = ":/images/classes.png";
 static const QString SUBMITDIRICON_PATH = ":/images/submitdir.png";
 static const QString TOEXCELICON_PATH = ":/images/toexcel.png";
 static const QString FROMEXCELICON_PATH = ":/images/fromexcel.png";
+static const QString BACKUPICON_PATH = ":/images/backup.png";
+static const QString LOADBACKUPICON_PATH = ":/images/loadbackup.png";
 
 static const char* DEBUGLOG_PATH = "/debug.log";
 
@@ -85,5 +87,13 @@ static const EXCELCOLOR XLSX_HEADERTEXTHEXCOL = {255, 255, 255};
 static const EXCELCOLOR XLSX_USERROWODDFILL = {255, 255, 255}; // Interwoven colors
 static const EXCELCOLOR XLSX_USERROWEVENFILL = {214, 235, 255};
 static const EXCELCOLOR XLSX_USERSUMCELL = {176, 216, 255};
+
+// -> Some characters related to the backup functionality
+static const char BACKUP_SEPARATOR = (char)30;
+static const char BACKUP_SECTIONMARKER = (char)31;
+static const char BACKUP_EACHVALUE_SEPARATOR = (char)6; // Each value separator is the separator for EACH value
+static const char BACKUP_EACHGROUP_SEPARATOR = (char)29; // Each pair separator is the seprator for EACH pair, which is bigger than each value
+
+static const std::string BACKUP_SANITIZATION_PREMARKER = "/@/";
 
 #endif

@@ -626,7 +626,7 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
         try:
             success = True
             message = ""
-            logdata = ""
+            logdata = "Không có dữ liệu"
             result = -1
             
             # Get username
@@ -652,7 +652,7 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
         except Exception as e:
             success = False
             message = str(e)
-            logdata = ""
+            logdata = "Đã có lỗi xảy ra"
             result = -1
             print("/api/getsubmissioninfo" + str(e))
 
