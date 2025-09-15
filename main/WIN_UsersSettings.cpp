@@ -89,7 +89,7 @@ WIN_UsersSettings::WIN_UsersSettings(QWidget *parent) : QWidget(parent, Qt::Wind
     passwdBtn->setObjectName("genericBtn");
     passwdBtn->setText("Đổi mật khẩu");
 
-    connect(passwdBtn, &QPushButton::clicked, this, WIN_UsersSettings::changePassword);
+    connect(passwdBtn, &QPushButton::clicked, this, &WIN_UsersSettings::changePassword);
 
     // Details' elements adding in order
     detailsLayout->addWidget(passwdLabel);

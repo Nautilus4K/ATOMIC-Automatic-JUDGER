@@ -25,3 +25,16 @@ python.js
 
 # Project only
 panel.exe
+
+# API
+API.txt
+
+# C++
+include/
+*.obj
+*.o
+*.exe
+
+# Font
+*.ttf
+*.otf

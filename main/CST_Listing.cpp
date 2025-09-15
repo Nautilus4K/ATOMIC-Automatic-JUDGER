@@ -26,8 +26,8 @@ CST_Listing::CST_Listing(QWidget *parent) : QWidget(parent) {
     subBtn->setObjectName("genericBtn"); // the correct looks
 
     // Connecting to the neccessary functions
-    connect(addBtn, &QPushButton::clicked, this, CST_Listing::addEntry);
-    connect(subBtn, &QPushButton::clicked, this, CST_Listing::removeEntry);
+    connect(addBtn, &QPushButton::clicked, this, &CST_Listing::addEntry);
+    connect(subBtn, &QPushButton::clicked, this, &CST_Listing::removeEntry);
 
     // Creates a horizontally aligned QWidget
     QWidget *btnPlane = new QWidget(this);
@@ -78,7 +78,7 @@ void CST_Listing::addEntry() {
 
         // Validifying
         bool unique = true;
-        for (const QString entName : curEnt) {
+        for (const QString& entName : curEnt) {
             if (entName == name)  {
                 // So what this does is it browse through the LIST
                 // If it found just a single matching entry, it would HALT immediately

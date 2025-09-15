@@ -78,6 +78,7 @@ NEVER SEEN ANYTHING THIS BAD
 #include <QtGui/QIcon>                 // Icon readings
 #include <QtGui/QPixmap>               // Picture reading
 #include <QtGui/QFont>                 // Fonts
+#include <QtGui/QFontDatabase>         // Font database. For loading custom fonts
 #include <QtGui/QColor>                // Colors
 #include <QtGui/QTextDocumentFragment> // Producing a fragment of an HTML document. Sorta like a wrapper cleaner for HTMLs
 
@@ -86,6 +87,8 @@ NEVER SEEN ANYTHING THIS BAD
 #include <QtCore/QProcess> // Process running
 #include <QtCore/QStringListModel> // QStringList model? Idk
 
+#include <QtGui/QDesktopServices> // For desktop related services. Like opening a web browser
+
 // File I/O actions and getting data
 #include <fstream>
 #include <nlohmann/json.hpp>
@@ -93,18 +96,20 @@ NEVER SEEN ANYTHING THIS BAD
 using json = nlohmann::json;
 
 // System-related actions
-#ifndef WIN32_LEAN_AND_MEAN // Because of historical reasons, including Windows.h
-#define WIN32_LEAN_AND_MEAN // along with winsock2.h will need to have this
-#endif
+// #ifndef WIN32_LEAN_AND_MEAN // Because of historical reasons, including Windows.h
+// #define WIN32_LEAN_AND_MEAN // along with winsock2.h will need to have this
+// #endif
 
-#include <filesystem>
-#include "Windows.h"
-#include "winsock2.h" // Socket programming
-#include "shellapi.h" // ShellExecuteA, etc...
-#include "ws2tcpip.h"
+// Socket
+#include <boost/asio.hpp>
+#include <boost/system/error_code.hpp>
+
+#include <thread> // Threading
+
 #include <filesystem> // File managing
 
-#pragma comment(lib, "Ws2_32.lib") // Required library to link with
+// #pragma comment(lib, "Ws2_32.lib") // Required library to link with
+// aint gon lie i was quite foolish
 
 // C++ Features
 #include <vector>
@@ -227,7 +232,21 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         }
 
         // Setting fonts
-        monospaceFont.setFamilies({"Source Code Pro", "Cascadia Code", "Consolas", "Courier New", "Ubuntu Mono", "monospace"});
+        // monospaceFont.setFamilies({"Source Code Pro", "Cascadia Code", "Consolas", "Courier New", "Ubuntu Mono", "monospace"});
+        int monospaceId = QFontDatabase::addApplicationFont(MONOSPACEFONT_PATH);
+        if (monospaceId < 0) {
+            std::cerr << "Failed to load monospace font from " << MONOSPACEFONT_PATH.toStdString() << "\n";
+            monospaceFont.setFamilies({"Consolas", "Courier New", "Ubuntu Mono", "monospace"});
+        } else {
+            QStringList loadedFamilies = QFontDatabase::applicationFontFamilies(monospaceId);
+            if (!loadedFamilies.isEmpty()) {
+                monospaceFont.setFamily(loadedFamilies.at(0));
+                std::cout << "Loaded monospace font: " << loadedFamilies.at(0).toStdString() << "\n";
+            } else {
+                std::cout << "No families found in loaded monospace font\n";
+                monospaceFont.setFamilies({"Consolas", "Courier New", "Ubuntu Mono", "monospace"});
+            }
+        }
 
         // Preparing processes
         // Before starting the judgingProcess, set environment variables for proper Unicode support
@@ -264,7 +283,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         //////////////
         // Menu bar //
         //////////////
-        QMenuBar *menuBar = new QMenuBar();
+        QMenuBar *menuBar = new QMenuBar(this);
         setMenuBar(menuBar);
 
         // FILE MENU
@@ -272,7 +291,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         menuBar->addMenu(fileMenu);
 
         // Action of backing up files (Currently, well, not worked on yet)
-        QAction *fileBackup = new QAction();
+        QAction *fileBackup = new QAction(this);
         fileBackup->setIcon(QIcon(QPixmap(BACKUPICON_PATH)));
         fileBackup->setText("Sao lưu...");
         fileMenu->addAction(fileBackup);
@@ -280,7 +299,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         connect(fileBackup, &QAction::triggered, this, &PanelWindow::backUp);
 
         // Action of loading up backup files (WIP)
-        QAction *loadBackup = new QAction();
+        QAction *loadBackup = new QAction(this);
         loadBackup->setIcon(QIcon(QPixmap(LOADBACKUPICON_PATH)));
         loadBackup->setText("Mở sao lưu...");
         fileMenu->addAction(loadBackup);
@@ -288,7 +307,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         connect(loadBackup, &QAction::triggered, this, &PanelWindow::loadBackUp);
 
         // Action of exitting
-        QAction *exitApp = new QAction();
+        QAction *exitApp = new QAction(this);
         exitApp->setText("Thoát");
         exitApp->setIcon(QIcon(EXITICON_PATH));
         fileMenu->addAction(exitApp);
@@ -301,14 +320,14 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         menuBar->addMenu(helpMenu);
 
         // Action of about GITHUB page
-        QAction *openGitHub = new QAction();
+        QAction *openGitHub = new QAction(this);
         openGitHub->setText("Trang dự án...");
         helpMenu->addAction(openGitHub);
         // QAction connected function
         connect(openGitHub, &QAction::triggered, this, &PanelWindow::gitHub);
 
         // Action of about GITHUB page
-        QAction *openAbout = new QAction();
+        QAction *openAbout = new QAction(this);
         openAbout->setText("Về ATOMIC...");
         helpMenu->addAction(openAbout);
         // QAction connected function
@@ -324,9 +343,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         container->setObjectName("container"); // Setting name for QSS
 
         // Layout of container will be called mainLayout.
-        // The reason why I had to type new QVBoxLayout() is because of the fact that
+        // The reason why I had to type new QVBoxLayout(this) is because of the fact that
         // good ol QVBoxLayout mainLayout; is on stack, but setLayout requires a pointer
-        QVBoxLayout *mainLayout = new QVBoxLayout();
+        QVBoxLayout *mainLayout = new QVBoxLayout(this);
 
 
         // Splitter for main window
@@ -354,7 +373,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         sidebar->setMinimumWidth(150);
         sidebar->setMaximumWidth(350);
 
-        QVBoxLayout *sidebarLayout = new QVBoxLayout();
+        QVBoxLayout *sidebarLayout = new QVBoxLayout(this);
 
         // JUDGING
         QLabel *judgingProcessLabel = new QLabel();
@@ -630,7 +649,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
          * 
          * Update: Please save me from this hellhole
          */
-        QVBoxLayout *judgingTabLayout = new QVBoxLayout();
+        QVBoxLayout *judgingTabLayout = new QVBoxLayout(this);
 
         // WAIT TIME
         QLabel *judgingWaitTimeLabel = new QLabel();
@@ -706,7 +725,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
          *   + Slogan
          *   + Host name
          */
-        QVBoxLayout *webserverTabLayout = new QVBoxLayout();
+        QVBoxLayout *webserverTabLayout = new QVBoxLayout(this);
         webserverTabLayout->setAlignment(Qt::AlignTop);
 
         // MAXIMUM NOT LOGGED IN SECONDS
@@ -1219,7 +1238,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     }
 
     void submitDir() {
-        ShellExecuteA(0, "open", (dirPath + USERSUBHISTORY_DIR).c_str(), 0, 0, SW_SHOWNORMAL);
+        // ShellExecuteA(0, "open", (dirPath + USERSUBHISTORY_DIR).c_str(), 0, 0, SW_SHOWNORMAL);
+        // std::cout << "fixme: Open submission history folder at " << (dirPath + USERSUBHISTORY_DIR) << "\n";
+        QDesktopServices::openUrl(QUrl::fromLocalFile(QString::fromStdString(dirPath + USERSUBHISTORY_DIR)));
     }
 
     void about() {
@@ -1291,7 +1312,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 licensingInfo->setFont(monospaceFont);
                 licensingSplitter->addWidget(licensingInfo);
 
-                QVBoxLayout *layout = new QVBoxLayout();
+                QVBoxLayout *layout = new QVBoxLayout(this);
                 layout->addWidget(licensingSplitter);
                 aboutFrame->setLayout(layout);
             } catch (const json::parse_error& e) { 
@@ -1380,12 +1401,14 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
     void gitHub() {
         // Executing the github repo into Windows
-        ShellExecuteA(0, "open", GITHUB_PAGE.c_str(), 0, 0, SW_SHOWNORMAL); // Using the ANSI version and not Unicode
+        // ShellExecuteA(0, "open", GITHUB_PAGE.c_str(), 0, 0, SW_SHOWNORMAL); // Using the ANSI version and not Unicode
+        QDesktopServices::openUrl(QUrl(QString::fromStdString(GITHUB_PAGE)));
     }
 
     void openHttpWebsite() {
         // Opening the opened HTTP website
-        ShellExecuteA(0, "open", "http://127.0.0.1/", 0, 0, SW_SHOWNORMAL);
+        // ShellExecuteA(0, "open", "http://127.0.0.1/", 0, 0, SW_SHOWNORMAL);
+        QDesktopServices::openUrl(QUrl("http://127.0.0.1/"));
     }
 
     void backUp() {
@@ -1828,39 +1851,44 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 }
             }
             else {
-                // Turn off JUDGING process via created socket HOLE
-                SOCKET exitSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-                if (exitSocket == INVALID_SOCKET) {
-                    std::cout << "exitSocket: INVALID_SOCKET\n";
-                    errorDialog("Lỗi tạo dựng SOCKET. Chương trình sẽ thoát và hãy mở lại chương trình. Thiết bị của bạn có thể không tương thích với ATOMIC.");
-                    WSACleanup();
+                // Turn off JUDGING process via ASIO socket
+                try {
+                    boost::asio::io_context io_context;
+                    boost::asio::ip::tcp::socket socket(io_context);
+                    
+                    // Create endpoint
+                    boost::asio::ip::tcp::endpoint endpoint(
+                        boost::asio::ip::make_address(JUDGING_EXITADDR), 
+                        JUDGING_EXITPORT
+                    );
+
+                    // Connect to target
+                    boost::system::error_code connect_error;
+                    socket.connect(endpoint, connect_error);
+                    
+                    if (connect_error) {
+                        // Connection failure
+                        errorDialog("Kết nối đến hệ thống chấm bài không thành công. Vui lòng đợi một chút và thử lại sau. Nếu vẫn không thành công thì hãy thử khởi động lại hệ thống.");
+                    }
+                    else {
+                        // Send exit message
+                        const std::string exitMsg = "exit";
+                        boost::system::error_code send_error;
+                        boost::asio::write(socket, boost::asio::buffer(exitMsg), send_error);
+                        
+                        if (!send_error) {
+                            // Now, we have to set the button disabled because the user might just spam it up so...
+                            judgingProcessButton->setEnabled(false);
+                        }
+                    }
+                    
+                    socket.close();
+                }
+                catch (const std::exception& e) {
+                    std::cout << "ASIO Exception in judging exit: " << e.what() << std::endl;
+                    errorDialog("Lỗi kết nối ASIO. Chương trình sẽ thoát và hãy mở lại chương trình. Thiết bị của bạn có thể không tương thích với ATOMIC.");
                     close();
-                    // judgingProcess->terminate();
                     exit(0);
-                }
-
-                // Marking addresses for impending connection
-                sockaddr_in targetAddr;
-                targetAddr.sin_family = AF_INET;
-                targetAddr.sin_port = htons(JUDGING_EXITPORT);
-                targetAddr.sin_addr.s_addr = inet_addr(JUDGING_EXITADDR.c_str());
-
-                // Connecting to target with Winsock's connect
-                if (::connect(exitSocket, (SOCKADDR*)&targetAddr, sizeof(targetAddr)) == SOCKET_ERROR) {
-                    // Connection failure:
-                    // Connect to target returned SOCKET_ERROR
-
-                    errorDialog("Kết nối đến hệ thống chấm bài không thành công. Vui lòng đợi một chút và thử lại sau. Nếu vẫn không thành công thì hãy thử khởi động lại hệ thống.");
-                    closesocket(exitSocket);
-                }
-                else {
-                    const char* exitMsg = "exit";
-                    send(exitSocket, exitMsg, strlen(exitMsg), 0);
-
-                    // No need for recieving
-
-                    // Now, we have to set the button disabled because the user might just spam it up so...
-                    judgingProcessButton->setEnabled(false);
                 }
             }
         } else if (type == "webserver") {
@@ -1887,44 +1915,49 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                     errorDialog("Thất bại trong quá trình mở hệ thống chấm bài. Hãy thử cài đặt lại chương trình hoặc cập nhật lên bản cập nhật mới nhất");
                 }
             } else {
-                // Turning off actions
-                // Turn off JUDGING process via created socket HOLE
-                SOCKET exitSocket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-                if (exitSocket == INVALID_SOCKET) {
-                    std::cout << "exitSocket: INVALID_SOCKET\n";
-                    errorDialog("Lỗi tạo dựng SOCKET. Chương trình sẽ thoát và hãy mở lại chương trình. Thiết bị của bạn có thể không tương thích với ATOMIC.");
-                    WSACleanup();
+                // Turn off WEBSERVER process via ASIO socket
+                try {
+                    boost::asio::io_context io_context;
+                    boost::asio::ip::tcp::socket socket(io_context);
+                    
+                    // Create endpoint
+                    boost::asio::ip::tcp::endpoint endpoint(
+                        boost::asio::ip::make_address(WEBSERVER_EXITADDR), 
+                        WEBSERVER_EXITPORT
+                    );
+
+                    // Connect to target
+                    boost::system::error_code connect_error;
+                    socket.connect(endpoint, connect_error);
+                    
+                    if (connect_error) {
+                        // Connection failure
+                        errorDialog("Kết nối đến hệ thống website không thành công. Vui lòng đợi một chút và thử lại sau. Nếu vẫn không thành công thì hãy thử khởi động lại hệ thống.");
+                    }
+                    else {
+                        // Send exit message
+                        const std::string exitMsg = "exit";
+                        boost::system::error_code send_error;
+                        boost::asio::write(socket, boost::asio::buffer(exitMsg), send_error);
+                        
+                        if (!send_error) {
+                            // Now, we have to set the button disabled because the user might just spam it up so...
+                            webserverProcessButton->setEnabled(false);
+                        }
+                    }
+                    
+                    socket.close();
+                }
+                catch (const std::exception& e) {
+                    std::cout << "ASIO Exception in webserver exit: " << e.what() << std::endl;
+                    errorDialog("Lỗi kết nối ASIO. Chương trình sẽ thoát và hãy mở lại chương trình. Thiết bị của bạn có thể không tương thích với ATOMIC.");
                     close();
-                    // judgingProcess->terminate();
                     exit(0);
-                }
-
-                // Marking addresses for impending connection
-                sockaddr_in targetAddr;
-                targetAddr.sin_family = AF_INET;
-                targetAddr.sin_port = htons(WEBSERVER_EXITPORT);
-                targetAddr.sin_addr.s_addr = inet_addr(WEBSERVER_EXITADDR.c_str());
-
-                // Connecting to target with Winsock's connect
-                if (::connect(exitSocket, (SOCKADDR*)&targetAddr, sizeof(targetAddr)) == SOCKET_ERROR) {
-                    // Connection failure:
-                    // Connect to target returned SOCKET_ERROR
-
-                    errorDialog("Kết nối đến hệ thống website không thành công. Vui lòng đợi một chút và thử lại sau. Nếu vẫn không thành công thì hãy thử khởi động lại hệ thống.");
-                    closesocket(exitSocket);
-                }
-                else {
-                    const char* exitMsg = "exit";
-                    send(exitSocket, exitMsg, strlen(exitMsg), 0);
-
-                    // No need for recieving
-
-                    // Now, we have to set the button disabled because the user might just spam it up so...
-                    webserverProcessButton->setEnabled(false);
                 }
             }
         }
     }
+
 
     // Add these two methods:
     void judgingHandleStandardOutput() {
@@ -2088,7 +2121,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             if (reply == QMessageBox::Yes) {
                 // Open logfile
                 std::cout << "Opened Webserver's log file.\n";
-                ShellExecuteA(0, "open", (dirPath + LOG_PATH).c_str(), 0, 0, SW_SHOWNORMAL);
+                // ShellExecuteA(0, "open", (dirPath + LOG_PATH).c_str(), 0, 0, SW_SHOWNORMAL);
+                QDesktopServices::openUrl(QUrl::fromLocalFile(QString::fromStdString(dirPath + LOG_PATH)));
             }
         } else {
             // Alright its fine
@@ -2419,7 +2453,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         std::vector<std::pair<double, std::string>> usersSums; // More sorting friendly
 
         // We go through EACH user
-        for (const std::string user : usersList) {
+        for (const std::string& user : usersList) {
             // Get the contests of EACH user (in JSON format)
             const json submissions = getSubmissionInfo(user);
             if (!submissions.is_null()) { // Not null
@@ -2711,42 +2745,23 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     }
 };
 
-/* PROPOSED BY CLAUDE. IDK HOW THIS WORKS BUT LOOKS LIKE ITS WAY BETTER */
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
+int main(int argc, char* argv[]) {
     // 1) Simple console check from command line
     bool hideConsole = true;
-    std::wstring cmdLine = GetCommandLineW();
-    if (cmdLine.find(L"--console") != std::wstring::npos) {
-        hideConsole = false;
+    for (int i = 1; i < argc; ++i) {
+        if (std::string(argv[i]) == "--console") {
+            hideConsole = false;
+        }
     }
 
-    // 2) Simple Qt arguments - just pass the program name
-    int qt_argc = 1;
-    char programName[] = "ATOMIC";
-    char* qt_argv[] = { programName };
-    char** qt_argv_ptr = qt_argv;
+    // 2) Qt arguments – reuse real argc/argv from main()
+    int qt_argc = argc;
+    char** qt_argv_ptr = argv;
 
-    // 3) Optionally allocate a console
     if (!hideConsole) {
-        if (AllocConsole()) {
-            // Redirect standard streams safely
-            FILE* fp = nullptr;
-            if (freopen_s(&fp, "CONOUT$", "w", stdout) == 0) {
-                setvbuf(stdout, nullptr, _IONBF, 0);
-            }
-            if (freopen_s(&fp, "CONOUT$", "w", stderr) == 0) {
-                setvbuf(stderr, nullptr, _IONBF, 0);
-            }
-            if (freopen_s(&fp, "CONIN$", "r", stdin) == 0) {
-                // Input stream setup successful
-            }
+        std::cout << "Application running with console support.\n";
 
-            // Use safer output methods
-            std::cout << "Console attached!\n";
-            std::cout << "Application running with console support.\n";
-            
-            // ASCII art
-            const char* asciiArt = R"(
+        const char* asciiArt = R"(
       ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: 
      :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   
     :+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     
@@ -2754,42 +2769,39 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
   +#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       
  #+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       
 ###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###
-            )";
-            std::cout << asciiArt << std::endl;
-            std::cout.flush();
-        }
+        )";
+        std::cout << asciiArt << std::endl;
     }
 
-    // 4) Initialize Winsock
-    WSADATA wsaData;
-    int wsResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
-    if (wsResult != 0) {
-        if (!hideConsole) {
-            std::cout << "WSAStartup failed: " << wsResult << std::endl;
-        }
-        
-        // Create a temporary QApplication just for the message box if needed
-        if (hideConsole) {
-            QApplication tempApp(qt_argc, qt_argv_ptr);
-            QMessageBox::critical(
-                nullptr,
-                "Lỗi mở WINSOCK",
-                "Đã gặp lỗi thiết lập WINSOCK. Thiết bị của bạn có thể không tương thích với phần mềm này",
-                QMessageBox::StandardButton::Ok
-            );
-        }
-        return 1;
-    }
+    int ret = 1; // Default return
 
-    int ret = 1; // Default error return
-    
     try {
-        // 5) Launch Qt application
+        // 3) Launch Qt application
         QApplication app(qt_argc, qt_argv_ptr);
         app.setApplicationDisplayName("ATOMIC");
         app.setApplicationName("ATOMIC");
         app.setApplicationVersion("v0.1");
         Q_INIT_RESOURCE(qres);
+
+        // Now over to the default font
+        QFont defaultFont;
+        int defaultFontId = QFontDatabase::addApplicationFont(DEFAULTFONT_PATH);
+        if (defaultFontId < 0) {
+            std::cerr << "Failed to load default font from " << DEFAULTFONT_PATH.toStdString() << "\n";
+            defaultFont.setFamilies({"Segoe UI", "Arial", "Tahoma", "sans-serif"});
+        } else {
+            QStringList loadedFamilies = QFontDatabase::applicationFontFamilies(defaultFontId);
+            if (!loadedFamilies.isEmpty()) {
+                defaultFont.setFamily(loadedFamilies.at(0));
+                std::cout << "Loaded default font: " << loadedFamilies.at(0).toStdString() << "\n";
+            } else {
+                std::cout << "No families found in loaded default font\n";
+                defaultFont.setFamilies({"Segoe UI", "Arial", "Tahoma", "sans-serif"});
+            }
+        }
+
+        defaultFont.setPointSize(10);
+        app.setFont(defaultFont); // Set the default font for the entire application
 
         PanelWindow panel(nullptr);
         panel.initialize();
@@ -2805,31 +2817,36 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
         panel.show();
         ret = app.exec();
-        
+
     } catch (const std::exception& e) {
         if (!hideConsole) {
             std::cout << "Exception caught: " << e.what() << std::endl;
         } else {
-            // For GUI-only mode, show message box for critical errors
-            QMessageBox::critical(nullptr, "Error", 
+            QMessageBox::critical(
+                nullptr, 
+                "Error", 
                 QString("An unexpected error occurred: %1").arg(e.what()), 
-                QMessageBox::Ok);
+                QMessageBox::Ok
+            );
         }
         ret = -1;
     } catch (...) {
         if (!hideConsole) {
             std::cout << "Unknown exception caught" << std::endl;
         } else {
-            QMessageBox::critical(nullptr, "Error", "An unknown error occurred", QMessageBox::Ok);
+            QMessageBox::critical(
+                nullptr, 
+                "Error", 
+                "An unknown error occurred", 
+                QMessageBox::Ok
+            );
         }
         ret = -1;
     }
 
-    // 6) Cleanup Winsock
-    WSACleanup();
-
     if (!hideConsole) {
         std::cin.get();
     }
+
     return ret;
 }

@@ -13,4 +13,8 @@
         <file alias="backup.png">source/images/backup.png</file>
         <file alias="loadbackup.png">source/images/loadbackup.png</file>
     </qresource>
+    <qresource prefix="/fonts">
+        <file alias="OpenSans.ttf">source/fonts/OpenSans.ttf</file>
+        <file alias="CascadiaCode.ttf">source/fonts/CascadiaCode.ttf</file>
+    </qresource>
 </RCC>

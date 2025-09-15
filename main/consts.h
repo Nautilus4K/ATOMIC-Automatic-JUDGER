@@ -48,6 +48,9 @@ static const QString FROMEXCELICON_PATH = ":/images/fromexcel.png";
 static const QString BACKUPICON_PATH = ":/images/backup.png";
 static const QString LOADBACKUPICON_PATH = ":/images/loadbackup.png";
 
+static const QString MONOSPACEFONT_PATH = ":/fonts/CascadiaCode.ttf";
+static const QString DEFAULTFONT_PATH = ":/fonts/OpenSans.ttf";
+
 static const char* DEBUGLOG_PATH = "/debug.log";
 
 // Paths

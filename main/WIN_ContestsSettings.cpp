@@ -50,7 +50,7 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) : QWidget(parent, Qt
     saveBtn->setText("Lưu");
     saveBtn->setEnabled(false); // Turns disabled IF there is no contest to save to.
     saveBtn->setFixedWidth(100);
-    connect(saveBtn, &QPushButton::clicked, this, WIN_ContestsSettings::saveInfo);
+    connect(saveBtn, &QPushButton::clicked, this, &WIN_ContestsSettings::saveInfo);
 
     // INITIALIZATION STEP. I have no idea why I need to put this function caller way up here. But whatever.
     // after all it does work and thats what matters.
@@ -128,7 +128,7 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) : QWidget(parent, Qt
     addTestCaseBtn->setObjectName("genericBtn");
     addTestCaseBtn->setFixedWidth(110);
     addTestCaseBtn->setText("Thêm bộ test");
-    connect(addTestCaseBtn, &QPushButton::clicked, this, WIN_ContestsSettings::addCase);
+    connect(addTestCaseBtn, &QPushButton::clicked, this, &WIN_ContestsSettings::addCase);
 
     QLabel *testCaseSectionLabel = new QLabel(this);
     testCaseSectionLabel->setObjectName("con_lab");
