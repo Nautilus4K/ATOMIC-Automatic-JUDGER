@@ -298,13 +298,21 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // QAction connected function
         connect(fileBackup, &QAction::triggered, this, &PanelWindow::backUp);
 
-        // Action of loading up backup files (WIP)
+        // Action of loading up backup files
         QAction *loadBackup = new QAction(this);
         loadBackup->setIcon(QIcon(QPixmap(LOADBACKUPICON_PATH)));
         loadBackup->setText("Mở sao lưu...");
         fileMenu->addAction(loadBackup);
         // QAction connected function
         connect(loadBackup, &QAction::triggered, this, &PanelWindow::loadBackUp);
+
+        // Action of resetting everything
+        QAction *resetAllAction = new QAction(this);
+        // resetAll->setIcon(QIcon(QPixmap(RESETICON_PATH)));
+        resetAllAction->setText("Đặt lại cài đặt...");
+        fileMenu->addAction(resetAllAction);
+        // QAction connected function
+        connect(resetAllAction, &QAction::triggered, this, &PanelWindow::resetAll);
 
         // Action of exitting
         QAction *exitApp = new QAction(this);
@@ -1411,6 +1419,28 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         QDesktopServices::openUrl(QUrl("http://127.0.0.1/"));
     }
 
+    void resetAll() {
+        QMessageBox::StandardButton rep = QMessageBox::warning(this, "Tiếp tục?", "Bạn có chắc muốn tiếp tục xoá tất cả dữ liệu hiện tại bạn có.", QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No);
+        if (rep == QMessageBox::StandardButton::No) return;
+
+        // Resetting all the data
+        saveUsersInfo({});
+        saveContestsInfo({});
+        saveClassesInfo({});
+        saveSettingsInfo({});
+        saveAliasesInfo({});
+
+        // Also we have to clear the submissions folder too
+        // Best to ask the user first
+        QMessageBox::StandardButton rep2 = QMessageBox::warning(this, "Tiếp tục?", "Bạn có chắc muốn tiếp tục xoá tất cả lịch sử nộp bài của người dùng?", QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No);
+        if (rep2 == QMessageBox::StandardButton::Yes) {
+            std::string submissionsDir = dirPath + USERSUBHISTORY_DIR;
+            for (const auto & entry : std::filesystem::directory_iterator(submissionsDir)) {
+                std::filesystem::remove_all(entry.path());
+            }
+        }
+    }
+
     void backUp() {
         std::cout << "[backUp()] Functionality called! Asking user...\n";
         // The extension should be something like .abp
@@ -1811,7 +1841,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     void loadBackUp() {
         std::cout << "[loadBackUp()] Functionality called!\n";
 
-        // This is gonna be hard but its fine. I am just gonna find the file and read it
+        QMessageBox::information(this, "Chú ý", "Tính năng này vẫn chưa hoàn thiện. Hiện hệ thống vẫn chưa hỗ trợ. Hãy chờ bản cập nhật trong tương lai.");
     }
 
     private: // PRIVATE FUNCTIONS. These cannot be connected to outside of whatever this object is.

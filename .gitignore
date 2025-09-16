@@ -34,6 +34,7 @@ include/
 *.obj
 *.o
 *.exe
+moc_*.cpp
 
 # Font
 *.ttf

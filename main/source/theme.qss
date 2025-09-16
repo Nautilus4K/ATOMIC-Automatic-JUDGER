@@ -141,6 +141,10 @@ QTableWidget {
     border: 1px solid #e0e0e0;
 }
 
+QHeaderView::section {
+    background-color: #ffffff;
+}
+
 /* Fix QTableWidget overlapping? */
 QTableWidget::item {}
 
@@ -305,4 +309,8 @@ QPushButton:pressed {
 #separatorLine {
     /* Line of separator on settings bad in manage tab */
     background: #e0e0e0;
+}
+
+QCheckBox {
+    background: #a6deff;
 }
