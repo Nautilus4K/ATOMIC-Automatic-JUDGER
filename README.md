@@ -1,90 +1,108 @@
-# ATOMIC-Automatic-JUDGER
+# ATOMIC Automatic Judging System
 
-![ATOM://C Automatic Marking Software](/assets/fullname.png)
+![ATOMIC Automatic Judging System](/assets/fullname.png)
 
-A Vietnamese automatic testing software built on Python. Supports online submission and offline tests.
-This software uses Docker for its isolated environment, WSGI callable object for the server interface, and JSON for its database.
-This software is designed by Vietnamese people, for Vietnamese people. So the UI is all Vietnamese.
-If you don't understand Vietnamese and want to add English. Feel free to contribute, give a pull request, I will add in (No backdoor pls).
+ATOMIC is a robust, automated testing software designed for both online submissions and offline tests. Built with Python, it leverages Docker for isolated environments, WSGI for server interfacing, and JSON for database management. The software is tailored for Vietnamese users, featuring a fully localized Vietnamese user interface. Contributions for additional language support, such as English, are welcome.
 
-**Note:** This software is intended for limited use. Not for public use. If you want to do that, consider editting the code and add a register page.
+> **Note:** This software is intended for limited use. For public deployment, modifications such as a registration page are recommended.
 
-## Features
+---
 
-- Support XLSX format (EXCEL files) for accounts.
-- Support isolated environment for reliability and safety (With Docker containers. Full WSL support. Isolated environments).
-- Dynamic webserver, with modern look and feel.
-- Great management system, including a hardened admin panel.
-- Security over performance (I'm not a security expert, just a hobbyist, so do not take that seriously).
-- Arch Linux, btw (I use Arch btw) in Docker.
-- Login/logout. (Manual registering).
+## Key Features
 
-## Dependencies
+- **Excel Integration**: Supports XLSX format for account management.
+- **Isolated Environments**: Ensures reliability and safety using Docker containers (with full WSL support).
+- **Dynamic Web Interface**: Modern, responsive webserver design.
+- **Comprehensive Management**: Includes a secure and feature-rich admin panel.
+- **Security-Focused**: Prioritizes security over performance (note: not professionally audited).
+- **Cross-Platform**: Compatible with both Windows and Linux operating systems.
 
-- Python 3 (Probably 3.11).
-- WSGI caller. Like gunicorn, for example.
-- Docker (Both desktop and Python package).
+---
 
-If you don't want to waste your time trying to find these dependencies, do this command:
+## System Requirements
+
+**Operating System**:  
+- Windows 10 or later  
+- Linux (tested on Arch Linux in Docker)
+
+**Hardware**:  
+- **RAM**: Minimum 1GB (DDR2), Recommended 2GB (DDR4)  
+- **GPU**: Not required  
+
+**Software**:  
+- Python 3.10 or later (tested with Python 3.11.2)  
+- WSGI server (e.g., Gunicorn)  
+- Docker (Desktop and Python package)
+
+---
+
+## Installation
+
+### Clone the Repository
+To get started, clone this repository or download the latest release (if available).
+
+```bash
+git clone https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER.git
+cd ATOMIC-Automatic-JUDGER
+```
+
+### Install Dependencies
+Dependencies are listed in `requirements.txt`. Install them using the following command:
 
 ```bash
 python -m pip install -r requirements.txt
 ```
 
-## Requirements
+---
 
-**OS:** Windows 10 or later
+## Usage
 
-**RAM:** 1GB (DDR2) | *Recommended:* 2GB (DDR4)
-
-**GPU:** None
-
-## Using the software (in `/main`)
-
-This thing requires Python, at least 3.10, I highly recommend **3.11.2** as it is tested, others I'm not sure.
-
-### Download
-
-Clone this repo, that's the file. Or wait until a release (for Windows).
-
-### Dependencies
-
-Dependencies are listed in `requirements.txt` in the form of python packages.
-
-In case you feels like you can run all the things manually, use the following command to install dependencies.
-
-```bash
-python -m pip install -r requirements.txt
-```
-
-### Start judging daemon manually
-
-To enable actual judging, run the command:
+### Judging Daemon
+To enable the judging functionality, run the following command:
 
 ```bash
 python judge.py
 ```
 
-### Start WSGI server.
-
-If you wants to run webserver as an apache, you can! By running `apache.py`.
+### Webserver
+To start the webserver (e.g., for Apache), execute:
 
 ```bash
 python apache.py
 ```
 
-### Running an ALL-IN-ONE management Panel
-
-There is a panel created to make it easier to run stuffs and browse through settings all done graphically with the Qt GUI Framework. To run it up, open it with Python:
+### Management Panel
+For a graphical interface to manage settings and operations, compile the management panel built with the Qt Framework
 
 ```bash
-python panel.py
+make
 ```
 
-### Main features
+After compiling, you can invoke it with
+```bash
+./panel
+```
 
-| Feature name      | Status      |
-|:-----------------:| ----------- |
-| Automatic judging | ✅ Ready     |
-| Webserver         | ✅ Ready     |
-| Management Panel  | In progress |
+---
+
+## Features Overview
+
+| Feature             | Status       |
+|---------------------|--------------|
+| Automatic Judging   | ✅ Available |
+| Webserver           | ✅ Available |
+| Management Panel    | 🚧 In Progress |
+
+---
+
+## Contribution
+We welcome contributions to improve the software. If you wish to add features, fix bugs, or localize the interface, feel free to submit a pull request. Please ensure your contributions adhere to the repository's license and guidelines.
+
+---
+
+## License
+This project is licensed under the terms specified in the `LICENSE` file. Proper attribution is required for any use or distribution.
+
+---
+
+For more information, visit the [GitHub repository](https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER).
