@@ -452,4 +452,17 @@ inline std::string sanitizeValue(std::string val) {
     return val;
 }
 
+#ifdef _WIN32
+// Windows: automatically assume YES
+inline bool isRoot() {
+    return true;
+}
+#else
+// Linux / Unix / macOS
+#include <unistd.h>
+inline bool isRoot() {
+    return (geteuid() == 0);
+}
+#endif
+
 #endif

@@ -1,6 +1,7 @@
 /*
     Note: Colors:
     - Normal text: #000000
+    - Disabled text: #808080
     - Background of QWidgets: #ffffff
     - Background of elements: #f1f1f1, #f7f7f7
     - Border of main container elements: #dfdfdf
@@ -23,11 +24,23 @@
 QWidget {
     /* A Wild QWidget? */
     background: transparent;
+    color: #000000;
+}
+
+/* For QWidget (general case) */
+QWidget:disabled {
+    color: #808080; /* Grey color */
+    font-style: italic; /* Italicize the text */
 }
 
 QLabel {
     /* Labels */
     color: #000000;
+}
+
+QLabel:disabled {
+    color: #808080; /* Grey color */
+    font-style: italic; /* Italicize the text */
 }
 
 QLineEdit {
@@ -263,6 +276,21 @@ QListView {
     border: 1px solid #dfdfdf;
 }
 
+QListWidgetitem {
+    background: #ffffff;
+    color: #000000;
+}
+
+QListWidgetitem:hover {
+    background: #f0f0f0;
+    color: #000000;
+}
+
+QListWidgetitem:selected {
+    background: #4285f4;
+    color: #ffffff;
+}
+
 #con_lab {
     /* Label in settings */
     margin-top: 4px;
@@ -305,6 +333,11 @@ QPushButton:pressed {
     background: #dfdfdf;
 }
 
+QPushButton:disabled {
+    color: #808080; /* Grey color */
+    font-style: italic; /* Italicize the text */
+}
+
 /* Other shits too */
 #separatorLine {
     /* Line of separator on settings bad in manage tab */
@@ -313,4 +346,9 @@ QPushButton:pressed {
 
 QCheckBox {
     background: #a6deff;
+}
+
+QTextEdit {
+    background: #ffffff;
+    border: 1px solid #dfdfdf;
 }

@@ -49,6 +49,13 @@ class WIN_ContestsSettings: public QWidget {
     std::vector<std::pair<std::string, std::string>> indexesToBeAdded; // List of indexes to be added
 
     // -----------------------------------------------------------------
+    // Purpose: To generate test cases using AI. This is alr enough as it is.
+    //          Also, note: This is not a good idea at all. I am just doing
+    //          this to get attention towards this project.
+    // -----------------------------------------------------------------
+    void generateTestCases(std::string contestName);
+
+    // -----------------------------------------------------------------
     // Purpose: To remove a contest from its ROW. Which originates from
     //          the fetchContests() functionality
     // -----------------------------------------------------------------

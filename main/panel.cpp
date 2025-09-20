@@ -401,7 +401,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // Console for judging process
         judgingProcessConsole->setObjectName("console");
         judgingProcessConsole->setReadOnly(true);
-        judgingProcessConsole->setAlignment(Qt::AlignTop);
+        // judgingProcessConsole->setAlignment(Qt::AlignTop);
         judgingProcessConsole->setFont(monospaceFont);
         sidebarLayout->addWidget(judgingProcessConsole);
         
@@ -1871,6 +1871,17 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 judgingProcess->start();
                 std::cout << "Started JUDGING process: " << judgingProcess->program().toStdString() << " " << judgingProcess->arguments().join(' ').toStdString() << '\n';
 
+                // Should work?
+                if (!judgingProcess->waitForStarted(10000)) {
+                    std::cerr << "[judgingProcess: fixme] Fuck. JudingProcess messed up big time here.\n";
+
+                    errorDialog("Mở hệ thống chấm bài không thành công. Lỗi: Thời gian mở hệ thống quá lâu.");
+                    judgingProcess->close();
+
+                    judgingEnabled = false;
+                    return;
+                }
+
                 if (judgingProcess->state() == QProcess::Running) {
                     // If judgingProcess ran without errors
                     std::cout << "Successfully ran JUDGING process with PID " << judgingProcess->processId() << "\n";
@@ -1878,6 +1889,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 } else {
                     std::cout << "Process failed to start. Error: " << judgingProcess->error() << '\n'; 
                     errorDialog("Thất bại trong quá trình mở hệ thống chấm bài. Hãy thử cài đặt lại chương trình hoặc cập nhật lên bản cập nhật mới nhất");
+                    judgingEnabled = false;
                 }
             }
             else {
@@ -1931,18 +1943,92 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             webserverEnabled = !webserverEnabled;
             std::cout << "Toggled webserver to: " << (webserverEnabled ? "Enabled" : "Disabled") << '\n';
             if (webserverEnabled) {
-                // If we just turned on webserver. We do the actions of turning it up
-                webserverProcess->start();
-                std::cout << "Started WEBSERVER process: " << webserverProcess->program().toStdString() << " " << webserverProcess->arguments().join(' ').toStdString() << '\n';
+                if (!isRoot()) {
+                    // We can see 2 things:
+                    // Using MacOS/Linux and running this software without sudo
+                    // Which means -> Running the webserver MIGHT fail because of the port restrictions
+                    // Fix? Well easy. We just ask the user for the root password and then run the webserver with sudo
+                    // However, this is not a good idea because of security reasons
+                    // So we will just warn the user and then let them handle it themselves
+                    QMessageBox::StandardButton rep = QMessageBox::warning(this, "Lỗi: Không có quyền truy cập", "Bạn đang sử dụng hệ điều hành MacOS/Linux và không chạy chương trình với quyền root (sudo). Điều này có thể khiến việc khởi động hệ thống website thất bại do các giới hạn về cổng mạng đối với những nhóm người dùng không sử dụng sudo. Nếu tiếp tục, bạn sẽ cần nhập mật khẩu người dùng hiện tại (Người dùng hiện tại cần là sudoer, nếu không thì đừng tiếp tục). Tiếp tục?", QMessageBox::StandardButton::Yes | QMessageBox::StandardButton::No);
 
-                // Check if the process started normally
-                if (webserverProcess->state() == QProcess::Running) {
-                    // If webserverProcess ran without errors
-                    std::cout << "Successfully ran WEBSERVER process with PID " << webserverProcess->processId() << "\n";
-                    webserverProcessButton->setText("Tắt Website");
-                } else {
-                    std::cout << "Process failed to start. Error: " << webserverProcess->error() << '\n'; 
-                    errorDialog("Thất bại trong quá trình mở hệ thống chấm bài. Hãy thử cài đặt lại chương trình hoặc cập nhật lên bản cập nhật mới nhất");
+                    // Whatever mannnn
+                    if (rep == QMessageBox::StandardButton::Yes) {
+                        // If the user said yes
+                        std::cout << "Hey yes! This is dangerous! We are going to step into sudo territory!\n";
+
+                        // We need to input the data!!!!!
+                        // bool ok;
+                        // QString passwd = QInputDialog::getText(this, "Mật khẩu người dùng hiện tại (sudoer)", "Hãy nhập mật khẩu người dùng hiện tại. Nếu người dùng hiện tại không thể sử dụng sudo thì hãy hủy", );
+
+                        webserverProcess->setProgram(PKEXEC_PATH); // Exec as root with a graphical interface with whatever it is...
+                        
+                        QStringList args;
+                        args << QString::fromStdString(dirPath + PYDIR) << QString::fromStdString(dirPath + WEBSERVER_PATH);
+                        webserverProcess->setArguments(args);
+
+                        webserverProcess->start();
+
+                        // Should work?
+                        if (!webserverProcess->waitForStarted(10000)) {
+                            std::cerr << "[webserverProcess: fixme] WebserverProcess messed up big time here too even with root from pkexec (asked root).\n";
+
+                            errorDialog("Mở hệ thống chấm bài không thành công. Lỗi: Không có quyền truy cập. Tên người dùng hoặc mật khẩu không đúng hoặc thời gian nhập quá lâu");
+                            webserverProcess->close();
+
+                            webserverEnabled = false;
+                            return;
+                        }
+
+                        // Check if the process started normally
+                        if (webserverProcess->state() == QProcess::Running) {
+                            // If webserverProcess ran without errors
+                            std::cout << "Successfully ran WEBSERVER process with PID " << webserverProcess->processId() << "\n";
+                            webserverProcessButton->setText("Tắt Website");
+                        } else {
+                            std::cout << "Process failed to start. Error: " << webserverProcess->error() << '\n'; 
+                            errorDialog("Thất bại trong quá trình mở hệ thống chấm bài. Hãy thử cài đặt lại chương trình hoặc cập nhật lên bản cập nhật mới nhất");
+
+                            webserverEnabled = false;
+                        }
+
+                        std::cout << "Started WEBSERVER process: " << webserverProcess->program().toStdString() << " " << webserverProcess->arguments().join(' ').toStdString() << '\n';
+
+                        // Putting this here as safeguard before the actual thing works
+                        // webserverEnabled = false;
+                        // return;
+                    } else {
+                        std::cout << "Nahhhh. Yes we won't be caring about this.\n";
+                        webserverEnabled = false;
+                        return;
+                    }
+                } else { // Rooted already. Dont have to change anything
+                    // If we just turned on webserver. We do the actions of turning it up
+                    webserverProcess->start();
+                    std::cout << "Started WEBSERVER process: " << webserverProcess->program().toStdString() << " " << webserverProcess->arguments().join(' ').toStdString() << '\n';
+
+                    // Should work?
+                    if (!webserverProcess->waitForStarted(10000)) {
+                        std::cerr << "[webserverProcess: fixme] WebserverProcess messed up big time here also. This is with root from the start without any nagging.\n";
+
+                        errorDialog("Mở hệ thống chấm bài không thành công. Lỗi: Không có quyền truy cập. Tên người dùng hoặc mật khẩu không đúng hoặc thời gian nhập quá lâu");
+                        webserverProcess->close();
+
+                        webserverEnabled = false;
+                        return;
+                    }
+
+                    // Check if the process started normally
+                    if (webserverProcess->state() == QProcess::Running) {
+                        // If webserverProcess ran without errors
+                        std::cout << "Successfully ran WEBSERVER process with PID " << webserverProcess->processId() << "\n";
+                        webserverProcessButton->setText("Tắt Website");
+                    } else {
+                        std::cout << "Process failed to start. Error: " << webserverProcess->error() << '\n'; 
+                        errorDialog("Thất bại trong quá trình mở hệ thống chấm bài. Hãy thử cài đặt lại chương trình hoặc cập nhật lên bản cập nhật mới nhất");
+
+                        webserverEnabled = false;
+                    }
                 }
             } else {
                 // Turn off WEBSERVER process via ASIO socket
@@ -2776,6 +2862,10 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 };
 
 int main(int argc, char* argv[]) {
+    // Neutralize qt6ct (and other platform themes) before QApplication
+    qputenv("QT_QPA_PLATFORMTHEME", "");
+    qputenv("QT_STYLE_OVERRIDE", "fusion");
+
     // 1) Simple console check from command line
     bool hideConsole = true;
     for (int i = 1; i < argc; ++i) {
@@ -2814,6 +2904,8 @@ int main(int argc, char* argv[]) {
         Q_INIT_RESOURCE(qres);
 
         // Now over to the default font
+        QFontDatabase::removeAllApplicationFonts(); // wipes theme fonts
+
         QFont defaultFont;
         int defaultFontId = QFontDatabase::addApplicationFont(DEFAULTFONT_PATH);
         if (defaultFontId < 0) {
@@ -2832,6 +2924,7 @@ int main(int argc, char* argv[]) {
 
         defaultFont.setPointSize(10);
         app.setFont(defaultFont); // Set the default font for the entire application
+        app.setFont(defaultFont, "QWidget");
 
         PanelWindow panel(nullptr);
         panel.initialize();

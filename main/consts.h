@@ -30,7 +30,8 @@ static const std::string USERQUEUE_DIR = "/workspace/queue/";
 static const std::string USERSUBHISTORY_DIR = "/userdata/";
 static const std::string SUBMITLOG_DIR = "/workspace/result/logs/";  // EVERY SINGLE DIRECTORY PATH NEEDS TO HAVE A TRAILING `/`
 
-static const std::string PYDIR = "/python3118/python.exe";
+static const QString PKEXEC_PATH = "/usr/bin/pkexec";
+static const std::string PYDIR = "/pythonenv/bin/python3";
 static const std::string JUDGING_PATH = "/judge.py";
 static const std::string WEBSERVER_PATH = "/apache.py";
 
@@ -47,13 +48,14 @@ static const QString TOEXCELICON_PATH = ":/images/toexcel.png";
 static const QString FROMEXCELICON_PATH = ":/images/fromexcel.png";
 static const QString BACKUPICON_PATH = ":/images/backup.png";
 static const QString LOADBACKUPICON_PATH = ":/images/loadbackup.png";
+static const QString AIGENICON_PATH = ":/images/aigen.png";
 
 static const QString MONOSPACEFONT_PATH = ":/fonts/CascadiaCode.ttf";
 static const QString DEFAULTFONT_PATH = ":/fonts/OpenSans.ttf";
 
 static const char* DEBUGLOG_PATH = "/debug.log";
 
-// Paths
+// -> Dynamic Paths
 static const std::string dirPath = std::filesystem::current_path().string();
 
 // -> Qt Style Sheet

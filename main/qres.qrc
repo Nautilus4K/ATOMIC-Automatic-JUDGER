@@ -12,6 +12,7 @@
         <file alias="fromexcel.png">source/images/fromexcel.png</file>
         <file alias="backup.png">source/images/backup.png</file>
         <file alias="loadbackup.png">source/images/loadbackup.png</file>
+        <file alias="aigen.png">source/images/aigen.png</file>
     </qresource>
     <qresource prefix="/fonts">
         <file alias="OpenSans.ttf">source/fonts/OpenSans.ttf</file>

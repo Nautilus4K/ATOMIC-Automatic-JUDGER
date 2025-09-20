@@ -124,11 +124,30 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) : QWidget(parent, Qt
     testCasesList->setMinimumHeight(150);
 
     // Adding test cases functionality
+    QWidget *addTestCaseArea = new QWidget(this); // We are going to have 2 buttons so adding this is good
+    QHBoxLayout *addTestCaseAreaLayout = new QHBoxLayout(addTestCaseArea);
+    addTestCaseArea->setLayout(addTestCaseAreaLayout);
+    addTestCaseAreaLayout->setContentsMargins(0, 0, 0, 0);
+    addTestCaseAreaLayout->setAlignment(Qt::AlignRight);
+
     QPushButton *addTestCaseBtn = new QPushButton(sidebar);
     addTestCaseBtn->setObjectName("genericBtn");
-    addTestCaseBtn->setFixedWidth(110);
+    addTestCaseBtn->setFixedWidth(150);
     addTestCaseBtn->setText("Thêm bộ test");
     connect(addTestCaseBtn, &QPushButton::clicked, this, &WIN_ContestsSettings::addCase);
+
+    QPushButton *aiGenTestCaseBtn = new QPushButton(sidebar);
+    aiGenTestCaseBtn->setObjectName("genericBtn");
+    aiGenTestCaseBtn->setFixedWidth(40);
+    // aiGenTestCaseBtn->setText("Tạo bộ test AI");
+    aiGenTestCaseBtn->setIcon(QIcon(AIGENICON_PATH));
+    connect(aiGenTestCaseBtn, &QPushButton::clicked, this, [this]{
+        // lambda is the most convenient thing everrrr
+        generateTestCases(currentCnts);
+    });
+
+    addTestCaseAreaLayout->addWidget(addTestCaseBtn);
+    addTestCaseAreaLayout->addWidget(aiGenTestCaseBtn);
 
     QLabel *testCaseSectionLabel = new QLabel(this);
     testCaseSectionLabel->setObjectName("con_lab");
@@ -207,7 +226,7 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) : QWidget(parent, Qt
     
     contestDetailsLayout->addWidget(cnTestLabel);
     contestDetailsLayout->addWidget(testCasesList);
-    contestDetailsLayout->addWidget(addTestCaseBtn);
+    contestDetailsLayout->addWidget(addTestCaseArea);
 
     contestDetailsLayout->addWidget(saveBtn);
     
@@ -215,6 +234,13 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) : QWidget(parent, Qt
     
     splitter->addWidget(sidebar);
     splitter->addWidget(contestDetailsScrollable);
+}
+
+void WIN_ContestsSettings::generateTestCases(std::string contestName) {
+    QMessageBox::information(this, "Chức năng chưa hoàn thiện", 
+        "Chức năng này hiện chưa được hoàn thiện. Mặc dù hiện tại đã có để được sử dụng nhưng kết quả được trả về bởi AI có thể không như mong đợi.", 
+        QMessageBox::Ok
+    );
 }
 
 void WIN_ContestsSettings::remContest(QListWidgetItem *item) {

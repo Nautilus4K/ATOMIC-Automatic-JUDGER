@@ -21,7 +21,7 @@ import docker
 import os
 import json
 import pathlib
-import keyboard
+# import keyboard
 import threading
 import queue
 from typing import Tuple, Optional, Any
@@ -950,9 +950,9 @@ while running:
             with open(filePath+STATUS_PATH, "w") as statusfile:
                 statusfile.write(json.dumps(statusdata))
         # Reduce drive I/O stress
-        if keyboard.is_pressed("a") and keyboard.is_pressed("x") and keyboard.is_pressed("z"):
+        # if keyboard.is_pressed("a") and keyboard.is_pressed("x") and keyboard.is_pressed("z"):
             # Keybind: A + X + Z
-            input("Đang tạm dừng...")
+            # input("Đang tạm dừng...")
         
         # Reloading functionality.
         # This functionality is used to make sure abitrary code execution wouldn't last long.
