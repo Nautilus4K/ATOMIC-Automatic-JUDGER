@@ -180,10 +180,12 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     QString styleSheetResult;
     
     // Processes
-    QProcess *judgingProcess = new QProcess();
+    QProcess *judgingProcess = new QProcess(this);
     bool judgingEnabled;
-    QProcess *webserverProcess = new QProcess();
+    QProcess *webserverProcess = new QProcess(this);
     bool webserverEnabled;
+    QProcess *ollamaProcess = new QProcess(this);
+    bool ollamaEnabled;
 
     // Fine shyt
     QTabWidget *tabs = new QTabWidget();
@@ -278,6 +280,17 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         judgingProcess->setReadChannel(QProcess::StandardOutput);
         judgingProcess->setProcessChannelMode(QProcess::MergedChannels); // Merges stdout and stderr
+
+
+        ollamaProcess->setProcessEnvironment(env);
+
+        ollamaEnabled = false;
+        ollamaProcess->setProgram(OLLAMA_PATH);
+        ollamaProcess->setArguments(QStringList() << "serve");
+
+        // Look I am sane but we need an actual way to check on this ollama when it crashes so whatever man
+        connect(ollamaProcess, &QProcess::finished, this, &PanelWindow::stoppedOllama);
+        connect(ollamaProcess, &QProcess::errorOccurred, this, &PanelWindow::stoppedOllama);
 
 
         //////////////
@@ -841,6 +854,15 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         // Attaching event filter
         manageTab->installEventFilter(this);
+
+        // Also let's begin ollama
+        ollamaProcess->start();
+        ollamaEnabled = true;
+    }
+
+    void stoppedOllama() {
+        std::cerr << "[ollama] Stopped??? What the fuck. Okay restarting rq.\n";
+        ollamaProcess->start();
     }
 
     void toExcel() {

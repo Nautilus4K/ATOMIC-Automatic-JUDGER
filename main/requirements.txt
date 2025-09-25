@@ -1,4 +1,10 @@
+# Python libraries requirements
+# Python version: 3.11 -> 3.13
+# Versions are hardcoded.
+
 docker==7.1.0
 keyboard==0.13.5
 waitress==3.0.2
 pillow==11.2.1
+ollama==0.5.4
+beautifulsoup4==4.13.5

@@ -4,6 +4,7 @@ import json
 import random
 import time
 import string
+import traceback
 from hashlib import sha256
 from base64 import b64decode
 
@@ -253,6 +254,7 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
 
         except Exception as e:
             print(f"Error in getbroadinfo: {str(e)}")
+            traceback.print_exc()
             username = "ErrorHandling2␀"
             # Keep default empty values on error
 
@@ -319,6 +321,7 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
 
         except Exception as e:
             print(f"Error in getfullinfo: {str(e)}")
+            traceback.print_exc()
             username = "ErrorHandling2␀"
 
         json_response = user_data

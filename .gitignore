@@ -39,3 +39,6 @@ moc_*.cpp
 # Font
 *.ttf
 *.otf
+
+# Testing scripts
+test_*

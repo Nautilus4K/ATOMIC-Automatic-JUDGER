@@ -1,23 +1,8 @@
-      ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: 
-     :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   
-    :+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     
-   +#+ +:+ +#+ +#++:++#++: +#+    +:+     +#+         +#+     +#+       +#+    +:+ +#++:++#++  +#+  +:+   +#++:++       
-  +#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       
- #+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       
-###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###   
-
-Made with Pylons/waitress. Put together by Nautilus4K with love 💖.
-
-
-
-------------------------------
-EXEC DATE: 2025-09-17 15:27:23.426464
-
 WARNING:waitress.queue:Task queue depth is 1
 Opened Socket at 127.0.0.1:28473
 Now opened socket with capacity of 1 concurrent connection.
 Traceback (most recent call last):
-  File "/home/nautilus/Documents/GitHub/ATOMIC-Automatic-JUDGER/main/apache.py", line 91, in <module>
+  File "/home/nautilus/Documents/GitHub/ATOMIC-Automatic-JUDGER/main/./apache.py", line 91, in <module>
     conn, addr = server.accept()
                  ~~~~~~~~~~~~~^^
   File "/usr/lib/python3.13/socket.py", line 295, in accept
@@ -28,104 +13,17 @@ KeyboardInterrupt
 
 
 ------------------------------
-EXEC DATE: 2025-09-17 15:29:18.589102
+EXEC DATE: 2025-09-25 15:50:20.314513
 
-Opened Socket at 127.0.0.1:28473
-Now opened socket with capacity of 1 concurrent connection.
-Traceback (most recent call last):
-  File "/home/nautilus/Documents/GitHub/ATOMIC-Automatic-JUDGER/main/apache.py", line 91, in <module>
-    conn, addr = server.accept()
-                 ~~~~~~~~~~~~~^^
-  File "/usr/lib/python3.13/socket.py", line 295, in accept
-    fd, addr = self._accept()
-               ~~~~~~~~~~~~^^
-KeyboardInterrupt
 
 
 
 ------------------------------
-EXEC DATE: 2025-09-17 15:29:53.813585
+EXEC DATE: 2025-09-25 15:50:50.807127
 
-Opened Socket at 127.0.0.1:28473
-Now opened socket with capacity of 1 concurrent connection.
-Traceback (most recent call last):
-  File "/home/nautilus/Documents/GitHub/ATOMIC-Automatic-JUDGER/main/apache.py", line 91, in <module>
-    conn, addr = server.accept()
-                 ~~~~~~~~~~~~~^^
-  File "/usr/lib/python3.13/socket.py", line 295, in accept
-    fd, addr = self._accept()
-               ~~~~~~~~~~~~^^
-KeyboardInterrupt
 
 
 
 ------------------------------
-EXEC DATE: 2025-09-17 15:30:30.340277
+EXEC DATE: 2025-09-25 15:51:19.019437
 
-Opened Socket at 127.0.0.1:28473
-Now opened socket with capacity of 1 concurrent connection.
-Traceback (most recent call last):
-  File "/home/nautilus/Documents/GitHub/ATOMIC-Automatic-JUDGER/main/apache.py", line 91, in <module>
-    conn, addr = server.accept()
-                 ~~~~~~~~~~~~~^^
-  File "/usr/lib/python3.13/socket.py", line 295, in accept
-    fd, addr = self._accept()
-               ~~~~~~~~~~~~^^
-KeyboardInterrupt
-
-
-
-------------------------------
-EXEC DATE: 2025-09-19 22:16:20.439374
-
-Opened Socket at 127.0.0.1:28473
-Now opened socket with capacity of 1 concurrent connection.
-Connected with a target. Awaiting instructions...
-Stopped by communication interface. Shutting down waitress...
-Successful.
-
-
-
-------------------------------
-EXEC DATE: 2025-09-19 22:16:35.220638
-
-WARNING:waitress.queue:Task queue depth is 1
-Opened Socket at 127.0.0.1:28473
-Now opened socket with capacity of 1 concurrent connection.
-Connected with a target. Awaiting instructions...
-Stopped by communication interface. Shutting down waitress...
-Successful.
-
-
-
-------------------------------
-EXEC DATE: 2025-09-19 22:17:03.675387
-
-Opened Socket at 127.0.0.1:28473
-Now opened socket with capacity of 1 concurrent connection.
-Connected with a target. Awaiting instructions...
-Stopped by communication interface. Shutting down waitress...
-Successful.
-
-
-
-------------------------------
-EXEC DATE: 2025-09-19 22:18:54.522235
-
-Opened Socket at 127.0.0.1:28473
-Now opened socket with capacity of 1 concurrent connection.
-Connected with a target. Awaiting instructions...
-Stopped by communication interface. Shutting down waitress...
-Successful.
-
-
-
-------------------------------
-EXEC DATE: 2025-09-20 13:52:06.847354
-
-WARNING:waitress.queue:Task queue depth is 1
-Opened Socket at 127.0.0.1:28473
-Now opened socket with capacity of 1 concurrent connection.
-Connected with a target. Awaiting instructions...
-Stopped by communication interface. Shutting down waitress...
-Successful.

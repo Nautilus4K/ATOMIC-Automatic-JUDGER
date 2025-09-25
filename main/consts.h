@@ -66,8 +66,8 @@ static const QString STYLE_SMALLALEL = "font-size: 11px; font-style: italic;";
 // -> Others
 static const std::string GITHUB_PAGE = "\"https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER\"";
 static const int JUDGING_EXITPORT = 28472;
-static const std::string JUDGING_EXITADDR = "127.0.0.1";
 static const int WEBSERVER_EXITPORT = 28473;
+static const std::string JUDGING_EXITADDR = "127.0.0.1";
 static const std::string WEBSERVER_EXITADDR = "127.0.0.1";
 static const std::string SHA256_PASSWD_123 = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
 
@@ -100,5 +100,15 @@ static const char BACKUP_EACHVALUE_SEPARATOR = (char)6; // Each value separator 
 static const char BACKUP_EACHGROUP_SEPARATOR = (char)29; // Each pair separator is the seprator for EACH pair, which is bigger than each value
 
 static const std::string BACKUP_SANITIZATION_PREMARKER = "/@/";
+
+// -> Platform specifics
+#ifdef _WIN32
+// This is for when we are on Windows
+// ollama is gonna be installed alongside this thing and ran minimally as a cli tool
+static const QString OLLAMA_PATH = dirPath + "/ext/ollama/ollama.exe";
+#else
+// Yea its not gonna be as much of a problem as on Windows.
+static const QString OLLAMA_PATH = "/usr/bin/ollama";
+#endif
 
 #endif
