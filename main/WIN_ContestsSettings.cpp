@@ -1,8 +1,9 @@
-#include "WIN_ContestsSettings.h" // The main shyt
-#include "CST_TestCaseDialog.h"   // For the dialog of the test cases
-#include "CST_PlainTextDialog.h"  // Plain text dialog (for new contests)
-#include "consts.h"               // Constants
-#include "utilities.h"            // Utilities (custom conversion functions)
+#include "WIN_ContestsSettings.h"        // The main shyt
+#include "WIN_GenerateTestCasesDialog.h" // Test cases generation
+#include "CST_TestCaseDialog.h"          // For the dialog of the test cases
+#include "CST_PlainTextDialog.h"         // Plain text dialog (for new contests)
+#include "consts.h"                      // Constants
+#include "utilities.h"                   // Utilities (custom conversion functions)
 
 #include <QtWidgets/QVBoxLayout>
 #include <QtWidgets/QSplitter>
@@ -234,13 +235,28 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) : QWidget(parent, Qt
     
     splitter->addWidget(sidebar);
     splitter->addWidget(contestDetailsScrollable);
+
+    // Initialize some variables
+    generatingTestCases = false;
 }
 
 void WIN_ContestsSettings::generateTestCases(std::string contestName) {
-    QMessageBox::information(this, "Chức năng chưa hoàn thiện", 
-        "Chức năng này hiện chưa được hoàn thiện. Mặc dù hiện tại đã có để được sử dụng nhưng kết quả được trả về bởi AI có thể không như mong đợi.", 
-        QMessageBox::Ok
-    );
+    // QMessageBox::information(this, "Chức năng chưa hoàn thiện", 
+    //     "Chức năng này hiện chưa được hoàn thiện. Mặc dù hiện tại đã có để được sử dụng nhưng kết quả được trả về bởi AI có thể không như mong đợi.", 
+    //     QMessageBox::Ok
+    // );
+
+    if (generatingTestCases) {
+        QMessageBox::warning(this, "Đang trong quá trình tạo dựng bộ test",
+            "Có 1 bộ test vẫn đang trong quá trình tạo dựng. Chỉ 1 bộ test có thể được tạo dựng cùng lúc với trí tuệ nhân tạo.",
+            QMessageBox::Ok
+        );
+
+        return;
+    }
+
+    WIN_GenerateTestCasesDialog *dlg = new WIN_GenerateTestCasesDialog(this, &generatingTestCases); // Change this bool straight outta the box
+    dlg->show();
 }
 
 void WIN_ContestsSettings::remContest(QListWidgetItem *item) {

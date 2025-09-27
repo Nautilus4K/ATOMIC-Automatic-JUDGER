@@ -34,8 +34,9 @@ CST_TestCaseDialog.h:
 CST_TextEditorDialog.h:
 
 WIN_ClassesSettings.h: 
-WIN_ContestsSettings.h: CST_RichTextEdit.h CST_Listing.h
+WIN_ContestsSettings.h: CST_RichTextEdit.h CST_Listing.h WIN_GenerateTestCasesDialog.h
 WIN_UsersSettings.h: CST_Listing.h 
+WIN_GenerateTestCasesDialog.h: WIN_ContestsSettings.h utilities.h
 
 # Object files list
 OBJECTS := panel.o timezone_stub.o qres.o \
@@ -48,7 +49,8 @@ OBJECTS := panel.o timezone_stub.o qres.o \
 		   CST_TextEditorDialog.o moc_CST_TextEditorDialog.o \
 		   WIN_ClassesSettings.o moc_WIN_ClassesSettings.o \
 		   WIN_ContestsSettings.o moc_WIN_ContestsSettings.o \
-		   WIN_UsersSettings.o moc_WIN_UsersSettings.o
+		   WIN_UsersSettings.o moc_WIN_UsersSettings.o \
+		   WIN_GenerateTestCasesDialog.o moc_WIN_GenerateTestCasesDialog.o
 
 # Main target - link all objects
 panel: $(OBJECTS)
@@ -204,6 +206,19 @@ moc_WIN_UsersSettings.o: moc_WIN_UsersSettings.cpp
 
 moc_WIN_UsersSettings.cpp: WIN_UsersSettings.h
 	@echo -e "$(BLUE)[$(version)]$(NC)Generating moc for WIN_UsersSettings.h"
+	$(MOC) -o $@ $<
+
+## WIN_GenerateTestCasesDialog
+WIN_GenerateTestCasesDialog.o: WIN_GenerateTestCasesDialog.cpp WIN_GenerateTestCasesDialog.h
+	@echo -e "$(BLUE)[$(version)]$(NC)Compiling WIN_GenerateTestCasesDialog.cpp"
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+moc_WIN_GenerateTestCasesDialog.o: moc_WIN_GenerateTestCasesDialog.cpp
+	@echo -e "$(BLUE)[$(version)]$(NC)Compiling moc_WIN_GenerateTestCasesDialog.cpp"
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
+
+moc_WIN_GenerateTestCasesDialog.cpp: WIN_GenerateTestCasesDialog.h
+	@echo -e "$(BLUE)[$(version)]$(NC)Generating moc for WIN_GenerateTestCasesDialog.h"
 	$(MOC) -o $@ $<
 
 # Clean

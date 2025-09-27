@@ -453,12 +453,30 @@ inline std::string sanitizeValue(std::string val) {
 }
 
 #ifdef _WIN32
+// This is for the terminate process thing
+#include <windows.h>
+inline bool terminateProcess(int pid) {
+    HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
+    if (hProcess == NULL) {
+        return false;
+    }
+    bool result = TerminateProcess(hProcess, 1);
+    CloseHandle(hProcess);
+    return result;
+}
+
 // Windows: automatically assume YES
 inline bool isRoot() {
     return true;
 }
 #else
 // Linux / Unix / macOS
+#include <signal.h>
+#include <unistd.h>
+inline bool terminateProcess(int pid) {
+    return kill(pid, SIGTERM) == 0;
+}
+
 #include <unistd.h>
 inline bool isRoot() {
     return (geteuid() == 0);

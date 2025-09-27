@@ -338,6 +338,44 @@ QPushButton:disabled {
     font-style: italic; /* Italicize the text */
 }
 
+QSpinBox::up-button {
+    border: 1px solid #e0e0e0;
+    background: #f7f7f7;
+    padding: 8px 20px;
+}
+
+QSpinBox::up-button:hover {
+    background: #ffffff;
+}
+
+QSpinBox::up-button:pressed {
+    background: #dfdfdf;
+}
+
+QSpinBox::up-button:disabled {
+    color: #808080; /* Grey color */
+    font-style: italic; /* Italicize the text */
+}
+
+QSpinBox::down-button {
+    border: 1px solid #e0e0e0;
+    background: #f7f7f7;
+    padding: 8px 20px;
+}
+
+QSpinBox::down-button:hover {
+    background: #ffffff;
+}
+
+QSpinBox::down-button:pressed {
+    background: #dfdfdf;
+}
+
+QSpinBox::down-button:disabled {
+    color: #808080; /* Grey color */
+    font-style: italic; /* Italicize the text */
+}
+
 /* Other shits too */
 #separatorLine {
     /* Line of separator on settings bad in manage tab */

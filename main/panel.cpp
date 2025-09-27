@@ -725,7 +725,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
         judgingTabLayout->addWidget(judgingShowTestCheckbox);
         // Connecting to a function w/ lambda (again)
-        connect(judgingShowTestCheckbox, &QCheckBox::stateChanged, this, [this](const int state) {
+        connect(judgingShowTestCheckbox, &QCheckBox::checkStateChanged, this, [this](const int state) {
             onInputChanges("show_test", QString::fromStdString(intToString(state)));
         });
 
@@ -941,7 +941,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             for (const auto& contestItem : contests.items()) {
                 // Check if the contestItem have the same, like, class yk
                 bool classExists = false;
-                for (const std::string& classVal : contestItem.value()["Classes"]) {
+                for (const std::string classVal : contestItem.value()["Classes"]) {
                     if (classVal == className) {
                         classExists = true;
                         break;
@@ -974,7 +974,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 std::cout << "XLSX Processing user " << studentItem.key() << '\n';
                 // Validify if the student is in the class
                 bool classExists = false;
-                for (const std::string& classVal : studentItem.value()["class"]) {
+                for (const std::string classVal : studentItem.value()["class"]) {
                     if (classVal == className) {
                         classExists = true;
                         break;
@@ -1010,7 +1010,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             int rindex = 2; // Starts at 2 cuz 1 is the header bruh
 
             // Cuz we start at 2, the offset is gonna be -2 to get 0, which is the root of all things
-            const int rvaloffset = -rindex;
+            // const int rvaloffset = -rindex;
             for (const auto& p : sumOfStudents) { // Now let's create another header, this time on the left side
                 std::cout << "Placing user " << p.second << " on row " << rindex << '\n';
                 // Draw the header position in the worksheet
@@ -1037,7 +1037,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                 // While we are at it, let's fill in the remaining datas too (each contests values)
                 int cindex = 3; // 1 is users headers, 2 is sums, 3 is the beginning
-                for (const std::string contestName : currentContests) {
+                for (const std::string& contestName : currentContests) {
                     // Let's work with this
                     // We fetch the submissions info
                     json sub = getSubmissionInfo(p.second);
@@ -1517,7 +1517,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             std::cout << "     User: " << _u.key() << '\n';
 
             std::string classesStr;
-            for (const std::string& v : _u.value()["class"]) {
+            for (const std::string v : _u.value()["class"]) {
                 classesStr += (v + "&");
             }
 
@@ -1545,12 +1545,12 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             std::cout << "     Contest: " << _c.key() << '\n';
 
             std::string classesStr;
-            for (const std::string& v : _c.value()["Classes"]) {
+            for (const std::string v : _c.value()["Classes"]) {
                 classesStr += (v + "&");
             }
 
             std::string testsStr;
-            for (const std::vector<std::string>& v : _c.value()["Tests"]) {
+            for (const std::vector<std::string> v : _c.value()["Tests"]) {
                 // [ "1 1", "2" ]
                 testsStr += v[0] + BACKUP_EACHVALUE_SEPARATOR + v[1] + BACKUP_EACHGROUP_SEPARATOR;
             }
@@ -1635,7 +1635,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
 
                     bool valid = false;
                     for (const std::string& _ucl : userClasses) {
-                        for (const std::string& _ccl : contestItem.value()["Classes"]) {
+                        for (const std::string _ccl : contestItem.value()["Classes"]) {
                             if (_ucl == _ccl) {
                                 valid = true;
                                 break;
@@ -1932,6 +1932,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                     
                     if (connect_error) {
                         // Connection failure
+                        judgingEnabled = true;
                         errorDialog("Kết nối đến hệ thống chấm bài không thành công. Vui lòng đợi một chút và thử lại sau. Nếu vẫn không thành công thì hãy thử khởi động lại hệ thống.");
                     }
                     else {
@@ -2858,6 +2859,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             reply = QMessageBox::question(this, "Xác nhận", "Bạn có chắc muốn thoát?",
                                         QMessageBox::Yes | QMessageBox::No);
             if (reply == QMessageBox::Yes) {
+                // On this one case
+                terminateProcess(static_cast<int>(ollamaProcess->processId()));
                 event->accept();  // Allow closing
             } else {
                 event->ignore();  // Prevent closing

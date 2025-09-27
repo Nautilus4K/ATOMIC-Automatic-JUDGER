@@ -1,4 +1,9 @@
 # aigen.py
+#
+# Exit codes (aside from Python's built-in ones):
+# -192 Unhandled Exception in stream
+# -200 Broken Pipe in stream (Pipe Broke while generating)
+#
 # script to generate AI test cases
 # Let's fucking gooooo
 # To use this. We need a way to convey whatever the fuck the user wants. And to do that socket might just be the one
@@ -67,10 +72,18 @@ def listener():
 
                     full_response = ""
 
-                    for chunk in stream:
-                        conn.sendall(chunk['message']['content'].encode('utf-8'))
-                        full_response += chunk['message']['content']
-                    conn.sendall("\x03".encode('utf-8'))
+                    try:
+                        for chunk in stream:
+                            conn.sendall(chunk['message']['content'].encode('utf-8'))
+                            full_response += chunk['message']['content']
+                        conn.sendall("\x03".encode('utf-8'))
+                    except BrokenPipeError:
+                        print("Pipe broken.")
+                        exit(-200)
+                    except Exception as e:
+                        print("Failed: {e}")
+                        conn.sendall("\x05")
+                        exit(-192)
 
                     # print(full_response)
                     # Parse this response

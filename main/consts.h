@@ -34,6 +34,7 @@ static const QString PKEXEC_PATH = "/usr/bin/pkexec";
 static const std::string PYDIR = "/pythonenv/bin/python3";
 static const std::string JUDGING_PATH = "/judge.py";
 static const std::string WEBSERVER_PATH = "/apache.py";
+static const std::string AIGEN_PATH = "/aigen.py";
 
 static const std::string LOG_PATH = "/central/valkyrie.log";
 static const std::string ICON_PATH = "/icon.ico";
@@ -105,6 +106,7 @@ static const std::string BACKUP_SANITIZATION_PREMARKER = "/@/";
 #ifdef _WIN32
 // This is for when we are on Windows
 // ollama is gonna be installed alongside this thing and ran minimally as a cli tool
+// Yeah basically running portablly
 static const QString OLLAMA_PATH = dirPath + "/ext/ollama/ollama.exe";
 #else
 // Yea its not gonna be as much of a problem as on Windows.
