@@ -77,7 +77,15 @@ fetch("/api/getfullinfo", {
             window.location.href = window.location.href;
         }
     } else {
-        window.location.href = "/";
+        console.error("Error. Cannot find picture???")
+        document.getElementById("currentuserprofilepic").src = "/assets/defaultuser.png";
+        document.getElementById("displayname").value = json["fullname"];
+        document.getElementById("desc").value = json["desc"];
+
+        if (json["username"] == "ErrorHandling2␀") {
+            window.location.href = window.location.href;
+        }
+        // window.location.href = "/";
     }
 })
 

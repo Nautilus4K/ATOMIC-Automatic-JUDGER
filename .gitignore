@@ -22,9 +22,11 @@ python.js
 
 # Qt related
 *.dll
+qres.cpp
 
 # Project only
 panel.exe
+panel
 
 # API
 API.txt
