@@ -13,6 +13,9 @@
         <file alias="backup.png">source/images/backup.png</file>
         <file alias="loadbackup.png">source/images/loadbackup.png</file>
         <file alias="aigen.png">source/images/aigen.png</file>
+        <file alias="add.png">source/images/add.png</file>
+        <file alias="reduce.png">source/images/reduce.png</file>
+        <file alias="check.png">source/images/check.png</file>
     </qresource>
     <qresource prefix="/fonts">
         <file alias="OpenSans.ttf">source/fonts/OpenSans.ttf</file>

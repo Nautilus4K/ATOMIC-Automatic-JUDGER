@@ -221,6 +221,11 @@ moc_WIN_GenerateTestCasesDialog.cpp: WIN_GenerateTestCasesDialog.h
 	@echo -e "$(BLUE)[$(version)]$(NC)Generating moc for WIN_GenerateTestCasesDialog.h"
 	$(MOC) -o $@ $<
 
+# Build and run
+brun: all
+	@echo -e "$(BLUE)[$(version)]$(NC)Executing panel"
+	./panel
+
 # Clean
 clean:
 	@echo -e "$(BLUE)[$(version)]$(NC)Cleaning up build files"

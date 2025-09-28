@@ -1,5 +1,6 @@
 // WIN_GenerateTestCasesDialog.cpp
 // All headers are in the headers file
+// This is just the implementation to be able to generate .o files alongside moc's .o files
 #include <WIN_GenerateTestCasesDialog.h>
 
 WIN_GenerateTestCasesDialog::WIN_GenerateTestCasesDialog(WIN_ContestsSettings *parent, bool *busyState) : QWidget(parent, Qt::Window) {
@@ -49,10 +50,36 @@ WIN_GenerateTestCasesDialog::WIN_GenerateTestCasesDialog(WIN_ContestsSettings *p
     testCasesAmount->setMaximum(100);
     optionsAreaLayout->addWidget(testCasesAmount);
 
+    QWidget *overrideAllCurrentCasesCheckArea = new QWidget(optionsArea);
+    overrideAllCurrentCasesCheckArea->setToolTip("Xóa tất cả những trường hợp test đã có của bài thi này và thay thế bằng các trường hợp test được sáng tạo bởi AI.");
+
+    QHBoxLayout *overrideAllCurrentCasesCheckAreaLayout = new QHBoxLayout(overrideAllCurrentCasesCheckArea); // Long ass names
+    overrideAllCurrentCasesCheckAreaLayout->setAlignment(Qt::AlignLeft);
+    overrideAllCurrentCasesCheckAreaLayout->setSpacing(0); // Thank god
+    overrideAllCurrentCasesCheckAreaLayout->setContentsMargins(0, 0, 0, 0);
+
+    // Initialize the overrideAllCurrentCases checkbox
+    overrideAllCurrentCases = new QCheckBox(overrideAllCurrentCasesCheckArea);
+    overrideAllCurrentCases->setTristate(false); // Ensure no partially checked state
+    overrideAllCurrentCasesCheckAreaLayout->addWidget(overrideAllCurrentCases);
+
+    QLabel *overrideAllCurrentCasesLabel = new QLabel(overrideAllCurrentCasesCheckArea);
+    overrideAllCurrentCasesLabel->setText("Ghi đè lên bộ test đã có");
+    // overrideAllCurrentCasesLabel->setWordWrap(true); // Stop this! Its way unneeded cuz it will never overflow anyways
+    overrideAllCurrentCasesCheckAreaLayout->addWidget(overrideAllCurrentCasesLabel);
+
+    // ALRIGHT let me engage the checkbox with the function
+    connect(overrideAllCurrentCases, &QCheckBox::checkStateChanged, this, &WIN_GenerateTestCasesDialog::overrideCheckBoxStateChanged);
+
+    // Add the override area in
+    optionsAreaLayout->addWidget(overrideAllCurrentCasesCheckArea);
+
     QPushButton *generateButton = new QPushButton(optionsArea);
     generateButton->setText("Tạo");
     optionsAreaLayout->addStretch(1); // Area so that the button will always be at the end
     optionsAreaLayout->addWidget(generateButton);
+
+    connect(generateButton, &QPushButton::clicked, this, &WIN_GenerateTestCasesDialog::beginGeneration);
 
     // AI RESPONSE
     QWidget *resultArea = new QWidget(mainSplitter);
@@ -62,4 +89,16 @@ WIN_GenerateTestCasesDialog::WIN_GenerateTestCasesDialog(WIN_ContestsSettings *p
     // Add them into the splitter
     mainSplitter->addWidget(optionsArea);
     mainSplitter->addWidget(resultArea);
+
+    std::cout << "[//*//] Initialized WIN_GenerateTestCasesDialog.\n";
+}
+
+void WIN_GenerateTestCasesDialog::overrideCheckBoxStateChanged() {
+    // Here it is
+    std::cout << "[overrideCheckBoxStateChanged()] State changed -> " << overrideAllCurrentCases->checkState() << '\n';
+}
+
+void WIN_GenerateTestCasesDialog::beginGeneration() {
+    // Alr
+    std::cout << "[beginGeneration()] Beginning generation of test\n";
 }

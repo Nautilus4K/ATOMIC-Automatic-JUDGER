@@ -6,6 +6,7 @@
     - Background of elements: #f1f1f1, #f7f7f7
     - Border of main container elements: #dfdfdf
     - Background (primary): #a6deff
+    - Active: #4285f4
     - Color of outlines: #e0e0e0
 */
 
@@ -139,13 +140,13 @@ QComboBox QAbstractItemView {
     background: #dfdfdf;
     border: 1px solid #e0e0e0;
     color: #000000;
-    padding: 4px 6px;
-    margin-top: 5px;
+    outline: 0; /* prevent dotted focus rect */
+    selection-background-color: transparent; /* let our ::item:selected rule apply */
 }
 
 QComboBox QAbstractItemView::item:selected {
-    background-color: #e0e0e0;
-    color: #000000;
+    background-color: #4285f4;
+    color: #ffffff;
 } 
 
 /* QTableWidget styling */
@@ -338,42 +339,45 @@ QPushButton:disabled {
     font-style: italic; /* Italicize the text */
 }
 
-QSpinBox::up-button {
-    border: 1px solid #e0e0e0;
-    background: #f7f7f7;
-    padding: 8px 20px;
+QSpinBox {
+    background: #ffffff;
+    border: 1px solid #dfdfdf;
 }
 
-QSpinBox::up-button:hover {
+QSpinBox:focus {
+    border: 1px solid #4285f4;
+}
+
+QSpinBox::up-button, QSpinBox::down-button {
+    background: #f7f7f7;
+    border: 1px solid #e0e0e0;
+    width: 15px;
+    height: 10px;  /* each */
+}
+
+QSpinBox::up-button:hover, QSpinBox::down-button:hover {
     background: #ffffff;
 }
 
-QSpinBox::up-button:pressed {
+QSpinBox::up-button:pressed, QSpinBox::down-button:pressed {
     background: #dfdfdf;
 }
 
-QSpinBox::up-button:disabled {
+QSpinBox::up-button:disabled, QSpinBox::down-button:disabled {
     color: #808080; /* Grey color */
     font-style: italic; /* Italicize the text */
 }
 
-QSpinBox::down-button {
-    border: 1px solid #e0e0e0;
-    background: #f7f7f7;
-    padding: 8px 20px;
+QSpinBox::up-arrow {
+    image: url(":/images/add.png");
+    width: 15px;
+    height: 10px;  /* each */
 }
 
-QSpinBox::down-button:hover {
-    background: #ffffff;
-}
-
-QSpinBox::down-button:pressed {
-    background: #dfdfdf;
-}
-
-QSpinBox::down-button:disabled {
-    color: #808080; /* Grey color */
-    font-style: italic; /* Italicize the text */
+QSpinBox::down-arrow {
+    image: url(":/images/reduce.png");
+    width: 15px;
+    height: 10px;  /* each */
 }
 
 /* Other shits too */
@@ -382,11 +386,35 @@ QSpinBox::down-button:disabled {
     background: #e0e0e0;
 }
 
-QCheckBox {
-    background: #a6deff;
+QCheckBox::indicator {
+    background: #ffffff;
+    border: 1px solid #dfdfdf;
+    width: 12px;
+    height: 12px;
+}
+
+QCheckBox::indicator:hover {
+    border: 1px solid #4285f4;
+}
+
+QCheckBox::indicator:checked {
+    image: url(":/images/check.png");
 }
 
 QTextEdit {
     background: #ffffff;
     border: 1px solid #dfdfdf;
+}
+
+QTextEdit:focus {
+    border: 1px solid #4285f4;
+}
+
+QLineEdit {
+    background: #ffffff;
+    border: 1px solid #dfdfdf;
+}
+
+QLineEdit:focus {
+    border: 1px solid #4285f4;
 }

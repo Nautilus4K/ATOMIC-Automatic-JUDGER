@@ -54,7 +54,7 @@ static const QString AIGENICON_PATH = ":/images/aigen.png";
 static const QString MONOSPACEFONT_PATH = ":/fonts/CascadiaCode.ttf";
 static const QString DEFAULTFONT_PATH = ":/fonts/OpenSans.ttf";
 
-static const char* DEBUGLOG_PATH = "/debug.log";
+// static const char* DEBUGLOG_PATH = "/debug.log";
 
 // -> Dynamic Paths
 static const std::string dirPath = std::filesystem::current_path().string();

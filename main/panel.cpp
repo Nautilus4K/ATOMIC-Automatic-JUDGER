@@ -2892,31 +2892,31 @@ int main(int argc, char* argv[]) {
     qputenv("QT_STYLE_OVERRIDE", "fusion");
 
     // 1) Simple console check from command line
-    bool hideConsole = true;
-    for (int i = 1; i < argc; ++i) {
-        if (std::string(argv[i]) == "--console") {
-            hideConsole = false;
-        }
-    }
+    // bool hideConsole = true;
+    // for (int i = 1; i < argc; ++i) {
+    //     if (std::string(argv[i]) == "--console") {
+    //         hideConsole = false;
+    //     }
+    // }
+
+    // Yeah no this is useless now
 
     // 2) Qt arguments – reuse real argc/argv from main()
     int qt_argc = argc;
     char** qt_argv_ptr = argv;
 
-    if (!hideConsole) {
-        std::cout << "Application running with console support.\n";
+    std::cout << "Application running with console support.\n";
 
-        const char* asciiArt = R"(
-      ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: 
-     :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   
-    :+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     
-   +#+ +:+ +#+ +#++:++#++: +#+    +:+     +#+         +#+     +#+       +#+    +:+ +#++:++#++  +#+  +:+   +#++:++       
-  +#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       
- #+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       
+    const char* asciiArt = R"(
+    ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: 
+    :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   
+:+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     
++#+ +:+ +#+ +#++:++#++: +#+    +:+     +#+         +#+     +#+       +#+    +:+ +#++:++#++  +#+  +:+   +#++:++       
++#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       
+#+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       
 ###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###
-        )";
-        std::cout << asciiArt << std::endl;
-    }
+    )";
+    std::cout << asciiArt << std::endl;
 
     int ret = 1; // Default return
 
@@ -2954,47 +2954,47 @@ int main(int argc, char* argv[]) {
         PanelWindow panel(nullptr);
         panel.initialize();
 
-        if (!hideConsole) {
-            QMessageBox::warning(
-                nullptr, 
-                "Hiện bảng lịch sử hoạt động chương trình (logging)", 
-                "Bạn đang bắt đầu ATOMIC bằng tham số --console, điều này không được khuyến nghị bởi vì sẽ có thể xảy ra các lỗi liên quan đến bộ nhớ khi I/O chưa hoàn thiện. Nếu bạn không có ý định gỡ rối chương trình, hãy tránh sử dụng tham số --console khi khởi động chương trình", 
-                QMessageBox::Ok
-            );
-        }
+        // if (!hideConsole) {
+        //     QMessageBox::warning(
+        //         nullptr, 
+        //         "Hiện bảng lịch sử hoạt động chương trình (logging)", 
+        //         "Bạn đang bắt đầu ATOMIC bằng tham số --console, điều này không được khuyến nghị bởi vì sẽ có thể xảy ra các lỗi liên quan đến bộ nhớ khi I/O chưa hoàn thiện. Nếu bạn không có ý định gỡ rối chương trình, hãy tránh sử dụng tham số --console khi khởi động chương trình", 
+        //         QMessageBox::Ok
+        //     );
+        // }
 
         panel.show();
         ret = app.exec();
 
     } catch (const std::exception& e) {
-        if (!hideConsole) {
-            std::cout << "Exception caught: " << e.what() << std::endl;
-        } else {
-            QMessageBox::critical(
-                nullptr, 
-                "Error", 
-                QString("An unexpected error occurred: %1").arg(e.what()), 
-                QMessageBox::Ok
-            );
-        }
+        // if (!hideConsole) {
+        std::cout << "Exception caught: " << e.what() << std::endl;
+        // } else {
+        QMessageBox::critical(
+            nullptr, 
+            "Error", 
+            QString("An unexpected error occurred: %1").arg(e.what()), 
+            QMessageBox::Ok
+        );
+        // }
         ret = -1;
     } catch (...) {
-        if (!hideConsole) {
-            std::cout << "Unknown exception caught" << std::endl;
-        } else {
-            QMessageBox::critical(
-                nullptr, 
-                "Error", 
-                "An unknown error occurred", 
-                QMessageBox::Ok
-            );
-        }
+        // if (!hideConsole) {
+        std::cout << "Unknown exception caught" << std::endl;
+        // } else {
+        QMessageBox::critical(
+            nullptr, 
+            "Error", 
+            "An unknown error occurred", 
+            QMessageBox::Ok
+        );
+        // }
         ret = -1;
     }
 
-    if (!hideConsole) {
-        std::cin.get();
-    }
+    // if (!hideConsole) {
+    //     std::cin.get();
+    // }
 
     return ret;
 }
