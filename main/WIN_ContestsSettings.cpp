@@ -20,7 +20,7 @@
 
 namespace fs = std::filesystem;
 
-WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) : QWidget(parent, Qt::Window) {
+WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent, const std::unordered_map<std::string, QFont>& parentFonts) : QWidget(parent, Qt::Window) {
     setObjectName("container");
     setWindowIcon(parent->windowIcon());
     setStyleSheet(parent->styleSheet());
@@ -30,6 +30,8 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent) : QWidget(parent, Qt
     setMinimumHeight(400);
     setMinimumWidth(600);
     resize(QSize(700, 450)); // this is tiring asf ngl
+
+    fonts = parentFonts;
     
     // LAYOUT
     QVBoxLayout *layout = new QVBoxLayout();
@@ -255,7 +257,7 @@ void WIN_ContestsSettings::generateTestCases(std::string contestName) {
         return;
     }
 
-    WIN_GenerateTestCasesDialog *dlg = new WIN_GenerateTestCasesDialog(this, &generatingTestCases); // Change this bool straight outta the box
+    WIN_GenerateTestCasesDialog *dlg = new WIN_GenerateTestCasesDialog(this, &generatingTestCases, contestName); // Change this bool straight outta the box
     dlg->show();
 }
 

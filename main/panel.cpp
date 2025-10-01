@@ -115,6 +115,7 @@ using json = nlohmann::json;
 #include <vector>
 #include <map>
 #include <sstream>
+#include <unordered_map>
 
 // Debug console
 #include <iostream>
@@ -145,28 +146,28 @@ QColor COLOR_CONSOLE_DEFAULT;
 // --------------------------------------
 class PanelWindow: public QMainWindow { // This is based on QMainWindow
     public: // PUBLIC. ACCESSIBLE FROM ANYWHERE
-    QWidget *manageTab = new QWidget();
-    QWidget *judgingTab = new QWidget();
-    QWidget *webserverTab = new QWidget();
+    QWidget *manageTab = new QWidget(this);
+    QWidget *judgingTab = new QWidget(this);
+    QWidget *webserverTab = new QWidget(this);
 
     // Option elements (In tabs)
-    QLineEdit *judgingWaitTimeInput = new QLineEdit();
-    QLineEdit *judgingReloadTimeInput = new QLineEdit();
-    QCheckBox *judgingShowTestCheckbox = new QCheckBox();
+    QLineEdit *judgingWaitTimeInput = new QLineEdit(this);
+    QLineEdit *judgingReloadTimeInput = new QLineEdit(this);
+    QCheckBox *judgingShowTestCheckbox = new QCheckBox(this);
 
-    QLineEdit *webserverLogInSecsInput = new QLineEdit();
-    QLineEdit *webserverAliasWebnameInput = new QLineEdit();
-    QLineEdit *webserverAliasSloganInput = new QLineEdit();
-    QLineEdit *webserverAliasHostnameInput = new QLineEdit();
+    QLineEdit *webserverLogInSecsInput = new QLineEdit(this);
+    QLineEdit *webserverAliasWebnameInput = new QLineEdit(this);
+    QLineEdit *webserverAliasSloganInput = new QLineEdit(this);
+    QLineEdit *webserverAliasHostnameInput = new QLineEdit(this);
 
     // Main manager for the management of data and profiles
-    QComboBox *classDropdown = new QComboBox();
-    QTableWidget *currentTable = new QTableWidget();
+    QComboBox *classDropdown = new QComboBox(this);
+    QTableWidget *currentTable = new QTableWidget(this);
 
     // Sidebar elements
-    QPushButton *judgingProcessButton = new QPushButton();
-    QTextEdit *judgingProcessConsole = new QTextEdit();
-    QPushButton *webserverProcessButton = new QPushButton();
+    QPushButton *judgingProcessButton = new QPushButton(this);
+    QTextEdit *judgingProcessConsole = new QTextEdit(this);
+    QPushButton *webserverProcessButton = new QPushButton(this);
 
     // Data variables
     json settings; // NULL at first
@@ -176,8 +177,9 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     json contests; // Contests object. NULL at first
     json users; // Users object. NULL at first
     QPixmap iconPixmap;
-    QFont monospaceFont; // NULL at first
+    // QFont monospaceFont; // NULL at first
     QString styleSheetResult;
+    std::unordered_map<std::string, QFont> fonts;
     
     // Processes
     QProcess *judgingProcess = new QProcess(this);
@@ -238,15 +240,15 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         int monospaceId = QFontDatabase::addApplicationFont(MONOSPACEFONT_PATH);
         if (monospaceId < 0) {
             std::cerr << "Failed to load monospace font from " << MONOSPACEFONT_PATH.toStdString() << "\n";
-            monospaceFont.setFamilies({"Consolas", "Courier New", "Ubuntu Mono", "monospace"});
+            fonts["monospace"].setFamilies({"Consolas", "Courier New", "Ubuntu Mono", "monospace"});
         } else {
             QStringList loadedFamilies = QFontDatabase::applicationFontFamilies(monospaceId);
             if (!loadedFamilies.isEmpty()) {
-                monospaceFont.setFamily(loadedFamilies.at(0));
+                fonts["monospace"].setFamily(loadedFamilies.at(0));
                 std::cout << "Loaded monospace font: " << loadedFamilies.at(0).toStdString() << "\n";
             } else {
                 std::cout << "No families found in loaded monospace font\n";
-                monospaceFont.setFamilies({"Consolas", "Courier New", "Ubuntu Mono", "monospace"});
+                fonts["monospace"].setFamilies({"Consolas", "Courier New", "Ubuntu Mono", "monospace"});
             }
         }
 
@@ -415,7 +417,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         judgingProcessConsole->setObjectName("console");
         judgingProcessConsole->setReadOnly(true);
         // judgingProcessConsole->setAlignment(Qt::AlignTop);
-        judgingProcessConsole->setFont(monospaceFont);
+        judgingProcessConsole->setFont(fonts["monospace"]);
         sidebarLayout->addWidget(judgingProcessConsole);
         
 
@@ -858,11 +860,22 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // Also let's begin ollama
         ollamaProcess->start();
         ollamaEnabled = true;
+
+        ollamaRetries = 0;
     }
 
+    int ollamaRetries = 0;
     void stoppedOllama() {
+        if (ollamaRetries >= 5) {
+            std::cerr << "[ollama] Retried too many goddamn times\n";
+            errorDialog("Không thể mở ollama (Cần thiết cho tính năng tạo dựng bộ test bằng AI). Có thể đã có một ollama khác đang chạy. Việc mở ollama ở trong phiên này sẽ bị hủy bỏ.");
+
+            return;
+        }
+
         std::cerr << "[ollama] Stopped??? What the fuck. Okay restarting rq.\n";
         ollamaProcess->start();
+        ollamaRetries++;
     }
 
     void toExcel() {
@@ -1339,7 +1352,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 licensingInfo->setText(licensingText);
                 licensingInfo->setReadOnly(true);
                 licensingInfo->setObjectName("aboutLicensing");
-                licensingInfo->setFont(monospaceFont);
+                licensingInfo->setFont(fonts["monospace"]);
                 licensingSplitter->addWidget(licensingInfo);
 
                 QVBoxLayout *layout = new QVBoxLayout(this);
@@ -2705,7 +2718,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
             // all current operations to focus on only the QDialog.
             // This will instantly close on open with stack allocation, so heap allocation (pointers)
             // is the only way (for now)
-            WIN_ContestsSettings *cstWin = new WIN_ContestsSettings(this);
+            WIN_ContestsSettings *cstWin = new WIN_ContestsSettings(this, fonts);
             cstWin->show();
 
             contestOpened = true;
@@ -2907,14 +2920,19 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Application running with console support.\n";
 
+    if (terminateProcessByName("ollama")) {
+        std::cout << "Terminated ollama.\n";
+    }
+
+    // Alligator
     const char* asciiArt = R"(
-    ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: 
-    :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   
-:+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     
-+#+ +:+ +#+ +#++:++#++: +#+    +:+     +#+         +#+     +#+       +#+    +:+ +#++:++#++  +#+  +:+   +#++:++       
-+#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       
-#+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       
-###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###
+      ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: 
+     :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   
+    :+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     
+   +#+ +:+ +#+ +#++:++#++: +#+    +:+     +#+         +#+     +#+       +#+    +:+ +#++:++#++  +#+  +:+   +#++:++       
+  +#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       
+ #+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       
+###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###       
     )";
     std::cout << asciiArt << std::endl;
 
@@ -2952,6 +2970,7 @@ int main(int argc, char* argv[]) {
         app.setFont(defaultFont, "QWidget");
 
         PanelWindow panel(nullptr);
+        panel.fonts["default"] = defaultFont;
         panel.initialize();
 
         // if (!hideConsole) {

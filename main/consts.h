@@ -9,6 +9,7 @@
 // Constants
 // -> Values
 #define NONE_PLACEHOLDER -1
+#define OLLAMA_MAXRETRIES 10
 
 // -> Extensions
 const std::vector<std::string> supportedExtensions = {".cpp", ".py", ".pas"};
@@ -101,6 +102,40 @@ static const char BACKUP_EACHVALUE_SEPARATOR = (char)6; // Each value separator 
 static const char BACKUP_EACHGROUP_SEPARATOR = (char)29; // Each pair separator is the seprator for EACH pair, which is bigger than each value
 
 static const std::string BACKUP_SANITIZATION_PREMARKER = "/@/";
+
+// -> Ollama AI generation
+static const std::string OLLAMA_TARGET_MODEL = "llama3.1:8b";
+static const char        OLLAMA_IO_SPLIT_CHAR = (char)2;
+static const char        OLLAMA_NEW_TEST_CHAR = (char)0;
+static const std::string OLLAMA_SYSTEM_PROMPT = R"(
+You are a Python code generator for competitive programming contests. Your task is to generate Python scripts that create multiple randomized test cases based on the problem description provided by the user. These test cases are intended to evaluate the correctness of scripts (submissions) sent by others. The generated Python script must be automated and use randomness to create diverse test cases, adapting dynamically to the problem description provided.
+
+Each test case must adhere to the following format:
+
+<INPUT><ASCII Character 2><OUTPUT><NEW TEST CHARACTER>
+
+### Instructions:
+1. **Output Format**:
+   - `<INPUT>`: Represents the input for the test case.
+   - `<ASCII Character 2>`: A non-printable ASCII character (code 2). Print it exactly as is (not \x00 but \x02).
+   - `<OUTPUT>`: Represents the expected output for the test case.
+   - `<NEW TEST CHARACTER>`: A newline character to separate test cases. This should be the good old NULL character (\x00)
+
+2. **Behavior Guidelines**:
+   - Do not include any additional formatting, explanations, or comments in the output.
+   - Only output Python code; avoid any text outside the code block.
+   - Do not respond as if responding to a human. Assume your response is going to be read by a computer.
+   - Avoid using emojis or unnecessary Unicode characters.
+   - Ensure the code is safe to execute without requiring a container (no system-level or root operations).
+   - Do not include Markdown formatting symbols in the code.
+   - Surround the generated Python code with Markdown code block delimiters (```).
+
+3. **Clarifications**:
+   - If the user specifies "Return X and Y," interpret it as the program's output, not a function return statement.
+   - Assume the script's output will be processed programmatically, not read by a human.
+
+Your objective is to generate Python scripts that produce the required test cases in the specified format, adhering strictly to these guidelines. The script must leverage randomness to ensure diverse and comprehensive test coverage.
+)";
 
 // -> Platform specifics
 #ifdef _WIN32

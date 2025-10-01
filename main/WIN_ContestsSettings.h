@@ -14,6 +14,7 @@
 #include "CST_Listing.h"
 
 #include <nlohmann/json.hpp>
+#include <unordered_map>
 using nlohmann::json;
 
 // ------------------------------------------------
@@ -23,7 +24,7 @@ class WIN_ContestsSettings: public QWidget {
     Q_OBJECT
 
     public:
-    WIN_ContestsSettings(QWidget *parent = (QWidget *)nullptr);
+    WIN_ContestsSettings(QWidget *parent = (QWidget *)nullptr, const std::unordered_map<std::string, QFont>& fonts = {});
 
     // Sidebar widget
     QListWidget *listView = new QListWidget(this);
@@ -40,6 +41,8 @@ class WIN_ContestsSettings: public QWidget {
     QLineEdit *fileOutputName = new QLineEdit(this);
     QLineEdit *timeLimit = new QLineEdit(this);
 
+    // Some data
+    std::unordered_map<std::string, QFont> fonts;
     json contests; // Contest data in JSON. Would allow for faster reading since the whole thing is already based around JSON
     std::string currentCnts = "";
 

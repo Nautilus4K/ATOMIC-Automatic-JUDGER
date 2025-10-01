@@ -81,8 +81,8 @@ def listener():
                         print("Pipe broken.")
                         exit(-200)
                     except Exception as e:
-                        print("Failed: {e}")
-                        conn.sendall("\x05")
+                        print(f"Failed: {e}")
+                        conn.sendall("\x05".encode('utf-8'))
                         exit(-192)
 
                     # print(full_response)

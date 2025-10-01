@@ -455,6 +455,7 @@ inline std::string sanitizeValue(std::string val) {
 #ifdef _WIN32
 // This is for the terminate process thing
 #include <windows.h>
+#include <tlhelp32.h>
 inline bool terminateProcess(int pid) {
     HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
     if (hProcess == NULL) {
@@ -465,6 +466,33 @@ inline bool terminateProcess(int pid) {
     return result;
 }
 
+inline bool terminateProcessByName(const std::string& processName) {
+    bool success = false;
+
+    HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnapshot == INVALID_HANDLE_VALUE) return false;
+
+    PROCESSENTRY32 pe;
+    pe.dwSize = sizeof(PROCESSENTRY32);
+
+    if (Process32First(hSnapshot, &pe)) {
+        do {
+            if (_stricmp(pe.szExeFile, processName.c_str()) == 0) {
+                HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
+                if (hProcess) {
+                    if (TerminateProcess(hProcess, 1)) {
+                        success = true;
+                    }
+                    CloseHandle(hProcess);
+                }
+            }
+        } while (Process32Next(hSnapshot, &pe));
+    }
+
+    CloseHandle(hSnapshot);
+    return success;
+}
+
 // Windows: automatically assume YES
 inline bool isRoot() {
     return true;
@@ -473,8 +501,18 @@ inline bool isRoot() {
 // Linux / Unix / macOS
 #include <signal.h>
 #include <unistd.h>
+#include <cstdlib>
+#include <sys/types.h>
+
 inline bool terminateProcess(int pid) {
     return kill(pid, SIGTERM) == 0;
+}
+
+inline bool terminateProcessByName(const std::string& processName) {
+    // Portable way: use system pkill (works on Linux/Unix/macOS)
+    std::string cmd = "pkill -TERM " + processName;
+    int ret = system(cmd.c_str());
+    return (ret == 0);
 }
 
 #include <unistd.h>
