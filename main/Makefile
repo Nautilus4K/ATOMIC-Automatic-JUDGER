@@ -209,7 +209,7 @@ moc_WIN_UsersSettings.cpp: WIN_UsersSettings.h
 	$(MOC) -o $@ $<
 
 ## WIN_GenerateTestCasesDialog
-WIN_GenerateTestCasesDialog.o: WIN_GenerateTestCasesDialog.cpp WIN_GenerateTestCasesDialog.h
+WIN_GenerateTestCasesDialog.o: WIN_GenerateTestCasesDialog.cpp WIN_GenerateTestCasesDialog.h utilities.h consts.h
 	@echo -e "$(BLUE)[$(version)]$(NC)Compiling WIN_GenerateTestCasesDialog.cpp"
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c $< -o $@
 

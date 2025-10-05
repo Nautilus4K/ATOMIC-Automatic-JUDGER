@@ -46,7 +46,7 @@ class WIN_ContestsSettings: public QWidget {
     json contests; // Contest data in JSON. Would allow for faster reading since the whole thing is already based around JSON
     std::string currentCnts = "";
 
-    bool generatingTestCases;
+    bool *generatingTestCases = new bool(false);
 
     private:
     std::vector<int> indexesToBeRemoved; // List of indexes that will be removed

@@ -410,6 +410,18 @@ QTextEdit:focus {
     border: 1px solid #4285f4;
 }
 
+QProgressBar {
+    background: #ffffff;
+    border: 1px solid #dfdfdf;
+    text-align: center;
+    color: #ffffff;
+}
+
+QProgressBar::chunk {
+    background: #4285f4;
+    margin: 1px;
+}
+
 QLineEdit {
     background: #ffffff;
     border: 1px solid #dfdfdf;

@@ -432,6 +432,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // First, create a sub-QWidget and then add QHBoxLayout and finally add buttons
         QWidget *webserverProcessButtonsLine = new QWidget();
         QHBoxLayout *webserverProcessButtonsLineLayout = new QHBoxLayout();
+        webserverProcessButtonsLineLayout->setContentsMargins(0, 0, 0, 0);
 
         webserverProcessButton->setText("Bật Website");
         connect(webserverProcessButton, &QPushButton::clicked, this, [this] {
@@ -1287,8 +1288,8 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
     }
 
     void about() {
-        QWidget *aboutFrame = new QWidget();
-        aboutFrame->setFixedSize(500, 250);
+        QWidget *aboutFrame = new QWidget(this, Qt::Window);
+        aboutFrame->setFixedSize(600, 300);
         aboutFrame->show();
         aboutFrame->setWindowTitle("Về ATOMIC");
         aboutFrame->setWindowIcon(QIcon(iconPixmap));
@@ -1337,11 +1338,11 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
                 splitter->addWidget(appImage);
 
                 // Setting width for easy splitting
-                splitter->setFixedHeight(75);
+                splitter->setFixedHeight(100);
 
                 // This text is like this because of some shit.
                 // It's just cause of C's poor strings...
-                QString licensingText = "====== Giấy phép ======\n\nPhần mềm này được phát hành dưới Giấy phép Mã nguồn mở MIT (MIT License) đã qua sửa đổi. Thông tin chi tiết truy cập trang dự án GitHub.\n\n====== Ghi nhận ======\n\nPhần mềm được phát triển dựa trên hoặc sử dụng các dự án mã nguồn mở sau:\n\n- Qt GUI Framework (https://qt.io)\n- Python Interpreter (https://python.org)\n- waitress (https://github.com/Pylons/waitress)\n- Docker (https://docker.com)\n- nlohmann/json - JSON for Modern C++ (https://github.com/nlohmann/json)\n- boppreh/keyboard - Python keyboard library (https://github.com/boppreh/keyboard)\n- Cascadia Code Font (https://github.com/microsoft/cascadia-code)\n- tfussell/xlnt: Cross-platform user-friendly xlsx library for C++11+ (https://github.com/tfussell/xlnt)";
+                QString licensingText = QString::fromStdString(LICENSING);
 
                 QSplitter *licensingSplitter = new QSplitter();
                 licensingSplitter->setOrientation(Qt::Orientation::Vertical);

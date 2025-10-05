@@ -452,6 +452,60 @@ inline std::string sanitizeValue(std::string val) {
     return val;
 }
 
+// Clean trailings stuff. Offbrand strip()
+inline std::string cleanTrails(const std::string& s) {
+    if (s.empty()) return ""; // handle this exception
+
+    size_t actualBegin = 0;
+    size_t actualEnd = s.size() - 1;
+
+    while (actualBegin < s.size() && (s[actualBegin] == ' ' || s[actualBegin] == '\n')) actualBegin++;
+    while (actualEnd > actualBegin && (s[actualEnd] == ' ' || s[actualEnd] == '\n')) actualEnd--;
+
+    return s.substr(actualBegin, actualEnd - actualBegin + 1);
+}
+
+// Extract code from AI responses
+inline std::string extractCodeBlocks(const std::string& response) {
+    std::string normalized = response;
+    normalized.erase(std::remove(normalized.begin(), normalized.end(), '\r'), normalized.end());
+    size_t currentProgress = 0;
+    std::string code = "";
+    
+    while (true) {
+        size_t openingMarker = normalized.find("```", currentProgress);
+        if (openingMarker == std::string::npos) break;
+        
+        size_t start = openingMarker + 3;
+        
+        // Check if there's a language identifier on the same line
+        size_t newlinePos = normalized.find('\n', start);
+        if (newlinePos == std::string::npos) break;
+        
+        // Only skip the line if it contains a language identifier (non-whitespace before newline)
+        bool hasLangId = false;
+        for (size_t i = start; i < newlinePos; i++) {
+            if (normalized[i] != ' ' && normalized[i] != '\t') {
+                hasLangId = true;
+                break;
+            }
+        }
+        
+        if (hasLangId) {
+            start = newlinePos + 1;
+        }
+        
+        size_t end = normalized.find("```", start);
+        if (end == std::string::npos) end = normalized.length();
+        
+        code += normalized.substr(start, end - start);
+        currentProgress = end + 3;
+    }
+    
+    return code;
+}
+
+
 #ifdef _WIN32
 // This is for the terminate process thing
 #include <windows.h>

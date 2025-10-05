@@ -72,6 +72,25 @@ static const int WEBSERVER_EXITPORT = 28473;
 static const std::string JUDGING_EXITADDR = "127.0.0.1";
 static const std::string WEBSERVER_EXITADDR = "127.0.0.1";
 static const std::string SHA256_PASSWD_123 = "a665a45920422f9d417e4867efdc4fb8a04a1f3fff1fa07e998e86f7f7a27ae3";
+static const std::string LICENSING = R"(
+====== Giấy phép ======
+
+Phần mềm này được phát hành dưới Giấy phép Mã nguồn mở MIT (MIT License) đã qua sửa đổi. Thông tin chi tiết truy cập trang dự án GitHub.
+
+====== Ghi nhận ======
+
+Phần mềm được phát triển dựa trên hoặc sử dụng các dự án mã nguồn mở sau:
+
+- Qt GUI Framework (https://qt.io)
+- Python Interpreter (https://python.org)
+- waitress (https://github.com/Pylons/waitress)
+- Docker (https://docker.com)
+- nlohmann/json - JSON for Modern C++ (https://github.com/nlohmann/json)
+- boppreh/keyboard - Python keyboard library (https://github.com/boppreh/keyboard)
+- Cascadia Code Font (https://github.com/microsoft/cascadia-code)
+- tfussell/xlnt: Cross-platform user-friendly xlsx library for C++11+ (https://github.com/tfussell/xlnt)
+- OpenSSL: The OpenSSL software library is a robust, commercial-grade, full-featured toolkit for general-purpose cryptography and secure communication. (https://openssl-library.org/)
+)";
 
 // -> ANSI Color codes
 static const std::string INFO_COL = "\x1b[0m";
@@ -129,10 +148,43 @@ Each test case must adhere to the following format:
    - Ensure the code is safe to execute without requiring a container (no system-level or root operations).
    - Do not include Markdown formatting symbols in the code.
    - Surround the generated Python code with Markdown code block delimiters (```).
+   - Only have 1 singular code block.
+   - Do not add any code that needs input, assume your code is going to be executed automatically to solve that specific problem, do not make it dynamic.
 
-3. **Clarifications**:
+3. **Example**:
+   - If the problem is "0 TEST CASES Sum of two integers," the script should generate test cases like:
+   ```python
+   import random
+
+   def generate_test_cases(num_test_cases):
+      for _ in range(num_test_cases):
+         a = random.randint(0, 10**9)
+         b = random.randint(0, 10**9)
+         input_str = f"{a} {b}"
+         output = str(a + b)
+         print(f"{input_str}\x02{output}\x00")
+
+   generate_test_cases(0)
+   ```
+   - The incorrect version:
+   ```python
+   import random
+
+   def generate_test_cases(num_test_cases):
+      for _ in range(num_test_cases):
+         a = random.randint(0, 10**9)
+         b = random.randint(0, 10**9)
+         input_str = f"{a} {b}"
+         output = str(a + b)
+         print(f"{input_str}\x02{output}\x00")
+
+   num_test_cases = int(input("Enter the number of test cases: "))
+   generate_test_cases(num_test_cases)
+
+4. **Clarifications**:
    - If the user specifies "Return X and Y," interpret it as the program's output, not a function return statement.
    - Assume the script's output will be processed programmatically, not read by a human.
+   - Even if the user queries 0 tests, do it and make a script that returns 0 test cases, don't assume.
 
 Your objective is to generate Python scripts that produce the required test cases in the specified format, adhering strictly to these guidelines. The script must leverage randomness to ensure diverse and comprehensive test coverage.
 )";
@@ -143,9 +195,10 @@ Your objective is to generate Python scripts that produce the required test case
 // ollama is gonna be installed alongside this thing and ran minimally as a cli tool
 // Yeah basically running portablly
 static const QString OLLAMA_PATH = dirPath + "/ext/ollama/ollama.exe";
+static const std::string TEMP_FOLDER = std::getenv("TEMP");
 #else
 // Yea its not gonna be as much of a problem as on Windows.
 static const QString OLLAMA_PATH = "/usr/bin/ollama";
+static const std::string TEMP_FOLDER = "/tmp";
 #endif
-
 #endif

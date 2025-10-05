@@ -239,7 +239,7 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent, const std::unordered
     splitter->addWidget(contestDetailsScrollable);
 
     // Initialize some variables
-    generatingTestCases = false;
+    *generatingTestCases = false;
 }
 
 void WIN_ContestsSettings::generateTestCases(std::string contestName) {
@@ -248,7 +248,9 @@ void WIN_ContestsSettings::generateTestCases(std::string contestName) {
     //     QMessageBox::Ok
     // );
 
-    if (generatingTestCases) {
+    saveInfo();
+
+    if (*generatingTestCases) {
         QMessageBox::warning(this, "Đang trong quá trình tạo dựng bộ test",
             "Có 1 bộ test vẫn đang trong quá trình tạo dựng. Chỉ 1 bộ test có thể được tạo dựng cùng lúc với trí tuệ nhân tạo.",
             QMessageBox::Ok
@@ -257,8 +259,34 @@ void WIN_ContestsSettings::generateTestCases(std::string contestName) {
         return;
     }
 
-    WIN_GenerateTestCasesDialog *dlg = new WIN_GenerateTestCasesDialog(this, &generatingTestCases, contestName); // Change this bool straight outta the box
+    WIN_GenerateTestCasesDialog *dlg = new WIN_GenerateTestCasesDialog(this, generatingTestCases, contestName); // Change this bool straight outta the box
     dlg->show();
+
+    // Let's connect to the signal thing
+    connect(dlg, &WIN_GenerateTestCasesDialog::exportResultsEvent, this, [this](std::vector<testCase> v, bool o) {
+        std::cout << "Tests: " << v.size();
+        if (o) std::cout << " (override)";
+        std::cout << '\n';
+
+        // Let's now branch it all
+
+        // Override?
+        if (o) {
+            // indexesToBeRemoved.push_back(index);
+            for (int i = 0; i < contests[currentCnts]["Tests"].size(); i++) {
+                indexesToBeRemoved.push_back(i);
+            }
+        }
+
+        // No override flag
+        // Let's add all v's test cases into the current contests' cases shall we?
+        // Copy pasted
+        for (const testCase& vs : v) {
+            indexesToBeAdded.push_back({vs.input, vs.output}); // Add in the queue
+        }
+
+        saveInfo();
+    });
 }
 
 void WIN_ContestsSettings::remContest(QListWidgetItem *item) {
@@ -838,7 +866,7 @@ void WIN_ContestsSettings::toCnts(std::string contestName) {
         // Initialize item
         QListWidgetItem *item = new QListWidgetItem(QString::fromStdString(intToString(index)), testCasesList); // The cases is the parent since this will be inside
 
-        // The QWidget storing a smaller QWidget and a label 🔥
+        // The QWidget storing a smaller QWidget and a label
         QWidget *itemWidget = new QWidget(testCasesList);
         QHBoxLayout* itemLayout = new QHBoxLayout(itemWidget);
 
@@ -852,7 +880,7 @@ void WIN_ContestsSettings::toCnts(std::string contestName) {
         QHBoxLayout *btnAreaLayout = new QHBoxLayout(buttonsArea);
         itemLayout->addWidget(buttonsArea);
 
-        // The buttons 🍶
+        // The buttons
         QPushButton *delBtn = new QPushButton(buttonsArea);
         delBtn->setObjectName("genericBtn");
         QPixmap delBtnPixmap(DELETEICON_PATH);
@@ -1021,6 +1049,7 @@ void WIN_ContestsSettings::closeEvent(QCloseEvent *event) {
     indexesToBeModified.clear();
     indexesToBeAdded.clear();
     event->accept();
+    delete generatingTestCases;
     this->deleteLater(); // Cleaning.
 }
     
