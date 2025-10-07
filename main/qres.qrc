@@ -16,6 +16,7 @@
         <file alias="add.png">source/images/add.png</file>
         <file alias="reduce.png">source/images/reduce.png</file>
         <file alias="check.png">source/images/check.png</file>
+        <file alias="splash.png">source/images/splash.png</file>
     </qresource>
     <qresource prefix="/fonts">
         <file alias="OpenSans.ttf">source/fonts/OpenSans.ttf</file>

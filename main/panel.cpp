@@ -71,6 +71,7 @@ NEVER SEEN ANYTHING THIS BAD
 #include <QtWidgets/QListView>         // QListWidget but worse. However, much more lightweight (Also not as simple).
 #include <QtWidgets/QInputDialog>      // INPUT.IN.A.DIALOG. Yessssirrrr
 #include <QtWidgets/QFileDialog>       // Let's go fetch some files
+#include <QtWidgets/QSplashScreen>     // Splash screen
 #include <QtGui/QAction>               // Action for menus. Wonder what fucker thought to put it in QtGui
 #include <QtGui/QCloseEvent>           // Close event. The action of 'X' button
 #include <QtGui/QDoubleValidator>      // Validator for edits.
@@ -81,13 +82,16 @@ NEVER SEEN ANYTHING THIS BAD
 #include <QtGui/QFontDatabase>         // Font database. For loading custom fonts
 #include <QtGui/QColor>                // Colors
 #include <QtGui/QTextDocumentFragment> // Producing a fragment of an HTML document. Sorta like a wrapper cleaner for HTMLs
+#include <QtGui/QScreen>               // Screen info
 
 // Importing Qt related features
-#include <QtCore/Qt>       // A bunch of constants
-#include <QtCore/QProcess> // Process running
-#include <QtCore/QStringListModel> // QStringList model? Idk
+#include <QtCore/Qt>                   // A bunch of constants
+#include <QtCore/QProcess>             // Process running
+#include <QtCore/QStringListModel>     // QStringList model? Idk
+#include <QtCore/QThread>
+#include <QtCore/QTimer>
 
-#include <QtGui/QDesktopServices> // For desktop related services. Like opening a web browser
+#include <QtGui/QDesktopServices>      // For desktop related services. Like opening a web browser
 
 // File I/O actions and getting data
 #include <fstream>
@@ -2970,6 +2974,30 @@ int main(int argc, char* argv[]) {
         app.setFont(defaultFont); // Set the default font for the entire application
         app.setFont(defaultFont, "QWidget");
 
+        // WAIT NO BEFORE WE RUN THE MAIN WINDOW
+        // Render the splash screen for promotion's sake
+        // First we need to take in the SVG?
+        QScreen *screen = QGuiApplication::screenAt(QCursor::pos());
+        if (!screen)
+            screen = QGuiApplication::primaryScreen();
+
+
+        QPixmap splashPixmap(SPLASHIMAGE_PATH);
+
+        const double scalingRatio = 0.5;
+        QPixmap scaledPixmap = splashPixmap.scaled(
+            QSize(screen->size().width() * 0.5, screen->size().height() * 0.5),
+            Qt::KeepAspectRatio,
+            Qt::SmoothTransformation
+        );
+        // splashPixmap;
+        QSplashScreen *splashScr = new QSplashScreen(scaledPixmap);
+        // splashScr.resize(600, 400);
+        splashScr->show();
+
+        // QThread::sleep(3);
+
+        // Okey its done lets gooooo
         PanelWindow panel(nullptr);
         panel.fonts["default"] = defaultFont;
         panel.initialize();
@@ -2983,7 +3011,13 @@ int main(int argc, char* argv[]) {
         //     );
         // }
 
-        panel.show();
+        // panel.show();
+        // After 1k ms, hide splash and show main window
+        QTimer::singleShot(1000, [&]() {
+            splashScr->finish(&panel);
+            panel.show();
+            splashScr->deleteLater();
+        });
         ret = app.exec();
 
     } catch (const std::exception& e) {

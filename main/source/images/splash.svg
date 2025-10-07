@@ -1,0 +1,450 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="600mm"
+   height="400mm"
+   viewBox="0 0 600 400"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.2 (ebf0e940d0, 2025-05-08)"
+   sodipodi:docname="splash.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="0.35634119"
+     inkscape:cx="871.35591"
+     inkscape:cy="819.43937"
+     inkscape:window-width="1920"
+     inkscape:window-height="1011"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer2" />
+  <defs
+     id="defs1">
+    <rect
+       x="1226.3303"
+       y="396.87064"
+       width="690.55491"
+       height="416.71417"
+       id="rect226" />
+    <linearGradient
+       id="linearGradient226"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#a5d4ff;stop-opacity:0.27015254;"
+         offset="0"
+         id="stop225" />
+      <stop
+         style="stop-color:#a5d4ff;stop-opacity:0;"
+         offset="1"
+         id="stop226" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient24"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#a5d4ff;stop-opacity:0.83014596;"
+         offset="0"
+         id="stop24" />
+      <stop
+         style="stop-color:#a5d4ff;stop-opacity:0;"
+         offset="1"
+         id="stop25" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2"
+       inkscape:collect="always">
+      <stop
+         style="stop-color:#006dff;stop-opacity:1;"
+         offset="0"
+         id="stop2" />
+      <stop
+         style="stop-color:#001f49;stop-opacity:1;"
+         offset="1"
+         id="stop3" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2"
+       id="linearGradient3"
+       x1="202.32948"
+       y1="-83.65554"
+       x2="397.67035"
+       y2="483.65555"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient24"
+       id="linearGradient25"
+       x1="510.10086"
+       y1="466.41766"
+       x2="344.2627"
+       y2="179.17755"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient226"
+       id="linearGradient26"
+       gradientUnits="userSpaceOnUse"
+       x1="510.10086"
+       y1="466.41766"
+       x2="344.2627"
+       y2="179.17755"
+       gradientTransform="matrix(0.5,0,0,0.5,-123.34605,-121.59433)" />
+    <rect
+       x="1226.3303"
+       y="396.87064"
+       width="690.55493"
+       height="416.71417"
+       id="rect226-6" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     style="display:inline">
+    <rect
+       style="fill:url(#linearGradient3);fill-opacity:1;stroke-width:0.255215"
+       id="rect1"
+       width="600"
+       height="400"
+       x="0"
+       y="1.110223e-16" />
+    <path
+       id="text3"
+       style="font-size:64.2937px;font-family:'Fira Code';-inkscape-font-specification:'Fira Code, Normal';font-variant-numeric:slashed-zero;letter-spacing:-0.264583px;word-spacing:0px;fill:#a5d4ff;fill-opacity:1;stroke-width:5.35781"
+       d="m 246.30261,97.515378 c 2.14062,0.94466 4.28125,1.88932 6.42187,2.833982 9.68425,-19.953122 19.36849,-39.906247 29.05274,-59.859372 -2.10287,-1.035156 -4.20573,-2.070312 -6.3086,-3.105469 -9.722,20.04362 -19.44401,40.08724 -29.16601,60.130859 z m 32.97265,0 c 2.14063,0.94466 4.28125,1.88932 6.42188,2.833982 9.68359,-19.953122 19.36718,-39.906247 29.05078,-59.859372 -2.10287,-1.035156 -4.20573,-2.070312 -6.30859,-3.105469 -9.72136,20.04362 -19.44271,40.08724 -29.16407,60.130859 z M 142.828,45.007566 c -2.92458,-0.07711 -5.79526,0.915527 -8.10444,2.61465 -2.22884,1.588941 -3.85629,3.891761 -4.85982,6.41877 -2.13009,4.776564 -2.59684,10.06724 -2.63374,15.212283 -0.0497,5.530297 0.53983,11.231184 2.91031,16.318704 1.88922,4.326656 6.01002,7.776863 10.7838,8.263085 4.83455,0.7301 10.21697,-0.969892 13.15488,-5.020837 2.09596,-2.674218 3.27112,-5.895161 3.97557,-9.154311 1.17306,-5.691769 1.23497,-11.570314 0.50694,-17.28058 -0.59586,-4.924811 -2.15519,-10.006624 -5.7271,-13.606758 -2.16586,-2.244268 -5.3118,-3.495023 -8.32476,-3.729849 -0.47249,-0.03949 -1.13797,-0.05454 -1.68164,-0.03516 z m 199.23047,0.02344 c -3.89763,0.224611 -7.60482,1.710162 -10.65791,4.081767 -2.84464,2.183534 -5.20793,5.327441 -6.416,8.743252 -1.72068,4.439368 -2.22509,9.196699 -1.92453,13.949071 0.22406,4.252802 1.20799,8.654459 3.40689,12.398994 2.14363,3.832322 5.62011,6.910919 9.75826,8.421426 2.15741,0.82068 4.35286,1.253592 6.55522,1.369662 4.6754,0.23539 9.4428,-0.979172 13.26244,-3.647769 0.94714,-0.67889 1.8301,-1.44685 2.64453,-2.279294 -1.39974,-1.768229 -2.79948,-3.536458 -4.19922,-5.304687 -3.30123,2.869302 -7.72649,4.730115 -12.15237,4.131008 -4.23245,-0.350679 -8.27888,-3.19196 -9.64102,-7.281937 -1.94575,-4.693251 -1.80858,-9.910049 -1.40235,-14.878945 0.47524,-3.982308 1.98509,-8.158315 5.33573,-10.603115 4.90887,-3.444032 12.11577,-2.794923 16.50845,1.218926 1.19045,-0.04629 1.7186,-1.343907 2.46156,-2.085691 0.84329,-0.992343 1.70435,-1.969347 2.54821,-2.961184 -3.94639,-3.35403 -9.06347,-5.49501 -14.2953,-5.2803 -0.59759,-0.01101 -1.19503,0.0033 -1.79259,0.0088 z m -169.17774,0.6875 c -2.22135,0.0062 -4.44271,0.0018 -6.66406,0 -0.89779,15.839192 -1.79557,31.678385 -2.69336,47.51758 2.4987,0 4.9974,0 7.49609,0 0.47156,-8.492716 0.80559,-16.997478 1.38107,-25.480433 0.0579,-0.561366 0.39793,-1.426624 1.10331,-1.089882 0.74868,0.872733 0.96187,2.09589 1.30078,3.175782 1.26954,5.09335 2.59127,10.162948 3.89258,15.251953 2.46614,0 4.93229,0 7.39843,0 1.43491,-5.875567 2.71755,-11.795994 4.33204,-17.63086 0.11335,-0.640796 1.02804,-1.181857 1.42187,-0.466797 0.68493,2.408744 0.50592,4.976081 0.72604,7.430594 0.35381,6.279683 0.75083,12.556815 1.12943,18.835033 2.37844,-0.0781 4.76986,0.05 7.14062,-0.0937 0.81724,-0.54855 0.2509,-1.648877 0.30341,-2.442867 -0.80648,-15.012632 -1.67638,-30.015513 -2.52411,-45.025884 -3.29606,0.05162 -6.60506,0.0021 -9.90625,0.01953 -2.00118,8.802587 -3.8853,17.632863 -6.09375,26.386719 -0.6907,-1.705505 -1.17347,-3.476441 -1.56651,-5.270774 -1.66993,-6.865743 -3.29327,-13.754 -4.8788,-20.633523 -0.58993,-0.855076 -1.76729,-0.381985 -2.6335,-0.489565 -0.22177,0.0024 -0.44355,0.0048 -0.66533,0.0071 z M 44.628775,93.236076 c 2.624349,0 5.248698,0 7.873047,0 1.209258,-3.85733 2.416316,-7.715358 3.626953,-11.57226 5.471354,0 10.942708,0 16.414063,0 1.21063,3.856904 2.417699,7.714929 3.626953,11.57226 2.745444,0 5.490884,0 8.236324,0 -5.15299,-15.839187 -10.305986,-31.67838 -15.45898,-47.517572 -2.953125,0 -5.906251,0 -8.859376,0 C 54.934765,61.557696 49.78177,77.396889 44.628775,93.236076 Z m 40.98633,-40.488275 c 4.725919,0 9.451829,0 14.177739,0 0,13.496093 0,26.992187 0,40.488275 2.606766,0 5.213536,0 7.820306,0 0,-13.496088 0,-26.992182 0,-40.488275 4.55339,0 9.10677,0 13.66016,0 0.28385,-2.343099 0.56771,-4.686198 0.85156,-7.029297 -12.16992,0 -24.339836,0 -36.509765,0 0,2.343099 0,4.686198 0,7.029297 z m 57.542965,-1.199219 c 2.95257,0.02313 5.32746,2.441169 6.23369,5.103239 1.87647,5.177047 1.73685,10.766548 1.63171,16.18887 -0.18735,3.978707 -0.65201,8.138838 -2.73964,11.62128 -1.52933,2.364893 -4.80998,3.735617 -7.45179,2.441905 -2.67973,-1.185617 -4.02632,-4.067536 -4.65623,-6.772525 -1.10745,-4.393953 -1.01905,-8.970318 -0.98382,-13.468686 0.149,-3.877729 0.55718,-7.883204 2.31124,-11.401722 1.13628,-2.041143 3.22256,-3.740409 5.65484,-3.712361 z m 78.32422,0.609375 c -1.2565,-0.06145 -2.62143,0.460823 -3.52448,1.168511 -2.29735,1.684264 -3.45295,4.967551 -2.23025,7.630922 0.74032,1.830792 2.37043,3.17235 4.18844,3.735047 2.55857,0.890883 5.52728,-0.281362 6.99873,-2.503442 1.26167,-1.764851 1.68042,-4.471445 0.50348,-6.473081 -1.07244,-2.186578 -3.47093,-3.734515 -5.93592,-3.557957 z M 64.878775,56.818113 c 1.841879,5.993465 3.683087,11.987135 5.525391,17.980469 -4.04362,0 -8.08724,0 -12.13086,0 2.034076,-6.538545 4.067105,-13.077417 6.103516,-19.615235 0.167318,0.544922 0.334635,1.089844 0.501953,1.634766 z m 78.136725,7.269531 c -3.62247,-0.140696 -6.43049,4.240169 -4.83943,7.487108 1.22106,3.052536 5.57655,4.382023 8.16893,2.233489 2.33641,-1.733668 3.00115,-5.528108 0.96737,-7.744034 -1.03286,-1.262979 -2.65256,-2.062637 -4.29687,-1.976563 z m 78.17968,11.837891 c -3.79219,0.118764 -6.79202,4.362912 -5.74486,8.012499 0.87201,3.764131 5.61955,6.006145 9.04565,4.171095 3.15655,-1.519828 4.69412,-5.905973 2.75323,-8.9295 -1.19398,-2.094279 -3.62934,-3.478227 -6.05402,-3.254094 z" />
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:16.0735px;font-family:'Fira Code';-inkscape-font-specification:'Fira Code, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:slashed-zero;font-variant-east-asian:normal;text-align:start;letter-spacing:-0.0661455px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:url(#linearGradient25);stroke-width:0.0661455"
+       x="261.3436"
+       y="267.77682"
+       id="text4"><tspan
+         sodipodi:role="line"
+         id="tspan18"
+         x="261.3436"
+         y="267.77682"
+         style="fill:url(#linearGradient25)">#include &lt;iostream&gt;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan19"
+         x="261.3436"
+         y="287.86871"
+         style="fill:url(#linearGradient25)">using namespace std;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan20"
+         x="261.3436"
+         y="307.96057"
+         style="fill:url(#linearGradient25)"></tspan><tspan
+         sodipodi:role="line"
+         id="tspan21"
+         x="261.3436"
+         y="328.05246"
+         style="fill:url(#linearGradient25)">int main(int argc, char *argv[]) {</tspan><tspan
+         sodipodi:role="line"
+         id="tspan22"
+         x="261.3436"
+         y="348.14432"
+         style="fill:url(#linearGradient25)">    cout &lt;&lt; &quot;Hello, World!&quot;;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan23"
+         x="261.3436"
+         y="368.23621"
+         style="fill:url(#linearGradient25)">    return 0;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan24"
+         x="261.3436"
+         y="388.32806"
+         style="fill:url(#linearGradient25)">}</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.03675px;font-family:'Fira Code';-inkscape-font-specification:'Fira Code, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:slashed-zero;font-variant-east-asian:normal;text-align:start;letter-spacing:-0.0330728px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:url(#linearGradient26);fill-opacity:1;stroke-width:0.033;stroke-dasharray:none"
+       x="7.3257494"
+       y="12.294117"
+       id="text4-0"><tspan
+         sodipodi:role="line"
+         id="tspan187"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="12.294117">class WIN_GenerateTestCasesDialog: public QWidget {</tspan><tspan
+         sodipodi:role="line"
+         id="tspan188"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="22.340054">    Q_OBJECT</tspan><tspan
+         sodipodi:role="line"
+         id="tspan189"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="32.38599"></tspan><tspan
+         sodipodi:role="line"
+         id="tspan190"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="42.431931">    public:</tspan><tspan
+         sodipodi:role="line"
+         id="tspan191"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="52.477867">    // We gotta add an option to automatically clear all old test for these new ones</tspan><tspan
+         sodipodi:role="line"
+         id="tspan192"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="62.523804">    QCheckBox *overrideAllCurrentCases;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan193"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="72.56974">    QPushButton *generateButton;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan194"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="82.615677">    QPushButton *exportButton;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan195"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="92.661613">    QTextEdit *aiResponseFrame;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan196"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="102.70755">    QProgressBar *workingIndicator;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan197"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="112.75349">    QProcess *testProcess;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan198"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="122.79943">    std::string targetContest;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan199"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="132.84537">    // std::string currentTestOutput;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan200"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="142.8913">    std::vector&lt;testCase&gt; currentTestCases;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan201"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="152.93724">    // testCases currentTestCases;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan202"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="162.98317">    QThread *generateThread = nullptr;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan203"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="173.02911">    bool *busy;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan204"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="183.07506">    bool allowForGeneration;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan205"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="193.12099"></tspan><tspan
+         sodipodi:role="line"
+         id="tspan206"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="203.16693">    // Only WIN_ContestsSettings can be the parent here.</tspan><tspan
+         sodipodi:role="line"
+         id="tspan207"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="213.21286">    // busyState is the bool that says &quot;HEY AI GENERATION IS BUSY&quot;</tspan><tspan
+         sodipodi:role="line"
+         id="tspan208"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="223.2588">    WIN_GenerateTestCasesDialog(WIN_ContestsSettings *parent = nullptr, bool *busyState = nullptr, const std::string&amp; contest = &quot;&quot;);</tspan><tspan
+         sodipodi:role="line"
+         id="tspan209"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="233.30473">    ~WIN_GenerateTestCasesDialog();</tspan><tspan
+         sodipodi:role="line"
+         id="tspan210"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="243.35068"></tspan><tspan
+         sodipodi:role="line"
+         id="tspan211"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="253.39661">    // Destruct</tspan><tspan
+         sodipodi:role="line"
+         id="tspan212"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="263.44254">    // ~WIN_GenerateTestCasesDialog();</tspan><tspan
+         sodipodi:role="line"
+         id="tspan213"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="273.48849"></tspan><tspan
+         sodipodi:role="line"
+         id="tspan214"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="283.53442">    private slots:</tspan><tspan
+         sodipodi:role="line"
+         id="tspan215"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="293.58035">    // Event when the overrideAllCurrentCases checkbox changed states</tspan><tspan
+         sodipodi:role="line"
+         id="tspan216"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="303.62631">    void overrideCheckBoxStateChanged();</tspan><tspan
+         sodipodi:role="line"
+         id="tspan217"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="313.67224"></tspan><tspan
+         sodipodi:role="line"
+         id="tspan218"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="323.71817">    // Event when the user clicks on the generate button</tspan><tspan
+         sodipodi:role="line"
+         id="tspan219"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="333.7641">    void beginGeneration(std::string query);</tspan><tspan
+         sodipodi:role="line"
+         id="tspan220"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="343.81006"></tspan><tspan
+         sodipodi:role="line"
+         id="tspan221"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="353.85599">    // Event when response is cleared to make way for the new responses</tspan><tspan
+         sodipodi:role="line"
+         id="tspan222"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="363.90192">    void clearResponse();</tspan><tspan
+         sodipodi:role="line"
+         id="tspan223"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="373.94785"></tspan><tspan
+         sodipodi:role="line"
+         id="tspan224"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="383.9938">    // Event when there is a new token</tspan><tspan
+         sodipodi:role="line"
+         id="tspan225"
+         style="fill:url(#linearGradient26)"
+         x="7.3257494"
+         y="394.03973">    void newToken(QString token);</tspan></text>
+    <text
+       xml:space="preserve"
+       transform="matrix(1.0967889,0,0,1.0967889,-1300.3484,-328.77097)"
+       id="text226"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:15.439px;font-family:'Fira Code';-inkscape-font-specification:'Fira Code, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:slashed-zero;font-variant-east-asian:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect226);fill:#a5d4ff;fill-opacity:1;stroke-width:0.249449;stroke-dasharray:none"><tspan
+         x="1226.3301"
+         y="410.38022"
+         id="tspan2"><tspan
+           style="font-weight:bold"
+           id="tspan1">Automatic IT submissions judging software</tspan></tspan></text>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Layer 2">
+    <g
+       id="g228"
+       transform="rotate(45,78.21709,324.83242)">
+      <rect
+         style="fill:#a5d4ff;fill-opacity:1;stroke-width:0.066;stroke-dasharray:none"
+         id="rect227"
+         width="57.172501"
+         height="57.172501"
+         x="45.2925"
+         y="212.8275" />
+      <rect
+         style="fill:#a5d4ff;fill-opacity:1;stroke-width:0.0889079;stroke-dasharray:none"
+         id="rect227-7"
+         width="150.728"
+         height="39.352501"
+         x="-1.4855002"
+         y="221.737" />
+      <rect
+         style="fill:#a5d4ff;fill-opacity:1;stroke-width:0.101166;stroke-dasharray:none"
+         id="rect227-7-1"
+         width="25.987999"
+         height="295.51501"
+         x="60.884003"
+         y="232.50323" />
+      <rect
+         style="fill:#a5d4ff;fill-opacity:1;stroke-width:0.0383518;stroke-dasharray:none"
+         id="rect227-6"
+         width="19.305"
+         height="57.172501"
+         x="108.83417"
+         y="212.8275" />
+      <rect
+         style="fill:#a5d4ff;fill-opacity:1;stroke-width:0.0383518;stroke-dasharray:none"
+         id="rect227-6-8"
+         width="19.305"
+         height="57.172501"
+         x="20.779583"
+         y="212.8275" />
+      <rect
+         style="fill:#a5d4ff;fill-opacity:1;stroke-width:0.0383518;stroke-dasharray:none"
+         id="rect227-6-8-8"
+         width="19.305"
+         height="57.172501"
+         x="133.99641"
+         y="212.8275" />
+      <rect
+         style="fill:#a5d4ff;fill-opacity:1;stroke-width:0.0383518;stroke-dasharray:none"
+         id="rect227-6-8-8-3"
+         width="19.305"
+         height="57.172501"
+         x="-3.6488769"
+         y="212.8275" />
+    </g>
+    <text
+       xml:space="preserve"
+       transform="matrix(0.67356548,0,0,0.67356548,-780.15624,-138.90412)"
+       id="text226-2"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:19.9024px;font-family:'Fira Code';-inkscape-font-specification:'Fira Code, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:slashed-zero;font-variant-east-asian:normal;text-align:start;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect226-6);display:inline;fill:#a5d4ff;fill-opacity:1;stroke-width:0.249449;stroke-dasharray:none"><tspan
+         x="1226.3301"
+         y="414.28569"
+         id="tspan3">By Nautilus4K a.k.a Quang Vinh</tspan></text>
+  </g>
+</svg>

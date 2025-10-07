@@ -27,7 +27,12 @@ ATOMIC is a robust, automated testing software designed for both online submissi
 
 **Hardware**:  
 - **RAM**: Minimum 1GB (DDR2), Recommended 2GB (DDR4)  
-- **GPU**: Not required  
+- **GPU**: It depends:
+
+| Use AI? | Recommended GPU specifications |
+|---------|--------------------------------|
+| No      | None                           |
+| Yes     | 8GB of VRAM                    |
 
 **Software**:  
 - Python 3.10 or later (tested with Python 3.11.2)  
