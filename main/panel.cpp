@@ -2984,9 +2984,9 @@ int main(int argc, char* argv[]) {
 
         QPixmap splashPixmap(SPLASHIMAGE_PATH);
 
-        const double scalingRatio = 0.5;
+        const double scalingRatio = 0.3;
         QPixmap scaledPixmap = splashPixmap.scaled(
-            QSize(screen->size().width() * 0.5, screen->size().height() * 0.5),
+            QSize(screen->size().width() * scalingRatio, screen->size().height() * scalingRatio),
             Qt::KeepAspectRatio,
             Qt::SmoothTransformation
         );
@@ -2994,6 +2994,15 @@ int main(int argc, char* argv[]) {
         QSplashScreen *splashScr = new QSplashScreen(scaledPixmap);
         // splashScr.resize(600, 400);
         splashScr->show();
+
+        std::fstream versionFile(dirPath + VERSION_PATH, std::ios::in);
+        if (versionFile.is_open()) {
+            json version = json::parse(versionFile);
+
+            splashScr->showMessage(QString::fromStdString(version["version"]), Qt::AlignBottom | Qt::AlignRight, Qt::white);
+        } else {
+            splashScr->showMessage(QString::fromStdString("UNKNOWN BUILD"), Qt::AlignBottom | Qt::AlignRight, Qt::white);
+        }
 
         // QThread::sleep(3);
 
