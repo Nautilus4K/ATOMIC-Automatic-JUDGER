@@ -30,7 +30,9 @@ SUBMIT_DIR = "/workspace/queue/"
 CONTEST_WEBFILE = "/www/reserved/contest.html"
 LOG_DIR = "/workspace/result/logs/"
 
-from usermanage import USERFILE_PATH as USERDATA_JSON, CLASSFILE_PATH
+# from usermanage import USERFILE_PATH as USERDATA_JSON, CLASSFILE_PATH
+CLASSFILE_PATH = "/source/classes.json"
+USERDATA_JSON = "/source/users.json"
 
 dirPath = os.path.dirname(os.path.abspath(__file__))
 reservedPaths = ["/debug", "/reserved", "/api"]

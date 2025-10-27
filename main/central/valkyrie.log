@@ -1,0 +1,37 @@
+      ::::    :::     :::     :::    ::: ::::::::::: ::::::::::: :::       :::    :::  ::::::::      :::     :::    ::: 
+     :+:+:   :+:   :+: :+:   :+:    :+:     :+:         :+:     :+:       :+:    :+: :+:    :+:    :+:      :+:   :+:   
+    :+:+:+  +:+  +:+   +:+  +:+    +:+     +:+         +:+     +:+       +:+    +:+ +:+          +:+ +:+   +:+  +:+     
+   +#+ +:+ +#+ +#++:++#++: +#+    +:+     +#+         +#+     +#+       +#+    +:+ +#++:++#++  +#+  +:+   +#++:++       
+  +#+  +#+#+# +#+     +#+ +#+    +#+     +#+         +#+     +#+       +#+    +#+        +#+ +#+#+#+#+#+ +#+  +#+       
+ #+#   #+#+# #+#     #+# #+#    #+#     #+#         #+#     #+#       #+#    #+# #+#    #+#       #+#   #+#   #+#       
+###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###   
+
+Made with Pylons/waitress. Put together by Nautilus4K with love 💖.
+
+
+
+------------------------------
+EXEC DATE: 2025-10-26 09:53:27.672014
+
+Traceback (most recent call last):
+  File "/home/nautilus/ATOMIC-Automatic-JUDGER/main/apache.py", line 60, in <module>
+    from wsgi_interface import application
+  File "/home/nautilus/ATOMIC-Automatic-JUDGER/main/wsgi_interface.py", line 33, in <module>
+    from usermanage import USERFILE_PATH as USERDATA_JSON, CLASSFILE_PATH
+ModuleNotFoundError: No module named 'usermanage'
+
+
+
+------------------------------
+EXEC DATE: 2025-10-26 09:55:02.719062
+
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+WARNING:waitress.queue:Task queue depth is 1
+Opened Socket at 127.0.0.1:28473
+Now opened socket with capacity of 1 concurrent connection.
+Connected with a target. Awaiting instructions...
+Stopped by communication interface. Shutting down waitress...
+Successful.
