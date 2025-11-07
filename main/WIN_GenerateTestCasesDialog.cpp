@@ -1,7 +1,7 @@
 // WIN_GenerateTestCasesDialog.cpp
 // All headers are in the headers file
 // This is just the implementation to be able to generate .o files alongside moc's .o files
-#include <WIN_GenerateTestCasesDialog.h>
+#include "WIN_GenerateTestCasesDialog.h"
 
 WIN_GenerateTestCasesDialog::WIN_GenerateTestCasesDialog(WIN_ContestsSettings *parent, bool *busyState, const std::string& contest) : QWidget(parent, Qt::Window) {
     setObjectName("container");

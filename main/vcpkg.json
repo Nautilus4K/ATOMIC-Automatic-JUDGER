@@ -1,0 +1,12 @@
+{
+    "name": "atomic",
+    "version": "0.0.1",
+    "dependencies": [
+        "xlnt",
+        "nlohmann-json",
+        "openssl",
+        "qtbase",
+        "boost-asio",
+        "cpp-base64"
+    ]
+}

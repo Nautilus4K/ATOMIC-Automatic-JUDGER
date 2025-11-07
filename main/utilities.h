@@ -531,7 +531,7 @@ inline bool terminateProcessByName(const std::string& processName) {
 
     if (Process32First(hSnapshot, &pe)) {
         do {
-            if (_stricmp(pe.szExeFile, processName.c_str()) == 0) {
+            if (_wcsicmp(pe.szExeFile, std::wstring(processName.begin(), processName.end()).c_str()) == 0) {
                 HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
                 if (hProcess) {
                     if (TerminateProcess(hProcess, 1)) {

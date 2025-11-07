@@ -44,3 +44,11 @@ moc_*.cpp
 
 # Testing scripts
 test_*
+
+# vcpkg
+vcpkg_installed/
+
+# CMake
+CMakeFiles/
+bin/
+build/

@@ -195,7 +195,7 @@ Your objective is to generate Python scripts that produce the required test case
 // This is for when we are on Windows
 // ollama is gonna be installed alongside this thing and ran minimally as a cli tool
 // Yeah basically running portablly
-static const QString OLLAMA_PATH = dirPath + "/ext/ollama/ollama.exe";
+static const QString OLLAMA_PATH = QString::fromStdString(dirPath + "/ext/ollama/ollama.exe");
 static const std::string TEMP_FOLDER = std::getenv("TEMP");
 #else
 // Yea its not gonna be as much of a problem as on Windows.
