@@ -10,6 +10,8 @@
 #include <nlohmann/json.hpp>
 #include <openssl/sha.h>
 
+#include <QtCore/QFile>
+
 #include "consts.h"
 
 using nlohmann::json;
@@ -503,6 +505,209 @@ inline std::string extractCodeBlocks(const std::string& response) {
     }
     
     return code;
+}
+
+inline void prepareStart() {
+    // Files that need to exists
+    std::vector<std::string> criticalFiles = {
+        // JSONs (Empty-able)
+        CLASSES_PATH,
+        CONTESTS_PATH,
+        USERDATA_PATH
+    };
+
+    // Folders that needs to exists
+    std::vector<std::string> criticalDirectories {
+        // User-related directories
+        USERSTATS_DIR,
+        USERQUEUE_DIR,
+        USERSUBHISTORY_DIR,
+        SUBMITLOG_DIR
+    };
+
+    // Files that if not found then this is done for (yeah theyre must haves)
+    std::vector<std::string> mustFiles {
+        // Scripts
+        JUDGING_PATH,
+        WEBSERVER_PATH,
+    };
+
+    for (const std::string& fps : criticalFiles) {
+        std::filesystem::path path(dirPath + fps);
+        if (!std::filesystem::exists(path)) {
+            // Before we dive in, shall we try doing a big check?
+            // Sure let's do it.
+            // This is a check for all the DIRECTORIES that are the parents. They have to exist first
+            
+            std::filesystem::path currentParent = path.parent_path();
+            std::vector<std::filesystem::path> trials; // Directories to be created.
+            while (!std::filesystem::exists(currentParent)) {
+                // Mark this as to be created
+                trials.push_back(currentParent);
+                currentParent = currentParent.parent_path();
+            }
+
+            // Good god.
+            // Look at all these directories
+            for (int i = trials.size() - 1; i >= 0; i--) {
+                std::filesystem::create_directories(trials[i]);
+            }
+            
+            std::fstream file(path, std::ios::out | std::ios::trunc);
+            if (!file.is_open()) {
+                std::cerr << "[prepareStart()] UNABLE TO CREATE FILE at " << dirPath + fps << '\n';
+                exit(-24);
+            }
+
+            // Alright its fine
+            file << "{}"; // They're all jsons actually...
+            file.close();
+            std::cout << "[prepareStart()] Generated file at: " << dirPath + fps << '\n';
+        }
+    }
+
+    // Moving onto the folders
+    for (const std::string& fls : criticalDirectories) {
+        std::filesystem::path path(dirPath + fls);
+        if (!std::filesystem::exists(path)) {
+            std::filesystem::path currentParent = path.parent_path();
+            std::vector<std::filesystem::path> trials; // Directories to be created.
+            while (!std::filesystem::exists(currentParent)) {
+                // Mark this as to be created
+                trials.push_back(currentParent);
+                currentParent = currentParent.parent_path();
+            }
+
+            // Good god.
+            // Look at all these directories
+            for (int i = trials.size() - 1; i >= 0; i--) {
+                std::filesystem::create_directories(trials[i]);
+            }
+
+            std::filesystem::create_directories(fls);
+        }
+    }
+
+    // Now I have to deal with these twos
+    // SETTINGS_PATH,
+    // ALIAS_PATH,
+    std::fstream settingsFile(dirPath + SETTINGS_PATH, std::ios::out | std::ios::trunc);
+    std::fstream aliasesFile(dirPath + ALIAS_PATH, std::ios::out | std::ios::trunc);
+
+    if (!settingsFile.is_open()) {
+        std::cerr << "[prepareStart()] UNABLE TO CREATE FILE at " << SETTINGS_PATH << '\n';
+        exit(-24);
+    } 
+    if (!aliasesFile.is_open()) {
+        std::cerr << "[prepareStart()] UNABLE TO CREATE FILE at " << ALIAS_PATH << '\n';
+        exit(-24);
+    }
+
+    // This is the default general settings
+    settingsFile << "{\"max_not_logged_in_session_seconds\":31536000,\"reload_time\":60.0,\"show_test\":true,\"wait_time\":1.0}";
+    aliasesFile << R"(
+{
+    "footer": "Powered by <strong>ATOM://C</strong> & <strong>waitress</strong>",
+    "hostname": "Lê Quang N",
+    "slogan": "Keep typing, keep loving.",
+    "softwarelink": "https://github.com/Nautilus4K/ATOMIC-Automatic-JUDGER",
+    "website_name": "Lớp dạy chuyên tin"
+}
+    )";
+
+    settingsFile.close();
+    aliasesFile.close();
+
+    // Now over to themes
+    if (!std::filesystem::exists(dirPath + THEME_PATH)) {
+        // Fuck
+        // Let's regen shall we?
+        std::fstream themeFile(dirPath + THEME_PATH, std::ios::out | std::ios::trunc);
+        if (!themeFile.is_open()) {
+            std::cerr << "[prepareStart()] UNABLE TO CREATE FILE at " << THEME_PATH << '\n';
+            exit(-24);
+        }
+
+        QFile defThemeFile(DEFAULT_THEME_PATH);
+
+        if (!defThemeFile.open(QIODeviceBase::ReadOnly)) {
+            std::cerr << "[prepareStart()] UNABLE TO READ Qt RESOURCE at " << DEFAULT_THEME_PATH.toStdString() << '\n';
+            exit(-24);
+        }
+
+        themeFile << defThemeFile.readAll().toStdString();
+        defThemeFile.close();
+        themeFile.close();
+    }
+
+    // With themes done its versions.
+    if (!std::filesystem::exists(dirPath + VERSION_PATH)) {
+        // Yo lets go
+        std::fstream versionFile(dirPath + VERSION_PATH, std::ios::out | std::ios::trunc);
+        if (!versionFile.is_open()) {
+            std::cerr << "[prepareStart()] UNABLE TO CREATE FILE at " << VERSION_PATH << '\n';
+            exit(-24);
+        }
+
+        QFile defVersionFile(DEFAULT_VERSION_PATH);
+
+        if (!defVersionFile.open(QIODeviceBase::ReadOnly)) {
+            std::cerr << "[prepareStart()] UNABLE TO READ Qt RESOURCE at " << DEFAULT_VERSION_PATH.toStdString() << '\n';
+            exit(-24);
+        }
+
+        versionFile << defVersionFile.readAll().toStdString();
+        defVersionFile.close();
+        versionFile.close();
+    }
+
+    if (!std::filesystem::exists(dirPath + JUDGING_PATH)) {
+        // Niceeeeee
+        std::fstream judgingFile(dirPath + JUDGING_PATH, std::ios::out | std::ios::trunc);
+        if (!judgingFile.is_open()) {
+            std::cerr << "[prepareStart()] UNABLE TO CREATE FILE at " << JUDGING_PATH << '\n';
+            exit(-24);
+        }
+
+        QFile defJudgingFile(DEFAULT_JUDGING_PATH);
+
+        if (!defJudgingFile.open(QIODeviceBase::ReadOnly)) {
+            std::cerr << "[prepareStart()] UNABLE TO READ Qt RESOURCE at " << DEFAULT_JUDGING_PATH.toStdString() << '\n';
+            exit(-24);
+        }
+    }
+
+    if (!std::filesystem::exists(dirPath + WSGI_PATH)) {
+        // Niceeeeee
+        std::fstream wsgiFile(dirPath + WSGI_PATH, std::ios::out | std::ios::trunc);
+        if (!wsgiFile.is_open()) {
+            std::cerr << "[prepareStart()] UNABLE TO CREATE FILE at " << WSGI_PATH << '\n';
+            exit(-24);
+        }
+
+        QFile defWsgiFile(DEFAULT_WSGI_PATH);
+
+        if (!defWsgiFile.open(QIODeviceBase::ReadOnly)) {
+            std::cerr << "[prepareStart()] UNABLE TO READ Qt RESOURCE at " << DEFAULT_WSGI_PATH.toStdString() << '\n';
+            exit(-24);
+        }
+    }
+
+    if (!std::filesystem::exists(dirPath + WEBSERVER_PATH)) {
+        // Niceeeeee
+        std::fstream webserverFile(dirPath + WEBSERVER_PATH, std::ios::out | std::ios::trunc);
+        if (!webserverFile.is_open()) {
+            std::cerr << "[prepareStart()] UNABLE TO CREATE FILE at " << WEBSERVER_PATH << '\n';
+            exit(-24);
+        }
+
+        QFile defWebserverFile(DEFAULT_WEBSERVER_PATH);
+
+        if (!defWebserverFile.open(QIODeviceBase::ReadOnly)) {
+            std::cerr << "[prepareStart()] UNABLE TO READ Qt RESOURCE at " << DEFAULT_WEBSERVER_PATH.toStdString() << '\n';
+            exit(-24);
+        }
+    }
 }
 
 

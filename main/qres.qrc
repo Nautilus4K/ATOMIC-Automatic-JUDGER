@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/images">
+        <file alias="icon.ico">icon.ico</file>
         <file alias="down.png">source/images/down.png</file>
         <file alias="contests.png">source/images/contests.png</file>
         <file alias="exit.png">source/images/exit.png</file>
@@ -21,5 +22,15 @@
     <qresource prefix="/fonts">
         <file alias="OpenSans.ttf">source/fonts/OpenSans.ttf</file>
         <file alias="CascadiaCode.ttf">source/fonts/CascadiaCode.ttf</file>
+    </qresource>
+    <qresource prefix="/meta">
+        <file alias="version.json">source/version.json</file>
+        <file alias="theme.qss">source/theme.qss</file>
+        <file alias="theme_color.opt">source/theme_color.opt</file>
+    </qresource>
+    <qresource prefix="/scripts">
+        <file alias="judge.py">judge.py</file>
+        <file alias="wsgi_interface.py">wsgi_interface.py</file>
+        <file alias="apache.py">apache.py</file>
     </qresource>
 </RCC>

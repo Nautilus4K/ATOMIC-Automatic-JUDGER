@@ -16,29 +16,35 @@ const std::vector<std::string> supportedExtensions = {".cpp", ".py", ".pas"};
 const std::string logExt = ".log";
 
 // -> Paths
-static const std::string THEME_PATH          = "/source/theme.qss";
-static const std::string THEMECOLORS_PATH    = "/source/theme_color.opt";
+static const std::string THEME_PATH               = "/source/theme.qss";
+static const std::string THEMECOLORS_PATH         = "/source/theme_color.opt";
+static const QString     DEFAULT_THEME_PATH       = ":/meta/theme.qss";
+static const QString     DEFAULT_THEMECOLORS_PATH = ":/meta/theme_color.opt";
 
-static const std::string SETTINGS_PATH       = "/source/settings.json";
-static const std::string VERSION_PATH        = "/source/version.json";
-static const std::string ALIAS_PATH          = "/source/aliases.json";
-static const std::string CLASSES_PATH        = "/source/classes.json";
-static const std::string CONTESTS_PATH       = "/source/contests.json";
-static const std::string USERDATA_PATH       = "/source/users.json";
+static const std::string SETTINGS_PATH        = "/source/settings.json";
+static const std::string VERSION_PATH         = "/source/version.json";
+static const QString     DEFAULT_VERSION_PATH = ":/meta/version.json";
+static const std::string ALIAS_PATH           = "/source/aliases.json";
+static const std::string CLASSES_PATH         = "/source/classes.json";
+static const std::string CONTESTS_PATH        = "/source/contests.json";
+static const std::string USERDATA_PATH        = "/source/users.json";
 
 static const std::string USERSTATS_DIR       = "/workspace/result/";
 static const std::string USERQUEUE_DIR       = "/workspace/queue/";
 static const std::string USERSUBHISTORY_DIR  = "/userdata/";
 static const std::string SUBMITLOG_DIR       = "/workspace/result/logs/";  // EVERY SINGLE DIRECTORY PATH NEEDS TO HAVE A TRAILING `/`
 
-static const QString     PKEXEC_PATH         = "/usr/bin/pkexec";
-static const std::string PYDIR               = "/pythonenv/bin/python3";
-static const std::string JUDGING_PATH        = "/judge.py";
-static const std::string WEBSERVER_PATH      = "/apache.py";
-static const std::string AIGEN_PATH          = "/aigen.py";
+static const QString     PKEXEC_PATH            = "/usr/bin/pkexec";
+static const std::string PYDIR                  = "/pythonenv/bin/python3";
+static const std::string JUDGING_PATH           = "/judge.py";
+static const std::string WSGI_PATH              = "/wsgi_interface.py";
+static const std::string WEBSERVER_PATH         = "/apache.py";
+static const QString     DEFAULT_JUDGING_PATH   = ":/scripts/judge.py";
+static const QString     DEFAULT_WSGI_PATH      = ":/scripts/wsgi_interface.py";
+static const QString     DEFAULT_WEBSERVER_PATH = ":/scripts/apache.py";
 
 static const std::string LOG_PATH            = "/central/valkyrie.log";
-static const std::string ICON_PATH           = "/icon.ico";
+static const QString     ICON_PATH           = ":/icon.ico";
 static const QString     EXITICON_PATH       = ":/images/exit.png";
 static const QString     CONTESTSICON_PATH   = ":/images/contests.png";
 static const QString     DELETEICON_PATH     = ":/images/delete.png";
@@ -197,9 +203,11 @@ Your objective is to generate Python scripts that produce the required test case
 // Yeah basically running portablly
 static const QString OLLAMA_PATH = QString::fromStdString(dirPath + "/ext/ollama/ollama.exe");
 static const std::string TEMP_FOLDER = std::getenv("TEMP");
+static const bool isWindows = true;
 #else
 // Yea its not gonna be as much of a problem as on Windows.
 static const QString     OLLAMA_PATH = "/usr/bin/ollama";
 static const std::string TEMP_FOLDER = "/tmp";
+static const bool isWindows = false;
 #endif
 #endif

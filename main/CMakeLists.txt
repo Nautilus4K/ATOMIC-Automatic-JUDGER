@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
     CACHE STRING "Vcpkg toolchain file")
 
-project(ATOMIC_RYVENIA LANGUAGES CXX)
+project(ATOMIC LANGUAGES CXX)
 
 # Use C++17
 set(CMAKE_CXX_STANDARD 17)

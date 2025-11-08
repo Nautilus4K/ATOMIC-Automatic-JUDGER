@@ -218,7 +218,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         setMinimumSize(QSize(600, 400));
         setAttribute(Qt::WA_DeleteOnClose);
 
-        iconPixmap = QPixmap(QString::fromStdString(dirPath + ICON_PATH), "ICO", Qt::AutoColor);
+        iconPixmap = QPixmap(ICON_PATH, "ICO", Qt::AutoColor);
         setWindowIcon(QIcon(iconPixmap));
 
         // Reading themes from outside files with fstream
@@ -863,14 +863,18 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         manageTab->installEventFilter(this);
 
         // Also let's begin ollama
-        ollamaProcess->start();
-        ollamaEnabled = true;
+        if (!isWindows) {
+            ollamaProcess->start();
+            ollamaEnabled = true;
 
-        ollamaRetries = 0;
+            ollamaRetries = 0;
+        }
     }
 
     int ollamaRetries = 0;
     void stoppedOllama() {
+        if (isWindows) return; // Forget about it.
+
         if (ollamaRetries >= 5) {
             std::cerr << "[ollama] Retried too many goddamn times\n";
             errorDialog("Không thể mở ollama (Cần thiết cho tính năng tạo dựng bộ test bằng AI). Có thể đã có một ollama khác đang chạy. Việc mở ollama ở trong phiên này sẽ bị hủy bỏ.");
@@ -2940,6 +2944,8 @@ int main(int argc, char* argv[]) {
 ###    #### ###     ###  ########      ###     ########### ########## ########   ########        ###   ###    ###       
     )";
     std::cout << asciiArt << std::endl;
+
+    prepareStart();
 
     int ret = 1; // Default return
 
