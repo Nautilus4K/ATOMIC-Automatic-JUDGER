@@ -44,7 +44,7 @@ static const QString     DEFAULT_WSGI_PATH      = ":/scripts/wsgi_interface.py";
 static const QString     DEFAULT_WEBSERVER_PATH = ":/scripts/apache.py";
 
 static const std::string LOG_PATH            = "/central/valkyrie.log";
-static const QString     ICON_PATH           = ":/icon.ico";
+static const QString     ICON_PATH           = ":/images/icon.ico";
 static const QString     EXITICON_PATH       = ":/images/exit.png";
 static const QString     CONTESTSICON_PATH   = ":/images/contests.png";
 static const QString     DELETEICON_PATH     = ":/images/delete.png";

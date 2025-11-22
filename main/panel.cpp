@@ -2912,6 +2912,7 @@ int main(int argc, char* argv[]) {
     // Neutralize qt6ct (and other platform themes) before QApplication
     qputenv("QT_QPA_PLATFORMTHEME", "");
     qputenv("QT_STYLE_OVERRIDE", "fusion");
+    qputenv("PATH", QByteArray(qgetenv("PATH") + ";./"));
 
     // 1) Simple console check from command line
     // bool hideConsole = true;
@@ -2929,7 +2930,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Application running with console support.\n";
 
-    if (terminateProcessByName("ollama")) {
+    if (terminateProcessByName(L"ollama")) {
         std::cout << "Terminated ollama.\n";
     }
 

@@ -15,11 +15,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-# Compiler flags
+# Compiler flags (Currently debugging so...)
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options(-fdiagnostics-color=always -Wall -O2)
+    add_compile_options(-fdiagnostics-color=always -Wall -g)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
-    add_compile_options(/W4 /O2)
+    add_compile_options(/W4 /Z7 /DEBUG)
 endif()
 
 # ---- Dependencies ----
@@ -75,4 +75,30 @@ set_target_properties(panel PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
-message(STATUS "[*] Configured ATOMIC_RYVENIA (C++17, Qt6, xlnt, OpenSSL)")
+# ---- Auto-deploy Qt DLLs after build (Windows only) ----
+if(WIN32)
+    # Find windeployqt from vcpkg
+    find_program(WINDEPLOYQT_EXECUTABLE windeployqt
+        HINTS
+            "${VCPKG_ROOT}/installed/x64-windows/tools/Qt6/bin"
+            "${CMAKE_SOURCE_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin"
+            "${CMAKE_BINARY_DIR}/vcpkg_installed/x64-windows/tools/Qt6/bin"
+    )
+
+    if(WINDEPLOYQT_EXECUTABLE)
+        add_custom_command(TARGET panel POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E echo "Running windeployqt for $<CONFIG> build..."
+            COMMAND "${WINDEPLOYQT_EXECUTABLE}"
+                    --no-translations
+                    $<$<CONFIG:Debug>:--debug>
+                    $<$<CONFIG:Release>:--release>
+                    --dir \"$<TARGET_FILE_DIR:panel>\"
+                    \"$<TARGET_FILE:panel>\"
+            WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+            COMMENT "Deploying Qt runtime for panel"
+        )
+    else()
+        message(WARNING "windeployqt not found!")
+    endif()
+endif()
+message(STATUS "Configured ATOMIC")

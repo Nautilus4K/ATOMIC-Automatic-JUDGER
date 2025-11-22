@@ -712,40 +712,41 @@ inline void prepareStart() {
 
 
 #ifdef _WIN32
-// This is for the terminate process thing
 #include <windows.h>
 #include <tlhelp32.h>
+#include <string>
+
 inline bool terminateProcess(int pid) {
     HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pid);
-    if (hProcess == NULL) {
-        return false;
-    }
+    if (!hProcess) return false;
     bool result = TerminateProcess(hProcess, 1);
     CloseHandle(hProcess);
     return result;
 }
 
-inline bool terminateProcessByName(const std::string& processName) {
+inline bool terminateProcessByName(const std::wstring& processName) {
     bool success = false;
 
     HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-    if (hSnapshot == INVALID_HANDLE_VALUE) return false;
+    if (hSnapshot == INVALID_HANDLE_VALUE)
+        return false;
 
-    PROCESSENTRY32 pe;
-    pe.dwSize = sizeof(PROCESSENTRY32);
+    PROCESSENTRY32W pe;                  // W = wide (UTF-16)
+    pe.dwSize = sizeof(PROCESSENTRY32W);
 
-    if (Process32First(hSnapshot, &pe)) {
+    if (Process32FirstW(hSnapshot, &pe)) {
         do {
-            if (_wcsicmp(pe.szExeFile, std::wstring(processName.begin(), processName.end()).c_str()) == 0) {
+            // Case-insensitive wide string compare
+            if (_wcsicmp(pe.szExeFile, processName.c_str()) == 0) {
+
                 HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, pe.th32ProcessID);
                 if (hProcess) {
-                    if (TerminateProcess(hProcess, 1)) {
+                    if (TerminateProcess(hProcess, 1))
                         success = true;
-                    }
                     CloseHandle(hProcess);
                 }
             }
-        } while (Process32Next(hSnapshot, &pe));
+        } while (Process32NextW(hSnapshot, &pe));
     }
 
     CloseHandle(hSnapshot);
