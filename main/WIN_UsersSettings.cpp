@@ -19,7 +19,7 @@ WIN_UsersSettings::WIN_UsersSettings(QWidget *parent) : QWidget(parent, Qt::Wind
     setWindowIcon(parent->windowIcon());
     setStyleSheet(parent->styleSheet());
     setWindowTitle("Cài đặt học sinh");
-    setAttribute(Qt::WA_DeleteOnClose); // Cleaning
+    // setAttribute(Qt::WA_DeleteOnClose); // Cleaning
     
     setMinimumHeight(400);
     setMinimumWidth(600);
@@ -137,6 +137,7 @@ void WIN_UsersSettings::newUser(bool forced) {
         selectUserFromRow(index);
     } else if (forced) {
         close();
+        return;
     }
 }
 
@@ -162,6 +163,7 @@ void WIN_UsersSettings::loadUsers() {
     if (users.size() == 0) {
         std::cout << "[*UsersSettings] No users\n";
         newUser(true);
+        return;
     }
 
     // Now we will cycle through each user to get a nlohmann/json item object,
@@ -226,6 +228,11 @@ void WIN_UsersSettings::reloadVars() {
 }
 
 void WIN_UsersSettings::selectUserFromRow(int row) {
+    if (row < 0 || row >= userByRowOrder.size()) {
+        std::cerr << "Invalid row: " << row << ", size: " << userByRowOrder.size() << '\n';
+        return;
+    }
+
     listView->setCurrentRow(row);
 
     toUser(userByRowOrder[row]);
