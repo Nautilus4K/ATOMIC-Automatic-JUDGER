@@ -675,6 +675,8 @@ inline void prepareStart() {
             std::cerr << "[prepareStart()] UNABLE TO READ Qt RESOURCE at " << DEFAULT_JUDGING_PATH.toStdString() << '\n';
             exit(-24);
         }
+
+        judgingFile << defJudgingFile.readAll().toStdString();
     }
 
     if (!std::filesystem::exists(dirPath + WSGI_PATH)) {
@@ -691,6 +693,8 @@ inline void prepareStart() {
             std::cerr << "[prepareStart()] UNABLE TO READ Qt RESOURCE at " << DEFAULT_WSGI_PATH.toStdString() << '\n';
             exit(-24);
         }
+
+        wsgiFile << defWsgiFile.readAll().toStdString();
     }
 
     if (!std::filesystem::exists(dirPath + WEBSERVER_PATH)) {
@@ -707,6 +711,8 @@ inline void prepareStart() {
             std::cerr << "[prepareStart()] UNABLE TO READ Qt RESOURCE at " << DEFAULT_WEBSERVER_PATH.toStdString() << '\n';
             exit(-24);
         }
+
+        webserverFile << defWebserverFile.readAll().toStdString();
     }
 }
 

@@ -228,7 +228,7 @@ void WIN_UsersSettings::reloadVars() {
 }
 
 void WIN_UsersSettings::selectUserFromRow(int row) {
-    if (row < 0 || row >= userByRowOrder.size()) {
+    if (row < 0 || row >= static_cast<int>(userByRowOrder.size())) {
         std::cerr << "Invalid row: " << row << ", size: " << userByRowOrder.size() << '\n';
         return;
     }
