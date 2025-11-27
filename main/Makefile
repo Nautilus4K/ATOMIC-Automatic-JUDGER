@@ -4,13 +4,17 @@ version := ATOMIC_RYVENIA
 CMDLINE := powershell -Command
 ECHO := Write-Host
 RM := Remove-Item -ErrorAction SilentlyContinue -Path
+MKDIR := mkdir
 
 # Compiler and flags
 CXX := /Qt/Tools/mingw1310_64/bin/g++.exe
-CXXFLAGS := -fdiagnostics-color=always -Wall -O2 -std=c++17 -fPIC
+CXXFLAGS := -fdiagnostics-color=always -Wall -O2 -std=c++17 -fPIC -mwindows
+CXXFLAGSDEBUG := -fdiagnostics-color=always -Wall -O0 -g -std=c++17 -fPIC
 LDFLAGS  = -L/Qt/Tools/mingw1310_64/lib -L/Qt/6.10.1/mingw_64/lib -L/msys64/mingw64/lib -lxlnt -lQt6Widgets -lQt6Core -lQt6Gui -lssl -lcrypto -lpthread -lws2_32
 # INCLUDES := -I./include -I. -I/usr/include/qt6 
 INCLUDES := -I./include -I. -I/msys64/mingw64/include -I/Qt/6.10.1/mingw_64/include -I/Qt/Tools/mingw1310_64/include  # MSYS2-based
+TARGETFOLDER := ./bin
+WINDEPLOYQT := /Qt/6.10.1/mingw_64/bin/windeployqt.exe
 
 # Qt6 tools (stopping system from using whatever the fuck the Qt5 tools are)
 # RCC := /usr/lib/qt6/rcc
@@ -26,13 +30,13 @@ MOC := /Qt/6.10.1/mingw_64/bin/moc.exe
 # BLUE := \033[0;34m
 # NC := \033[0m # No Color (reset)
 # PS version
-RED   := "`e[0;31m"
-GREEN := "`e[0;32m"
-BLUE  := "`e[0;34m"
-NC    := "`e[0m"
+RED   := ""
+GREEN := ""
+BLUE  := ""
+NC    := " "
 
 # Project scope
-all: panel
+all: $(TARGETFOLDER)/panel.exe
 
 # Header dependencies
 utilities.h: consts.h
@@ -64,9 +68,14 @@ OBJECTS := panel.o timezone_stub.o qres.o \
 		   WIN_GenerateTestCasesDialog.o moc_WIN_GenerateTestCasesDialog.o
 
 # Main target - link all objects
-panel: $(OBJECTS)
+$(TARGETFOLDER)/panel.exe: $(OBJECTS) $(TARGETFOLDER)
 	@$(CMDLINE) "$(ECHO) \"$(BLUE)[$(version)]$(NC)Linking panel executable\""
-	$(CXX) -o $@ $^ $(LDFLAGS)
+	$(CXX) -o $@ $(OBJECTS) $(LDFLAGS)
+	$(WINDEPLOYQT) $@
+
+$(TARGETFOLDER):
+	@$(CMDLINE) "$(ECHO) \"$(BLUE)[$(version)]$(NC)Creating $(TARGETFOLDER) because it doesn't exist\""
+	$(CMDLINE) "$(MKDIR) $(TARGETFOLDER)"
 
 # Compile main panel source
 panel.o: panel.cpp utilities.h consts.h
@@ -235,13 +244,12 @@ moc_WIN_GenerateTestCasesDialog.cpp: WIN_GenerateTestCasesDialog.h
 # Build and run
 brun: all
 	@$(CMDLINE) "$(ECHO) \"$(BLUE)[$(version)]$(NC)Executing panel\""
-	./panel
+	./bin/$(TARGETFOLDER)/panel.exe
 
 # Clean
 clean:
 	@$(CMDLINE) "$(ECHO) \"$(BLUE)[$(version)]$(NC)Cleaning up build files\""
-	-$(CMDLINE) "$(RM) panel"
-	-$(CMDLINE) "$(RM) *.exe"
+	-$(CMDLINE) "$(RM) $(TARGETFOLDER)"
 	-$(CMDLINE) "$(RM) *.o"
 	-$(CMDLINE) "$(RM) *.obj"
 	-$(CMDLINE) "$(RM) moc_*.cpp"
