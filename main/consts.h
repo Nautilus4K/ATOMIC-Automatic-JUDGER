@@ -35,7 +35,7 @@ static const std::string USERSUBHISTORY_DIR  = "/userdata/";
 static const std::string SUBMITLOG_DIR       = "/workspace/result/logs/";  // EVERY SINGLE DIRECTORY PATH NEEDS TO HAVE A TRAILING `/`
 
 static const QString     PKEXEC_PATH            = "/usr/bin/pkexec";
-static const std::string PYDIR                  = "/pythonenv/bin/python3";
+static const std::string PYDIR                  = "/pythonenv/Scripts/python";
 static const std::string JUDGING_PATH           = "/judge.py";
 static const std::string WSGI_PATH              = "/wsgi_interface.py";
 static const std::string WEBSERVER_PATH         = "/apache.py";
@@ -44,6 +44,10 @@ static const QString     DEFAULT_WSGI_PATH      = ":/scripts/wsgi_interface.py";
 static const QString     DEFAULT_WEBSERVER_PATH = ":/scripts/apache.py";
 
 static const std::string LOG_PATH            = "/central/valkyrie.log";
+static const std::string SESSIONS_PATH       = "/central/sessions.json";
+static const std::string STATUS_PATH         = "/central/status.json";
+static const std::string LASTACCESS_PATH     = "/central/lastaccess.json";
+static const std::string CENTRAL_DIR         = "/central";
 static const QString     ICON_PATH           = ":/images/icon.ico";
 static const QString     EXITICON_PATH       = ":/images/exit.png";
 static const QString     CONTESTSICON_PATH   = ":/images/contests.png";

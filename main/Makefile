@@ -10,7 +10,7 @@ MKDIR := mkdir
 CXX := /Qt/Tools/mingw1310_64/bin/g++.exe
 CXXFLAGS := -fdiagnostics-color=always -Wall -O2 -std=c++17 -fPIC -mwindows
 CXXFLAGSDEBUG := -fdiagnostics-color=always -Wall -O0 -g -std=c++17 -fPIC
-LDFLAGS  = -L/Qt/Tools/mingw1310_64/lib -L/Qt/6.10.1/mingw_64/lib -L/msys64/mingw64/lib -lxlnt -lQt6Widgets -lQt6Core -lQt6Gui -lssl -lcrypto -lpthread -lws2_32
+LDFLAGS := -L/Qt/Tools/mingw1310_64/lib -L/Qt/6.10.1/mingw_64/lib -L/msys64/mingw64/lib -lxlnt -lQt6Widgets -lQt6Core -lQt6Gui -lssl -lcrypto -lpthread -lws2_32
 # INCLUDES := -I./include -I. -I/usr/include/qt6 
 INCLUDES := -I./include -I. -I/msys64/mingw64/include -I/Qt/6.10.1/mingw_64/include -I/Qt/Tools/mingw1310_64/include  # MSYS2-based
 TARGETFOLDER := ./bin

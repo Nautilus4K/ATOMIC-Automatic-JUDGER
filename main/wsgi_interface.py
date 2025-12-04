@@ -952,6 +952,7 @@ def application(environ, start_response):
     except Exception as e:
         print(e)
         print("Unidentified Error: " + str(e))
+        traceback.print_exc()
         if headers["USER_AGENT"].startswith("curl"):
             start_response('500 Internal Server Error', response_headers)
             return ['Đã có lỗi xảy ra trong hệ thống máy chủ, vui lòng báo lại với quản trị viên của trang Web.'.encode('utf-8')]

@@ -27,8 +27,8 @@ if not existedPrior:
 log_file.write(f"\n\n\n------------------------------\nEXEC DATE: {datetime.datetime.now()}\n\n") # Writing headers for each section
 
 # Redirect standard output and error to log file
-sys.stdout = log_file
-sys.stderr = log_file
+# sys.stdout = log_file
+# sys.stderr = log_file
 
 # Doing prior cleaning
 import json

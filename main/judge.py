@@ -156,7 +156,7 @@ if not check_image_exists("atomic-python"):
             pinfo(log.get('stream', '').strip())
         pok(f"Ảnh đã được xây dựng với ID: {pyimage.id}")
     except Exception as e:
-        perr("Tạo dựng ảnh xử lý không thành công, lỗi: ", {e})
+        perr(f"Tạo dựng ảnh xử lý không thành công, lỗi: {e}")
         sys.exit(-122);
 pinfo("Đang tạo container mới cho môi trường")
 try:

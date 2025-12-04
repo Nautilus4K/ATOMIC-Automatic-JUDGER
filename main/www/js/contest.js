@@ -1,6 +1,6 @@
 // Initialize Ace Editor on the #editor div
 var editor = ace.edit("editor");
-editor.setTheme("ace/theme/dynamic");
+editor.setTheme("ace/theme/gruvbox");
 // Set default language mode to C++ (ace/mode/c_cpp)
 editor.session.setMode("ace/mode/c_cpp");
 editor.setFontSize("18px");

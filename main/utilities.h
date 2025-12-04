@@ -513,7 +513,9 @@ inline void prepareStart() {
         // JSONs (Empty-able)
         CLASSES_PATH,
         CONTESTS_PATH,
-        USERDATA_PATH
+        USERDATA_PATH,
+        SESSIONS_PATH,
+        STATUS_PATH
     };
 
     // Folders that needs to exists
@@ -522,7 +524,8 @@ inline void prepareStart() {
         USERSTATS_DIR,
         USERQUEUE_DIR,
         USERSUBHISTORY_DIR,
-        SUBMITLOG_DIR
+        SUBMITLOG_DIR,
+        CENTRAL_DIR
     };
 
     // Files that if not found then this is done for (yeah theyre must haves)

@@ -19,3 +19,12 @@ bin/translations
 /msys64/mingw64/bin/libxlnt.dll
 ```
 All files above are going to be in the root of this software's folder, otherwise known as application root in a lot of instances. Here let's call it that way.
+
+## External applications:
+
+### Python
+A portable python installation posing as an environment is enough
+Target: `/pythonenv/`
+
+### Docker
+Docker Desktop is probably the way to go. Just have to install silently or teach the user to install the software then moving on to just use without an account and gotta be on if the software wants to start the **judging** process.
