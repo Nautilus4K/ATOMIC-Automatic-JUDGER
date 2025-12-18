@@ -67,7 +67,9 @@ static const QString     MONOSPACEFONT_PATH  = ":/fonts/CascadiaCode.ttf";
 static const QString     DEFAULTFONT_PATH    = ":/fonts/OpenSans.ttf";
 
 // -> Webserver packaged data paths
-std::map<std::string, std::string> webdataPaths = {
+// first value will interface with QFile, therefore using QString
+// second value, on the other hand, will interface with fstream and stdio, therefore using std::string
+static const std::map<QString, std::string> WEBDATA_PATHS = {
    {":/www/assets/dark.png",                "/www/assets/dark.png",              },
    {":/www/assets/light.png",               "/www/assets/light.png",             },
    {":/www/assets/defaultuser.png",         "/www/assets/defaultuser.png",       },
@@ -98,6 +100,7 @@ std::map<std::string, std::string> webdataPaths = {
    {":/www/thanks.txt",                     "/www/thanks.txt",                   },
    {":/www/useroptions.html",               "/www/useroptions.html",             }
 };
+static const std::string ACEEDITOR_DIR = "/www/js/ext";
 
 // -> Dynamic Paths
 static const std::string dirPath = std::filesystem::current_path().string();

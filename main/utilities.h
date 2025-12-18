@@ -525,7 +525,8 @@ inline void prepareStart() {
         USERQUEUE_DIR,
         USERSUBHISTORY_DIR,
         SUBMITLOG_DIR,
-        CENTRAL_DIR
+        CENTRAL_DIR,
+        ACEEDITOR_DIR
     };
 
     // Files that if not found then this is done for (yeah theyre must haves)
@@ -726,6 +727,65 @@ inline void prepareStart() {
         }
 
         lastaccessFile << "{\"login\": {}}"; // Done
+    }
+
+    // Now its the website's HTML sources
+    for (const auto& fpair : WEBDATA_PATHS) {
+        std::string fps = fpair.second;
+        std::filesystem::path path(dirPath + fps);
+        if (!std::filesystem::exists(path)) {
+            // Before we dive in, shall we try doing a big check?
+            // Sure let's do it.
+            // This is a check for all the DIRECTORIES that are the parents. They have to exist first
+            
+            std::filesystem::path currentParent = path.parent_path();
+            std::vector<std::filesystem::path> trials; // Directories to be created.
+            while (!std::filesystem::exists(currentParent)) {
+                // Mark this as to be created
+                trials.push_back(currentParent);
+                currentParent = currentParent.parent_path();
+            }
+
+            // Good god.
+            // Look at all these directories
+            for (int i = trials.size() - 1; i >= 0; i--) {
+                std::filesystem::create_directories(trials[i]);
+            }
+            
+            if (!fpair.first.endsWith(".png") && !fpair.first.endsWith(".ttf")) {
+                std::fstream file(path, std::ios::out | std::ios::trunc);
+                if (!file.is_open()) {
+                    std::cerr << "[prepareStart()] UNABLE TO CREATE FILE at " << dirPath + fps << '\n';
+                    exit(-24);
+                }
+
+                // Alright its fine
+                QFile packagedFile(fpair.first);
+                if (!packagedFile.open(QIODeviceBase::ReadOnly)) {
+                    std::cerr << "[prepareStart()] UNABLE TO READ Qt RESOURCE at " << packagedFile.fileName().toStdString() << '\n';
+                    exit(-24);
+                }
+
+                file << packagedFile.readAll().toStdString(); // They're all jsons actually...
+                file.close();
+            } else {
+                QFile packagedFile(fpair.first);
+                QFile outputFile(QString::fromStdString(dirPath + fps));
+
+                if (!packagedFile.open(QIODeviceBase::ReadOnly)) {
+                    std::cerr << "[prepareStart()] UNABLE TO READ Qt RESOURCE at " << LASTACCESS_PATH << '\n';
+                    exit(-24);
+                }
+
+                if (!outputFile.open(QIODeviceBase::WriteOnly)) {
+                    std::cerr << "[prepareStart()] UNABLE TO CREATE FILE at " << dirPath + fps << '\n';
+                    exit(-24);
+                }
+
+                outputFile.write(packagedFile.readAll());
+            }
+            std::cout << "[prepareStart()] Generated file at: " << dirPath + fps << '\n';
+        }
     }
 }
 
