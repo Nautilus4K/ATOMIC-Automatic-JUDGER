@@ -397,8 +397,7 @@ class PanelWindow: public QMainWindow { // This is based on QMainWindow
         // +-----------------------+
         QWidget *sidebar = new QWidget();
         sidebar->setObjectName("sidebar");
-        sidebar->setMinimumWidth(150);
-        sidebar->setMaximumWidth(350);
+        sidebar->resize(300, 0);
 
         QVBoxLayout *sidebarLayout = new QVBoxLayout(this);
 

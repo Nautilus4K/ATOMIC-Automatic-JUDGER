@@ -187,7 +187,7 @@ WIN_ContestsSettings::WIN_ContestsSettings(QWidget *parent, const std::unordered
 
     QLabel *fileOutputLabel = new QLabel(this);
     // fileOutputLabel->setStyleSheet(STYLE_BOLDLABEL);
-    fileOutputLabel->setText("Đầu vào đọc từ tệp?");
+    fileOutputLabel->setText("Đầu ra xuất ra tệp?");
 
     fileOutputCheckAreaLayout->addWidget(fileOutputCheck);
     fileOutputCheckAreaLayout->addWidget(fileOutputLabel);

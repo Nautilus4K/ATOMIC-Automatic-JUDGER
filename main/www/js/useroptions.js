@@ -94,26 +94,28 @@ function updateDetails() {
     const desc = document.getElementById("desc").value;
 
     fetch("/api/updatedetails", {
-        method: "GET",
+        method: "POST",
         headers: {
-            "TOKEN": token,
-            "NAME": name,
-            "DESC": desc
-        }
-    }).then(response => response.json()).then((json) => {
-        if (json["success"]) {
-            const detailsnoticeobj = document.getElementById("detailsnotice");
-            detailsnoticeobj.style.display = "block";
-            detailsnoticeobj.style.color = "var(--primary)";
-            detailsnoticeobj.textContent = "Cập nhật dữ liệu thành công";
-        }
-        else {
-            const detailsnoticeobj = document.getElementById("detailsnotice");
-            detailsnoticeobj.style.display = "block";
-            detailsnoticeobj.style.color = "var(--dangerous)";
-            detailsnoticeobj.textContent = "Lỗi: " + json["message"];
-        }
+            "Content-Type": "application/json",
+            "TOKEN": token
+        },
+        body: JSON.stringify({
+            name: name,
+            desc: desc
+        })
     })
+    .then(r => r.json())
+    .then(json => {
+        const obj = document.getElementById("detailsnotice");
+        obj.style.display = "block";
+        if (json.success) {
+            obj.style.color = "var(--primary)";
+            obj.textContent = "Cập nhật dữ liệu thành công";
+        } else {
+            obj.style.color = "var(--dangerous)";
+            obj.textContent = "Lỗi: " + json.message;
+        }
+    });
 }
 
 // Make sure that anytime the users is typing the details to update them, the old

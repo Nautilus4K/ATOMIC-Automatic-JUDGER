@@ -717,6 +717,16 @@ inline void prepareStart() {
 
         webserverFile << defWebserverFile.readAll().toStdString();
     }
+
+    if (!std::filesystem::exists(dirPath + LASTACCESS_PATH)) {
+        std::fstream lastaccessFile(dirPath + LASTACCESS_PATH, std::ios::out | std::ios::trunc);
+        if (!lastaccessFile.is_open()) {
+            std::cerr << "[prepareStart()] UNABLE TO CREATE FILE at " << LASTACCESS_PATH << '\n';
+            exit(-24);
+        }
+
+        lastaccessFile << "{\"login\": {}}"; // Done
+    }
 }
 
 

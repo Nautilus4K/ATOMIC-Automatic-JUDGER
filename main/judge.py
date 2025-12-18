@@ -562,7 +562,7 @@ def judge(fullfilename: str, show_test: bool):
         pinfo(f"Đang chấm {filename}...")
 
         # Prepare to write logs
-        logfiles = os.listdir(os.path.join(filePath, LOG_PATH))
+        logfiles = os.listdir(filePath + LOG_PATH)
         filenamenoext = os.path.splitext(fullfilename)[0]
 
         for log in logfiles:

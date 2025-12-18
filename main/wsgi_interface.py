@@ -386,11 +386,16 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
         }
 
     # Path for updating user details (which is display name and description)
-    elif path == "/api/updatedetails" and "TOKEN" in headers and "NAME" in headers and "DESC" in headers:
+    elif path == "/api/updatedetails" and "TOKEN" in headers:
         try:
             success = True
             message = ""
             
+            body_info = json.loads(body.decode('utf-8'))
+
+            name = body_info["name"]
+            desc = body_info["desc"]
+
             # Get username from token
             with open(dirPath + SESSION_JSON, "r", encoding='utf-8') as sessionsFile:
                 sessions = json.load(sessionsFile)
@@ -407,8 +412,8 @@ def api_interface(path: str, headers, ip_addr, body) -> dict:
                 users = json.load(userdataFile)
 
             # Modify intended user's information from within dictionary object
-            users[username]["fullname"] = headers["NAME"]
-            users[username]["desc"] = headers["DESC"]
+            users[username]["fullname"] = name
+            users[username]["desc"] = desc
 
             # Save modified user's information into users file
             with open(dirPath + USERDATA_JSON, "w", encoding='utf-8') as userdataWrite:
