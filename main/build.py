@@ -5,6 +5,16 @@ import platform
 import json
 import shutil
 import os
+import argparse
+
+parser = argparse.ArgumentParser(
+    "ATOMIC build",
+    description="A script to build ATOMIC from source."
+)
+parser.add_argument("--nobuild", action="store_true", help="Skip building process.")
+parser.add_argument("--noclean", action="store_true", help="Skip cleaning process.")
+
+args = parser.parse_args()
 
 BUILDNAME = "+ ATOMIC +"
 
@@ -364,49 +374,53 @@ if __name__ == "__main__":
             console.print(toBePrintedLine, style="dim")
             toBePrintedLine = obj + ", "
 
-    prstat("Now cleaning up environment...")
+    if not args.noclean:
+        prstat("Now cleaning up environment...")
 
-    prstat("Removing ", f"[red bold]{TARGETFOLDER}[/red bold]")
-    shutil.rmtree(TARGETFOLDER, ignore_errors=True)
-    prstat("Removing ", f"[red bold]qres.cpp[/red bold]")
-    if os.path.exists("qres.cpp"): os.remove("qres.cpp")
+        if os.path.exists(TARGETFOLDER):
+            prstat("Removing ", f"[red bold]{TARGETFOLDER}[/red bold]")
+            shutil.rmtree(TARGETFOLDER, ignore_errors=True)
+        if os.path.exists("qres.cpp"):
+            prstat("Removing ", f"[red bold]qres.cpp[/red bold]")
+            os.remove("qres.cpp")
 
-    ldirs = os.listdir()
-    for filename in ldirs:
-        if filename.endswith(".o") or \
-           filename.endswith(".obj") or \
-           (filename.startswith("moc_") and filename.endswith(".cpp")):
-            
-            prstat("Removing ", f"[red bold]{filename}[/red bold]")
-            os.remove(filename)
+        ldirs = os.listdir()
+        for filename in ldirs:
+            if filename.endswith(".o") or \
+            filename.endswith(".obj") or \
+            (filename.startswith("moc_") and filename.endswith(".cpp")):
+                
+                prstat("Removing ", f"[red bold]{filename}[/red bold]")
+                os.remove(filename)
 
-    prstat("Commencing build process...")
-    for obj in OBJECTS:
-        # prstat("Building object: ", f"[green]{obj}[/green]")
-        compileTarget(obj)
+    if not args.nobuild:
+        prstat("Commencing build process...")
+        for obj in OBJECTS:
+            # prstat("Building object: ", f"[green]{obj}[/green]")
+            compileTarget(obj)
 
-    prstat("Linking to executable...")
-    if not os.path.exists(TARGETFOLDER):
-        os.makedirs(TARGETFOLDER)
-        prstat("Created ", f"[green]{TARGETFOLDER}[/green]")
+        prstat("Linking to executable...")
+        if not os.path.exists(TARGETFOLDER):
+            os.makedirs(TARGETFOLDER)
+            prstat("Created ", f"[green]{TARGETFOLDER}[/green]")
 
-    objectsArg = ""
-    for obj in OBJECTS:
-        objectsArg += obj + " "
+        objectsArg = ""
+        for obj in OBJECTS:
+            objectsArg += obj + " "
 
-    cmd = f"{CXX} -o {TARGETFOLDER}/{TARGET} {objectsArg} {LDFLAGS}"
-    print("SHELL>", cmd)
-    os.system(cmd)
+        cmd = f"{CXX} -o {TARGETFOLDER}/{TARGET} {objectsArg} {LDFLAGS}"
+        print("SHELL>", cmd)
+        os.system(cmd)
 
-    if isWindows:
-        # This is limited to Windows
-        prstat("Deploying Dynamic Linking Libraries...")
-        deploycmd = f"{WINDEPLOYQT} {TARGETFOLDER}/{TARGET}"
-        print("SHELL>", deploycmd)
-        os.system(deploycmd)
+        if isWindows:
+            # This is limited to Windows
+            prstat("Deploying Dynamic Linking Libraries...")
+            deploycmd = f"{WINDEPLOYQT} {TARGETFOLDER}/{TARGET}"
+            print("SHELL>", deploycmd)
+            os.system(deploycmd)
 
-        # Copy much needed dlls over
-        for dll in ADDITIONALLIBS:
-            targetDLL = f"{TARGETFOLDER}/{os.path.basename(dll)}"
-            print(f"{dll} --> {targetDLL}")
-            shutil.copy(dll, targetDLL)
+            # Copy much needed dlls over
+            for dll in ADDITIONALLIBS:
+                targetDLL = f"{TARGETFOLDER}/{os.path.basename(dll)}"
+                print(f"{dll} --> {targetDLL}")
+                shutil.copy(dll, targetDLL)
