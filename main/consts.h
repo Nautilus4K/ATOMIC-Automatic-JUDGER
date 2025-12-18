@@ -66,7 +66,38 @@ static const QString     SPLASHIMAGE_PATH    = ":/images/splash.png";
 static const QString     MONOSPACEFONT_PATH  = ":/fonts/CascadiaCode.ttf";
 static const QString     DEFAULTFONT_PATH    = ":/fonts/OpenSans.ttf";
 
-// static const char* DEBUGLOG_PATH = "/debug.log";
+// -> Webserver packaged data paths
+std::map<std::string, std::string> webdataPaths = {
+   {":/www/assets/dark.png",                "/www/assets/dark.png",              },
+   {":/www/assets/light.png",               "/www/assets/light.png",             },
+   {":/www/assets/defaultuser.png",         "/www/assets/defaultuser.png",       },
+   {":/www/assets/favicon.png",             "/www/assets/favicon.png",           },
+   {":/www/js/contest.js",                  "/www/js/contest.js",                },
+   {":/www/js/general.js",                  "/www/js/general.js",                },
+   {":/www/js/generalDeferred.js",          "/www/js/generalDeferred.js",        },
+   {":/www/js/home.js",                     "/www/js/home.js",                   },
+   {":/www/js/login.js",                    "/www/js/login.js",                  },
+   {":/www/js/scoreboard.js",               "/www/js/scoreboard.js",             },
+   {":/www/js/useroptions.js",              "/www/js/useroptions.js",            },
+   {":/www/reserved/contest.html",          "/www/reserved/contest.html",        },
+   {":/www/reserved/error.html",            "/www/reserved/error.html",          },
+   {":/www/reserved/statsbar.html",         "/www/reserved/statsbar.html",       },
+   {":/www/reserved/userprofile.html",      "/www/reserved/userprofile.html",    },
+   {":/www/styles/fonts/CascadiaCode.ttf",  "/www/styles/fonts/CascadiaCode.ttf",},
+   {":/www/styles/contest.css",             "/www/styles/contest.css",           },
+   {":/www/styles/error.css",               "/www/styles/error.css",             },
+   {":/www/styles/general.css",             "/www/styles/general.css",           },
+   {":/www/styles/home.css",                "/www/styles/home.css",              },
+   {":/www/styles/login.css",               "/www/styles/login.css",             },
+   {":/www/styles/scoreboard.css",          "/www/styles/scoreboard.css",        },
+   {":/www/styles/useroptions.css",         "/www/styles/useroptions.css",       },
+   {":/www/styles/userprofile.css",         "/www/styles/userprofile.css",       },
+   {":/www/.html",                          "/www/.html",                        },
+   {":/www/login.html",                     "/www/login.html",                   },
+   {":/www/scoreboard.html",                "/www/scoreboard.html",              },
+   {":/www/thanks.txt",                     "/www/thanks.txt",                   },
+   {":/www/useroptions.html",               "/www/useroptions.html",             }
+};
 
 // -> Dynamic Paths
 static const std::string dirPath = std::filesystem::current_path().string();

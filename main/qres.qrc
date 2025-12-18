@@ -33,4 +33,35 @@
         <file alias="wsgi_interface.py">wsgi_interface.py</file>
         <file alias="apache.py">apache.py</file>
     </qresource>
+    <qresource>
+        <file>www/assets/dark.png</file>
+        <file>www/assets/light.png</file>
+        <file>www/assets/defaultuser.png</file>
+        <file>www/assets/favicon.png</file>
+        <file>www/js/contest.js</file>
+        <file>www/js/general.js</file>
+        <file>www/js/generalDeferred.js</file>
+        <file>www/js/home.js</file>
+        <file>www/js/login.js</file>
+        <file>www/js/scoreboard.js</file>
+        <file>www/js/useroptions.js</file>
+        <file>www/reserved/contest.html</file>
+        <file>www/reserved/error.html</file>
+        <file>www/reserved/statsbar.html</file>
+        <file>www/reserved/userprofile.html</file>
+        <file>www/styles/fonts/CascadiaCode.ttf</file>
+        <file>www/styles/contest.css</file>
+        <file>www/styles/error.css</file>
+        <file>www/styles/general.css</file>
+        <file>www/styles/home.css</file>
+        <file>www/styles/login.css</file>
+        <file>www/styles/scoreboard.css</file>
+        <file>www/styles/useroptions.css</file>
+        <file>www/styles/userprofile.css</file>
+        <file>www/.html</file>
+        <file>www/login.html</file>
+        <file>www/scoreboard.html</file>
+        <file>www/thanks.txt</file>
+        <file>www/useroptions.html</file>
+    </qresource>
 </RCC>
